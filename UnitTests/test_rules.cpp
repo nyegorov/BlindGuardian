@@ -17,6 +17,18 @@ public:
 	void Update() {}
 };
 
+class DumbMotor : public IActuator
+{
+	string _name;
+	value_t	_value = { 0 };
+public:
+	DumbMotor(const char *name) : _name(name) { }
+	string GetName() { return _name; };
+	value_t GetValue() { return _value; };
+	void Activate(value_t val) { _value = val; }
+};
+
+
 namespace Microsoft {
 namespace VisualStudio {
 namespace CppUnitTestFramework {
@@ -52,12 +64,20 @@ namespace UnitTests
 			DumbSensor ts("temp", value_tag::temperature, 24);
 			DumbSensor ls("light", value_tag::light, 2000);
 			DumbSensor tm("time", value_tag::time, 340);
+			DumbMotor mot("open");
 			RulesEngine re(
-				std::vector<ISensor*>{ &ts, &ls, &tm },
-				std::vector<IActuator*>{}
+				RulesEngine::vec_sensors{ &ts, &ls, &tm },
+				RulesEngine::vec_actuators{ &mot }
 			);
-			//re.UpdateRules();
+			RulesEngine::vec_rules rules {
+				{ "r1", "temp > 30", "open(100)" },
+			};
+			re.UpdateRules(rules);
 			re.Run();
+			Assert::AreEqual(0ll, mot.GetValue().value);
+			ts.SetValue(35);
+			re.Run();
+			Assert::AreEqual(100ll, mot.GetValue().value);
 		}
 		TEST_METHOD(Errors)
 		{

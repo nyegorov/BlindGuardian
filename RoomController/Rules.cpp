@@ -3,7 +3,7 @@
 
 namespace BlindGuardian {
 
-RulesEngine::RulesEngine(std::vector<ISensor*> &sensors, std::vector<IActuator*> &actuators) : _sensors(sensors), _actuators(actuators)
+RulesEngine::RulesEngine(const vec_sensors &sensors, const vec_actuators &actuators) : _sensors(sensors), _actuators(actuators)
 {
 	for(auto& ps : _sensors) {
 		_parser.set(ps->GetName(), [ps](value_t) {return ps->GetValue(); });
@@ -13,9 +13,9 @@ RulesEngine::RulesEngine(std::vector<ISensor*> &sensors, std::vector<IActuator*>
 	}
 }
 
-void RulesEngine::UpdateRules(int)
+void RulesEngine::UpdateRules(const vec_rules& rules)
 {
-
+	_rules = rules;
 }
 
 void RulesEngine::Run()
@@ -25,6 +25,7 @@ void RulesEngine::Run()
 		auto result = _parser.eval(pr.condition);
 		auto status = result.type == value_tag::error ? rule_status::error :
 			result.value == 0 ? rule_status::inactive : rule_status::active;
+
 		if(status != pr.status && status == rule_status::active) {
 			_parser.eval(pr.action);
 		}
