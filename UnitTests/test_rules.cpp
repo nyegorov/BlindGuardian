@@ -9,33 +9,24 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace BlindGuardian;
 
-class DumbSensor : public SensorBase
+class DumbSensor : public sensor
 {
 public:
-	DumbSensor(const char *name, value_tag tag, value_type val) : SensorBase(name, tag) { _value.value = val; }
+	DumbSensor(const char *name, value_tag tag, value_type val) : sensor(name, tag) { _value.value = val; }
 	void set(value_type val) { _value.value = val; }
 	void update() {}
 };
 
-class DumbMotor : public IActuator
+class DumbMotor : public actuator
 {
-	string _name;
 	value_t	_value = { 0 };
-	action<DumbMotor> a_open{ "open", this, &DumbMotor::open };
-	action<DumbMotor> a_close{ "close", this, &DumbMotor::close };
-	action<DumbMotor> a_setpos{ "set_pos", this, &DumbMotor::set_pos };
+	action open{ "open", [this](value_t) { _value = 100; } };
+	action close{ "close", [this](value_t) { _value = 0; } };
+	action setpos{ "set_pos", [this](value_t v) { _value = v; } };
 public:
-	DumbMotor(const char *name) : _name(name) { }
-
-	string name() { return _name; };
+	DumbMotor(const char *name) : actuator(name) { }
 	value_t value() { return _value; };
-	void open(value_t) { _value = 100; }
-	void close(value_t) { _value = 0; }
-	void set_pos(value_t v) { _value = v; }
-
-	std::vector<IAction*> actions() {
-		return{ &a_open, &a_close, &a_setpos };
-	}
+	std::vector<IAction*> actions() { return{ &open, &close, &setpos }; }
 };
 
 

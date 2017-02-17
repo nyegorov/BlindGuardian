@@ -30,7 +30,8 @@ void RoomEngine::run()
 			result.value == 0 ? rule_status::inactive : rule_status::active;
 
 		if(status != pr.status && status == rule_status::active) {
-			_parser.eval(pr.action);
+			result = _parser.eval(pr.action);
+			if(result.type == value_tag::error)	status = rule_status::error;
 		}
 		pr.status = status;
 	}

@@ -27,40 +27,46 @@ struct IActuator
 	virtual vector<IAction*> actions() = 0;
 };
 
-template<class T>class action : public IAction
+class action : public IAction
 {
-	using method_t = void (T::*)(value_t);
 	string		_name;
-	T*			_parent;
-	method_t	_pmethod;
+	std::function<void(value_t)> _action;
 public:
-	action(const char *name, T* parent, method_t pmethod) : _name(name), _parent(parent), _pmethod(pmethod) {}
+	action(const char *name, std::function<void(value_t)> func) : _name(name), _action(func) {}
 	string name() { return _name; }
-	void activate(value_t value) { (_parent->*_pmethod)(value); }
+	void activate(value_t value) { _action(value); }
 };
 
-class SensorBase : public ISensor
+class actuator : public IActuator
+{
+	string _name;
+public:
+	actuator(const char *name) : _name(name) { }
+	string name() { return _name; };
+};
+
+class sensor : public ISensor
 {
 protected:
 	value_t _value;
-	std::string _name;
+	string _name;
 public:
-	SensorBase(const char *name, value_tag type) : _name(name), _value{ type, 0 } {}
+	sensor(const char *name, value_tag type) : _name(name), _value{ type, 0 } {}
 	value_t value() const { return _value; }
 	string name() const { return _name; }
 };
 
-class TemperatureSensor : public SensorBase
+class TemperatureSensor : public sensor
 {
 public:
-	TemperatureSensor(const char *name) : SensorBase(name, value_tag::temperature) { }
+	TemperatureSensor(const char *name) : sensor(name, value_tag::temperature) { }
 	void update() { };
 };
 
-class LightSensor : public SensorBase
+class LightSensor : public sensor
 {
 public:
-	LightSensor(const char *name) : SensorBase(name, value_tag::light) { }
+	LightSensor(const char *name) : sensor(name, value_tag::light) { }
 	void update() { };
 };
 

@@ -32,5 +32,6 @@
 #include <agile.h>
 #include <string>
 #include <vector>
+#include <functional>
 
 using namespace std::literals::string_literals;
