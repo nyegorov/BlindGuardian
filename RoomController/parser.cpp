@@ -314,7 +314,7 @@ void Parser::ReadName(char c)
 {
 	if(!isalpha(c) && c != '@' && c != '_')	throw error_t::syntax;
 	_name = c;
-	while(isalnum(c = Read()) || c == '_')	_name += c;
+	while(isalnum(c = Read()) || c == '_' || c == '.')	_name += c;
 	Back();
 }
 

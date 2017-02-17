@@ -11,22 +11,22 @@ enum class rule_status { error, active, inactive };
 
 struct rule {
 	rule(const char *name, const char *condition, const char *action) : name(name), condition(condition), action(action) {}
-	std::string name;
-	std::string condition;
-	std::string action;
+	string name;
+	string condition;
+	string action;
 	rule_status	status = rule_status::inactive;
 };
 
-class RulesEngine
+class RoomEngine
 {
 public:
 	using vec_rules = std::vector<rule>;
 	using vec_sensors = std::vector<ISensor*>;
 	using vec_actuators = std::vector<IActuator*>;
 
-	RulesEngine(const vec_sensors &sensors, const vec_actuators &actuators);
-	void UpdateRules(const vec_rules& rules);
-	void Run();
+	RoomEngine(const vec_sensors &sensors, const vec_actuators &actuators);
+	void update_rules(const vec_rules& rules);
+	void run();
 
 private:
 	std::vector<rule>	_rules;

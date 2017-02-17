@@ -31,5 +31,6 @@
 #include <ppltasks.h>
 #include <agile.h>
 #include <string>
+#include <vector>
 
 using namespace std::literals::string_literals;

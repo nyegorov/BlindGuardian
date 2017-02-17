@@ -3,22 +3,25 @@
 
 namespace BlindGuardian {
 
-RulesEngine::RulesEngine(const vec_sensors &sensors, const vec_actuators &actuators) : _sensors(sensors), _actuators(actuators)
+RoomEngine::RoomEngine(const vec_sensors &sensors, const vec_actuators &actuators) : _sensors(sensors), _actuators(actuators)
 {
 	for(auto& ps : _sensors) {
-		_parser.set(ps->GetName(), [ps](value_t) {return ps->GetValue(); });
+		_parser.set(ps->name(), [ps](value_t) {return ps->value(); });
 	}
 	for(auto& pa : _actuators) {
-		_parser.set(pa->GetName(), [pa](value_t v) {return pa->Activate(v), value_t{ 1 }; });
+		string obj = pa->name();
+		for(auto& paction : pa->actions()) {
+			_parser.set(obj + "." + paction->name(), [paction](value_t v) {return paction->activate(v), value_t{ 1 }; });
+		}
 	}
 }
 
-void RulesEngine::UpdateRules(const vec_rules& rules)
+void RoomEngine::update_rules(const vec_rules& rules)
 {
 	_rules = rules;
 }
 
-void RulesEngine::Run()
+void RoomEngine::run()
 {
 	for(auto& pr : _rules)
 	{
