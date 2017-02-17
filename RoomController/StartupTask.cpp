@@ -41,5 +41,16 @@ void StartupTask::InitGpio()
 	pinValue = GpioPinValue::High;
 	pin->Write(pinValue);
 	pin->SetDriveMode(GpioPinDriveMode::Output);
+
+	Windows::Data::Json::JsonObject json;
+	json.Parse(R"(
+	{
+		"rules": [
+			{ "name": "r1", "condition": "temp > 30", "body": "mot1.open() " },
+			{ "name": "r2", "condition": "temp > 30", "body": "mot2.set_pos() " }
+	   ]
+	}
+	)");
+	auto rules = json.GetNamedArray("rules");
 }
 
