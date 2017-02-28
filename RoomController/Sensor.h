@@ -70,4 +70,17 @@ public:
 	void update() { };
 };
 
+class time_sensor : public sensor
+{
+public:
+	time_sensor(const char *name) : sensor(name, value_tag::time) { }
+	void update() {
+		auto now = std::chrono::system_clock::now();
+		auto now_t = std::chrono::system_clock::to_time_t(now);
+		tm tm;
+		localtime_s(&tm, &now_t);
+		_value.value = tm.tm_hour * 60 + tm.tm_min;
+	};
+};
+
 }

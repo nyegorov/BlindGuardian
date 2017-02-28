@@ -19,11 +19,11 @@ public:
 
 class DumbMotor : public actuator
 {
+public:
 	value_t	_value = { 0 };
 	action open{ "open", [this](value_t) { _value = 100; } };
 	action close{ "close", [this](value_t) { _value = 0; } };
 	action setpos{ "set_pos", [this](value_t v) { _value = v; } };
-public:
 	DumbMotor(const char *name) : actuator(name) { }
 	value_t value() { return _value; };
 	std::vector<IAction*> actions() { return{ &open, &close, &setpos }; }
@@ -57,28 +57,6 @@ namespace UnitTests
 			Assert::AreEqual( 1ll, ns.eval("x=1; y=2; x=x+y; y=y-x; x=x*y; x=x/y; x=x-1; x+y").value);
 			Assert::AreEqual(48ll, ns.eval("x=3; MyFunc(x)+myVar").value);
 			Assert::AreEqual(340ll, ns.eval("x=#5:40#; x").value);
-		}
-		TEST_METHOD(Sensors)
-		{
-			DumbSensor ts("temp", value_tag::temperature, 24);
-			DumbSensor ls("light", value_tag::light, 2000);
-			DumbSensor tm("time", value_tag::time, 340);
-			DumbMotor mot1("mot1"), mot2("mot2");
-			RoomEngine re(
-				RoomEngine::vec_sensors{ &ts, &ls, &tm },
-				RoomEngine::vec_actuators{ &mot1, &mot2 }
-			);
-			RoomEngine::vec_rules rules {
-				{ "r1", "temp > 30", "mot1.open()" },
-				{ "r2", "temp > 30", "mot2.set_pos(50)" },
-			};
-			re.update_rules(rules);
-			re.run();
-			Assert::AreEqual(0ll, mot1.value().value);
-			ts.set(35);
-			re.run();
-			Assert::AreEqual(100ll, mot1.value().value);
-			Assert::AreEqual( 50ll, mot2.value().value);
 		}
 		TEST_METHOD(Errors)
 		{
@@ -116,6 +94,42 @@ namespace UnitTests
 			ls.set(1500);
 			Assert::AreEqual( 1ll, ns.eval("if(tin > 20 && light > 1000) set_blind(24)").value);
 			Assert::AreEqual(24ll, pos.value);
+		}
+
+		TEST_METHOD(Sensors)
+		{
+			DumbSensor ts("temp", value_tag::temperature, 24);
+			DumbSensor ls("light", value_tag::light, 2000);
+			time_sensor tm("time");
+			tm.update();
+			DumbMotor mot1("mot1"), mot2("mot2");
+			RoomEngine re(
+				RoomEngine::vec_sensors{ &ts, &ls, &tm },
+				RoomEngine::vec_actuators{ &mot1, &mot2 }
+			);
+			RoomEngine::vec_rules rules{
+				{ "r1", "temp > 30", "mot1.open()" },
+				{ "r2", "temp > 30", "mot2.set_pos(50)" },
+				{ "r3", "time - lasttime >= 5 && time - lasttime < 6", "mot1.set_pos(42)" },
+			};
+			re.update_rules(rules);
+
+			// temperature
+			re.eval("lasttime = time");
+			re.run();
+			Assert::AreEqual(0ll, mot1.value().value);
+			ts.set(35);
+			re.run();
+			Assert::AreEqual(100ll, mot1.value().value);
+			Assert::AreEqual(50ll, mot2.value().value);
+
+			// time sensor
+			re.eval("lasttime = time - 5");
+			re.run();
+			Assert::AreEqual(42ll, mot1.value().value);
+			mot1.setpos.activate(0);
+			re.run();
+			Assert::AreEqual(0ll, mot1.value().value);
 		}
 
 	};

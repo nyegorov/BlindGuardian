@@ -21,19 +21,26 @@ void RoomEngine::update_rules(const vec_rules& rules)
 	_rules = rules;
 }
 
+value_t RoomEngine::eval(const char *expr)
+{
+	return _parser.eval(expr);
+}
+
 void RoomEngine::run()
 {
-	for(auto& pr : _rules)
+	for(auto& sensor : _sensors) sensor->update();
+
+	for(auto& rule : _rules)
 	{
-		auto result = _parser.eval(pr.condition);
+		auto result = _parser.eval(rule.condition);
 		auto status = result.type == value_tag::error ? rule_status::error :
 			result.value == 0 ? rule_status::inactive : rule_status::active;
 
-		if(status != pr.status && status == rule_status::active) {
-			result = _parser.eval(pr.action);
+		if(status != rule.status && status == rule_status::active) {
+			result = _parser.eval(rule.action);
 			if(result.type == value_tag::error)	status = rule_status::error;
 		}
-		pr.status = status;
+		rule.status = status;
 	}
 }
 
