@@ -225,8 +225,8 @@ Parser::Token Parser::Next()
 		case '>':	_token = Peek() == '=' ? Read(), ge : gt; break;
 		case '=':	_token = Peek() == '=' ? Read(), equ : setvar; break;
 		case '!':	_token = Peek() == '=' ? Read(), nequ : lnot; break;
-		case '&':	_token = Peek() == '&' ? Read(), land : and; break;
-		case '|':	_token = Peek() == '|' ? Read(), lor : or ; break;
+		case '&':	_token = Peek() == '&' ? Read(), land : land; break;
+		case '|':	_token = Peek() == '|' ? Read(), lor : lor ; break;
 		case ',':	_token = comma ; break;
 		case '(':	_token = lpar;break;
 		case ')':	_token = rpar;break;

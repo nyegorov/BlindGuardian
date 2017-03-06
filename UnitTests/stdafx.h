@@ -13,6 +13,7 @@
 // TODO: reference additional headers your program requires here
 #include <vector>
 #include <functional>
+#include <algorithm>
 #include <chrono>
 #include <ctime>
 #include <thread>

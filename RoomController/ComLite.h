@@ -1,5 +1,8 @@
 #pragma once
 
+#include <wrl.h>
+#include <atomic>
+
 namespace com	{
 
 // Basic policy-based IUnknown implementation
@@ -53,11 +56,11 @@ struct no_lock			{
 };
 
 class multi_thread		{
-	long volatile _counter;
+	std::atomic<long> _counter;
 protected:
 	multi_thread() : _counter(0)	{}
-	ULONG Increment()	{return InterlockedIncrement(&_counter);}
-	ULONG Decrement()	{return InterlockedDecrement(&_counter);}
+	ULONG Increment()	{return ++_counter;}
+	ULONG Decrement()	{return --_counter;}
 };
 
 class single_thread		{

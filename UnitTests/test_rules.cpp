@@ -13,7 +13,7 @@ class DumbSensor : public sensor
 {
 public:
 	DumbSensor(const char *name, value_tag tag, value_type val) : sensor(name, tag) { _value.value = val; }
-	void set(value_type val) { _value.value = val; }
+	void set(value_type val) { _value.value = val; _min = std::min(_min, _value); _max = std::max(_max, _value); }
 	void update() {}
 };
 
@@ -26,7 +26,7 @@ public:
 	action setpos{ "set_pos", [this](value_t v) { _value = v; } };
 	DumbMotor(const char *name) : actuator(name) { }
 	value_t value() { return _value; };
-	std::vector<IAction*> actions() { return{ &open, &close, &setpos }; }
+	std::vector<const IAction*> actions() const { return{ &open, &close, &setpos }; }
 };
 
 
@@ -131,6 +131,47 @@ namespace UnitTests
 			re.run();
 			Assert::AreEqual(0ll, mot1.value().value);
 		}
+		TEST_METHOD(Sensitivity)
+		{
+			DumbSensor ts("temp", value_tag::temperature, 24);
+			DumbSensor ls("light", value_tag::light, 2000);
+			time_sensor tm("time");
+			tm.update();
+			DumbMotor mot1("mot1"), mot2("mot2");
+			RoomEngine re(
+				RoomEngine::vec_sensors{ &ts, &ls, &tm },
+				RoomEngine::vec_actuators{ &mot1, &mot2 }
+			);
+			RoomEngine::vec_rules rules{
+				{ "r1", "temp > 30", "mot1.open()" },
+				{ "r2", "temp > 30 & temp.min < 25", "mot2.open(); temp.reset()" },
+			};
+			re.update_rules(rules);
+
+			// temperature
+			re.run();
+			Assert::AreEqual(0ll, mot1.value().value);
+			ts.set(35); re.run();
+			Assert::AreEqual(100ll, mot1.value().value);
+			Assert::AreEqual(100ll, mot2.value().value);
+			mot1.setpos.activate(0);
+			mot2.setpos.activate(0); re.run();
+			Assert::AreEqual(0ll, mot1.value().value);
+			Assert::AreEqual(0ll, mot2.value().value);
+			ts.set(27); re.run();
+			Assert::AreEqual(0ll, mot1.value().value);
+			Assert::AreEqual(0ll, mot2.value().value);
+			ts.set(35); re.run();
+			Assert::AreEqual(100ll, mot1.value().value);
+			Assert::AreEqual(0ll, mot2.value().value);
+			ts.set(20); re.run();
+			Assert::AreEqual(100ll, mot1.value().value);
+			Assert::AreEqual(0ll, mot2.value().value);
+			ts.set(35); re.run();
+			Assert::AreEqual(100ll, mot1.value().value);
+			Assert::AreEqual(100ll, mot2.value().value);
+		}
+
 
 	};
 }
