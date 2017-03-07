@@ -7,6 +7,11 @@
 
 #include "targetver.h"
 
+#include "winrt\base.h"
+#include "winrt\Windows.Data.Json.h"
+
+#pragma comment(lib, "windowsapp")
+
 // Headers for CppUnitTest
 #include "CppUnitTest.h"
 
@@ -17,6 +22,9 @@
 #include <chrono>
 #include <ctime>
 #include <thread>
+#include <codecvt>
+#include <cvt/wstring>
 
 using namespace std::literals::string_literals;
 using namespace std::literals::chrono_literals;
+

@@ -18,12 +18,6 @@ struct value_t
 	value_t(value_tag type, value_type value) : type(type), value(value) {}
 
 	operator value_type() const { return value; }
-	/*value_t operator =(value_t rhs)
-	{
-		value = rhs.value;
-		type = rhs.type;
-		return *this;
-	}*/
 };
 
 inline value_t operator +(value_t lhs, value_t rhs)

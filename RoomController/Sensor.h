@@ -6,6 +6,7 @@ namespace BlindGuardian
 {
 
 using std::string;
+using std::wstring;
 using std::vector;
 #undef min
 #undef max

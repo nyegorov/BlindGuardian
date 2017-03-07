@@ -10,7 +10,7 @@ namespace BlindGuardian {
 enum class rule_status { error, active, inactive };
 
 struct rule {
-	rule(const char *name, const char *condition, const char *action) : name(name), condition(condition), action(action) {}
+	rule(const string& name, const string& condition, const string& action) : name(name), condition(condition), action(action) {}
 	string name;
 	string condition;
 	string action;

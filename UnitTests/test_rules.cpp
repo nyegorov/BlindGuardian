@@ -7,6 +7,7 @@
 #include "../RoomController/parser.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+using namespace winrt::Windows::Data::Json;
 using namespace BlindGuardian;
 
 class DumbSensor : public sensor
@@ -29,6 +30,19 @@ public:
 	std::vector<const IAction*> actions() const { return{ &open, &close, &setpos }; }
 };
 
+wstring s2ws(const std::string& str)
+{
+	using convert_typeX = std::codecvt_utf8<wchar_t>;
+	std::wstring_convert<convert_typeX, wchar_t> converterX;
+	return converterX.from_bytes(str);
+}
+
+string ws2s(const std::wstring& wstr)
+{
+	using convert_typeX = std::codecvt_utf8<wchar_t>;
+	std::wstring_convert<convert_typeX, wchar_t> converterX;
+	return converterX.to_bytes(wstr);
+}
 
 namespace Microsoft {
 namespace VisualStudio {
@@ -133,13 +147,10 @@ namespace UnitTests
 		}
 		TEST_METHOD(Sensitivity)
 		{
-			DumbSensor ts("temp", value_tag::temperature, 24);
-			DumbSensor ls("light", value_tag::light, 2000);
-			time_sensor tm("time");
-			tm.update();
+			DumbSensor ts("temp", value_tag::temperature, 0);
 			DumbMotor mot1("mot1"), mot2("mot2");
 			RoomEngine re(
-				RoomEngine::vec_sensors{ &ts, &ls, &tm },
+				RoomEngine::vec_sensors{ &ts },
 				RoomEngine::vec_actuators{ &mot1, &mot2 }
 			);
 			RoomEngine::vec_rules rules{
@@ -171,7 +182,39 @@ namespace UnitTests
 			Assert::AreEqual(100ll, mot1.value().value);
 			Assert::AreEqual(100ll, mot2.value().value);
 		}
+		TEST_METHOD(Json)
+		{
+			auto json = JsonObject::Parse(LR"(
+			{
+				"rules": [
+					{ "name": "r1", "condition" : "temp > 30", "body" : "mot1.open() " },
+					{ "name": "r2", "condition" : "temp > 30", "body" : "mot2.set_pos(50) "}
+				]
+			})");
+			auto jrules = json.GetNamedArray(L"rules");
+			RoomEngine::vec_rules rules_v;
+			for(auto jri = jrules.First(); jri; ++jri)
+			{
+				auto jr = (*jri).GetObject();
+				rules_v.emplace_back(
+					ws2s(jr.GetNamedString(L"name")),
+					ws2s(jr.GetNamedString(L"condition")),
+					ws2s(jr.GetNamedString(L"body"))
+				);
+			}
+			DumbSensor ts("temp", value_tag::temperature, 35);
+			DumbMotor mot1("mot1"), mot2("mot2");
+			RoomEngine re(
+				RoomEngine::vec_sensors{ &ts },
+				RoomEngine::vec_actuators{ &mot1, &mot2 }
+			);
+			re.update_rules(rules_v);
+			re.run();
+			Assert::AreEqual(100ll, mot1.value().value);
+			Assert::AreEqual(50ll, mot2.value().value);
+		}
 
 
 	};
 }
+
