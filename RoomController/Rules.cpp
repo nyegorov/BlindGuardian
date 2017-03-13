@@ -1,12 +1,28 @@
 #include "pch.h"
 #include "Rules.h"
 
+using namespace Windows::Data::Json;
+
 namespace BlindGuardian {
+
+wstring s2ws(const std::string& str)
+{
+	using convert_typeX = std::codecvt_utf8<wchar_t>;
+	std::wstring_convert<convert_typeX, wchar_t> converterX;
+	return converterX.from_bytes(str);
+}
+
+string ws2s(const std::wstring& wstr)
+{
+	using convert_typeX = std::codecvt_utf8<wchar_t>;
+	std::wstring_convert<convert_typeX, wchar_t> converterX;
+	return converterX.to_bytes(wstr);
+}
 
 RoomEngine::RoomEngine(const vec_sensors &sensors, const vec_actuators &actuators) : _sensors(sensors), _actuators(actuators)
 {
 	for(auto& ps : _sensors) {
-		_parser.set(ps->name(), [ps](value_t) {return ps->value(); });
+		_parser.set(ps->name(), *ps);
 		_parser.set(ps->name() + ".min", [ps](value_t) {return ps->min(); });
 		_parser.set(ps->name() + ".max", [ps](value_t) {return ps->max(); });
 		_parser.set(ps->name() + ".reset", [ps](value_t) {return ps->reset(), ps->value(); });
@@ -22,6 +38,23 @@ RoomEngine::RoomEngine(const vec_sensors &sensors, const vec_actuators &actuator
 void RoomEngine::update_rules(const vec_rules& rules)
 {
 	_rules = rules;
+}
+
+void RoomEngine::update_rules(const string& rules)
+{
+	auto json = JsonObject::Parse(ref new Platform::String(s2ws(rules).c_str()));
+	auto jrules = json->GetNamedArray(L"rules");
+	vec_rules vr;
+	for(auto jri = jrules->First(); jri->HasCurrent; jri->MoveNext())
+	{
+		auto jr = jri->Current->GetObject();
+		vr.emplace_back(
+			ws2s(jr->GetNamedString(L"name")->Data()),
+			ws2s(jr->GetNamedString(L"condition")->Data()),
+			ws2s(jr->GetNamedString(L"body")->Data())
+		);
+	}
+	update_rules(vr);
 }
 
 value_t RoomEngine::eval(const char *expr)

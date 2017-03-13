@@ -26,6 +26,7 @@ public:
 
 	RoomEngine(const vec_sensors &sensors, const vec_actuators &actuators);
 	void update_rules(const vec_rules& rules);
+	void update_rules(const string& rules);
 	void run();
 	value_t eval(const char *expr);
 

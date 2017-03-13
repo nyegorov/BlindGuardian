@@ -5,34 +5,6 @@
 namespace BlindGuardian
 {
 
-using std::string;
-using std::wstring;
-using std::vector;
-#undef min
-#undef max
-
-struct ISensor
-{
-	virtual string name() const = 0;
-	virtual value_t value() const = 0;
-	virtual value_t min() const = 0;
-	virtual value_t max() const = 0;
-	virtual void reset() = 0;
-	virtual void update() = 0;
-};
-
-struct IAction
-{
-	virtual string name() const = 0;
-	virtual void activate(value_t value) const = 0;
-};
-
-struct IActuator
-{
-	virtual string name() const = 0;
-	virtual vector<const IAction*> actions() const = 0;
-};
-
 class action : public IAction
 {
 	string		_name;
@@ -41,6 +13,8 @@ public:
 	action(const char *name, std::function<void(value_t)> func) : _name(name), _action(func) {}
 	string name() const override { return _name; }
 	void activate(value_t value) const override { _action(value); }
+	void operator() (value_t value) const { activate(value); }
+	void operator() () const { activate({ 0 }); }
 };
 
 class actuator : public IActuator

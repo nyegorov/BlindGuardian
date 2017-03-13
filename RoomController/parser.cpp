@@ -14,13 +14,13 @@ namespace BlindGuardian	{
 
 void OpNull(value_t& op1, value_t& op2, value_t& result) {}
 void OpAdd(value_t& op1, value_t& op2, value_t& result) { result = op1 + op2; }
-void OpNeg(value_t& op1, value_t& op2, value_t& result) { result = value_t{op2.type, -op2.value}; }
+void OpNeg(value_t& op1, value_t& op2, value_t& result) { result = value_t{ 0 } - op2; }
 void OpSub(value_t& op1, value_t& op2, value_t& result) { result = op1-op2; }
 void OpMul(value_t& op1, value_t& op2, value_t& result) { result = op1 * op2; }
 void OpDiv(value_t& op1, value_t& op2, value_t& result) { result = op1 / op2; }
-void OpNot(value_t& op1, value_t& op2, value_t& result) { result = value_t{ op2.type, !op2.value }; }
-void OpOr(value_t& op1, value_t& op2, value_t& result)  { result = value_t{ value_tag::value, op1.value != 0 || op2.value != 0 }; }
-void OpAnd(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, op1.value != 0 && op2.value != 0 }; }
+void OpNot(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, !(*op2).value }; }
+void OpOr(value_t& op1, value_t& op2, value_t& result)  { result = value_t{ value_tag::value, (*op1).value != 0 || (*op2).value != 0 }; }
+void OpAnd(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, (*op1).value != 0 && (*op2).value != 0 }; }
 void OpEqu(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, compare(op1, op2) == compare_t::equal ? 1 : 0 }; }
 void OpNeq(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, compare(op1, op2) != compare_t::equal ? 1 : 0 }; }
 void OpLT(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, compare(op1, op2) == compare_t::less? 1 : 0 }; }
@@ -83,6 +83,7 @@ value_t NScript::eval(string script)
 		_parser.Init(script);
 		Parse(Script, result, false);
 		if(_parser.GetToken() != Parser::end)	throw error_t::syntax;
+		if(result.type == value_tag::callback)	result = reinterpret_cast<ISensor*>(result.value)->value();
 	} catch(error_t e) {
 		result = value_t{value_tag::error, (int)e};
 	}

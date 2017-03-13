@@ -60,9 +60,11 @@ namespace UnitTests
 		
 		TEST_METHOD(Parsing)
 		{
+			DumbSensor ts("temp", value_tag::temperature, 24);
 			NScript ns;
 			ns.set("myfunc", [](value_t p) {return p+p; });
 			ns.set("myvar", value_t{ 42 });
+			ns.set("mysens", value_t{ ts });
 			Assert::AreEqual( 4ll, ns.eval("2*2").value);
 			Assert::AreEqual( 1ll, ns.eval("2*(5-3)==4").value);
 			Assert::AreEqual( 1ll, ns.eval("(1>2 || 1>=2 || 1<=2 || 1<2) && !(3==4) && (3!=4) ? 1 : 0").value);
@@ -71,12 +73,14 @@ namespace UnitTests
 			Assert::AreEqual( 1ll, ns.eval("x=1; y=2; x=x+y; y=y-x; x=x*y; x=x/y; x=x-1; x+y").value);
 			Assert::AreEqual(48ll, ns.eval("x=3; MyFunc(x)+myVar").value);
 			Assert::AreEqual(340ll, ns.eval("x=#5:40#; x").value);
+			Assert::AreEqual( 24ll, ns.eval("mysens").value);
+			Assert::AreEqual(114ll, ns.eval("myVar+mysens+myfunc(mysens)").value);
 		}
 		TEST_METHOD(Errors)
 		{
-			NScript ns;
 			DumbSensor ts("temp",  value_tag::temperature, 24);
 			DumbSensor ls("light", value_tag::light, 2000);
+			NScript ns;
 			ns.set("myfunc", [](value_t p) {return p; });
 			ns.set("t", [&ts](value_t) {return ts.value(); });
 			ns.set("l", [&ls](value_t) {return ls.value(); });
@@ -118,15 +122,14 @@ namespace UnitTests
 			tm.update();
 			DumbMotor mot1("mot1"), mot2("mot2");
 			RoomEngine re(
-				RoomEngine::vec_sensors{ &ts, &ls, &tm },
-				RoomEngine::vec_actuators{ &mot1, &mot2 }
+				{ &ts, &ls, &tm },
+				{ &mot1, &mot2 }
 			);
-			RoomEngine::vec_rules rules{
+			re.update_rules({
 				{ "r1", "temp > 30", "mot1.open()" },
 				{ "r2", "temp > 30", "mot2.set_pos(50)" },
 				{ "r3", "time - lasttime >= 5 && time - lasttime < 6", "mot1.set_pos(42)" },
-			};
-			re.update_rules(rules);
+			});
 
 			// temperature
 			re.eval("lasttime = time");
@@ -141,7 +144,7 @@ namespace UnitTests
 			re.eval("lasttime = time - 5");
 			re.run();
 			Assert::AreEqual(42ll, mot1.value().value);
-			mot1.setpos.activate(0);
+			mot1.close();
 			re.run();
 			Assert::AreEqual(0ll, mot1.value().value);
 		}
@@ -149,15 +152,11 @@ namespace UnitTests
 		{
 			DumbSensor ts("temp", value_tag::temperature, 0);
 			DumbMotor mot1("mot1"), mot2("mot2");
-			RoomEngine re(
-				RoomEngine::vec_sensors{ &ts },
-				RoomEngine::vec_actuators{ &mot1, &mot2 }
-			);
-			RoomEngine::vec_rules rules{
+			RoomEngine re( { &ts }, { &mot1, &mot2 } );
+			re.update_rules({
 				{ "r1", "temp > 30", "mot1.open()" },
 				{ "r2", "temp > 30 & temp.min < 25", "mot2.open(); temp.reset()" },
-			};
-			re.update_rules(rules);
+			});
 
 			// temperature
 			re.run();
@@ -165,8 +164,8 @@ namespace UnitTests
 			ts.set(35); re.run();
 			Assert::AreEqual(100ll, mot1.value().value);
 			Assert::AreEqual(100ll, mot2.value().value);
-			mot1.setpos.activate(0);
-			mot2.setpos.activate(0); re.run();
+			mot1.close();
+			mot2.close(); re.run();
 			Assert::AreEqual(0ll, mot1.value().value);
 			Assert::AreEqual(0ll, mot2.value().value);
 			ts.set(27); re.run();
@@ -184,31 +183,17 @@ namespace UnitTests
 		}
 		TEST_METHOD(Json)
 		{
-			auto json = JsonObject::Parse(LR"(
+			auto rules = R"(
 			{
 				"rules": [
 					{ "name": "r1", "condition" : "temp > 30", "body" : "mot1.open() " },
 					{ "name": "r2", "condition" : "temp > 30", "body" : "mot2.set_pos(50) "}
 				]
-			})");
-			auto jrules = json.GetNamedArray(L"rules");
-			RoomEngine::vec_rules rules_v;
-			for(auto jri = jrules.First(); jri; ++jri)
-			{
-				auto jr = (*jri).GetObject();
-				rules_v.emplace_back(
-					ws2s(jr.GetNamedString(L"name")),
-					ws2s(jr.GetNamedString(L"condition")),
-					ws2s(jr.GetNamedString(L"body"))
-				);
-			}
+			})";
 			DumbSensor ts("temp", value_tag::temperature, 35);
 			DumbMotor mot1("mot1"), mot2("mot2");
-			RoomEngine re(
-				RoomEngine::vec_sensors{ &ts },
-				RoomEngine::vec_actuators{ &mot1, &mot2 }
-			);
-			re.update_rules(rules_v);
+			RoomEngine re( { &ts }, { &mot1, &mot2 } );
+			re.update_rules(rules);
 			re.run();
 			Assert::AreEqual(100ll, mot1.value().value);
 			Assert::AreEqual(50ll, mot2.value().value);
