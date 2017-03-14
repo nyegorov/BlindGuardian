@@ -22,9 +22,9 @@ class DumbMotor : public actuator
 {
 public:
 	value_t	_value = { 0 };
-	action open{ "open", [this](value_t) { _value = 100; } };
-	action close{ "close", [this](value_t) { _value = 0; } };
-	action setpos{ "set_pos", [this](value_t v) { _value = v; } };
+	action open{ "open", [this](auto) { _value = 100; } };
+	action close{ "close", [this](auto) { _value = 0; } };
+	action setpos{ "set_pos", [this](const params_t& v) { _value = v.empty() ? 0 : v.front(); } };
 	DumbMotor(const char *name) : actuator(name) { }
 	value_t value() { return _value; };
 	std::vector<const IAction*> actions() const { return{ &open, &close, &setpos }; }
@@ -62,7 +62,9 @@ namespace UnitTests
 		{
 			DumbSensor ts("temp", value_tag::temperature, 24);
 			NScript ns;
-			ns.set("myfunc", [](value_t p) {return p+p; });
+			ns.set("myfunc0", [](auto& p) {return 10; });
+			ns.set("myfunc1", [](auto& p) {return p[0] + p[0]; });
+			ns.set("myfunc2", [](auto& p) {return p[0]+p[1]; });
 			ns.set("myvar", value_t{ 42 });
 			ns.set("mysens", value_t{ ts });
 			Assert::AreEqual( 4ll, ns.eval("2*2").value);
@@ -71,19 +73,20 @@ namespace UnitTests
 			Assert::AreEqual( 0ll, ns.eval("(2<=1 || 1<1 || 1>1 || 1<1) && !(3==3) && (3!=3) ? 1 : 0").value);
 			Assert::AreEqual(42ll, ns.eval("x=42; x").value);
 			Assert::AreEqual( 1ll, ns.eval("x=1; y=2; x=x+y; y=y-x; x=x*y; x=x/y; x=x-1; x+y").value);
-			Assert::AreEqual(48ll, ns.eval("x=3; MyFunc(x)+myVar").value);
-			Assert::AreEqual(340ll, ns.eval("x=#5:40#; x").value);
-			Assert::AreEqual( 24ll, ns.eval("mysens").value);
-			Assert::AreEqual(114ll, ns.eval("myVar+mysens+myfunc(mysens)").value);
+			Assert::AreEqual(10ll, ns.eval("myfunc0()").value);
+			Assert::AreEqual(24ll, ns.eval("mysens").value);
+			Assert::AreEqual(48ll, ns.eval("x=3; MyFunc2(x, myVar)+x").value);
+			Assert::AreEqual(40ll, ns.eval("x=#5:40#; x-300").value);
+			Assert::AreEqual(114ll, ns.eval("myVar+mysens+myfunc1(mysens)").value);
 		}
 		TEST_METHOD(Errors)
 		{
 			DumbSensor ts("temp",  value_tag::temperature, 24);
 			DumbSensor ls("light", value_tag::light, 2000);
 			NScript ns;
-			ns.set("myfunc", [](value_t p) {return p; });
-			ns.set("t", [&ts](value_t) {return ts.value(); });
-			ns.set("l", [&ls](value_t) {return ls.value(); });
+			ns.set("myfunc", [](auto& p) {return p[0]; });
+			ns.set("t", [&]() {return ts.value(); });
+			ns.set("l", [&]() {return ls.value(); });
 			Assert::AreEqual(value_t{ value_tag::error, (value_type)error_t::name_not_found }, ns.eval("my_func(3)"));
 			Assert::AreEqual(value_t{ value_tag::error, (value_type)error_t::type_mismatch }, ns.eval("t + l"));
 			Assert::AreEqual(value_t{ value_tag::error, (value_type)error_t::type_mismatch }, ns.eval("t == l"));
@@ -97,10 +100,10 @@ namespace UnitTests
 			DumbSensor tm("time",  value_tag::time,  340);
 			value_t pos = 0;
 
-			ns.set("time",		[&tm](value_t) {return tm.value(); });
-			ns.set("tin",		[&ts](value_t) {return ts.value(); });
-			ns.set("light",		[&ls](value_t) {return ls.value(); });
-			ns.set("set_blind", [&pos](value_t p) {return pos = p, value_t{ 1 }; });
+			ns.set("time",	tm);
+			ns.set("tin",	ts);
+			ns.set("light",	ls);
+			ns.set("set_blind", [&pos](auto& p) {return pos = p[0], value_t{ 1 }; });
 			Assert::AreEqual( 1ll, ns.eval("#5:40# == time").value);
 			Assert::AreEqual( 1ll, ns.eval("if(tin > 20) set_blind(66)").value);
 			Assert::AreEqual(66ll, pos.value);

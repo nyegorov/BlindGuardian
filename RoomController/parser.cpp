@@ -64,16 +64,13 @@ bool Context::Get(const string& name, value_t& result) const
 NScript::OpInfo NScript::_operators[Term][10] = {
 	{{Parser::stmt,		&OpNull },	{Parser::end, NULL}},
 	{{Parser::comma,	&OpNull},	{Parser::end, NULL}},
-	{{Parser::end, NULL}},
 	{{Parser::ifop,		&OpNull },	{Parser::end, NULL}},
 	{{Parser::land,		&OpAnd },	{Parser::lor, &OpOr},		{Parser::end, NULL}},
 	{{Parser::equ,		&OpEqu },	{Parser::nequ,	&OpNeq },	{Parser::end, NULL } },
 	{{Parser::gt,		&OpGT },	{Parser::ge,	&OpGE },	{Parser::lt, &OpLT },	{Parser::le, &OpLE},	{ Parser::end, NULL } },
 	{{Parser::plus,		&OpAdd},	{Parser::minus,	&OpSub},	{Parser::end, NULL}},
 	{{Parser::multiply,	&OpMul},	{Parser::divide,&OpDiv},	{Parser::end, NULL}},
-	{{Parser::end, NULL}},
 	{{Parser::minus,	&OpNeg},	{Parser::lnot, &OpNot},		{Parser::end, NULL}},
-	{{Parser::end, NULL}},
 };
 
 value_t NScript::eval(string script)
@@ -83,20 +80,19 @@ value_t NScript::eval(string script)
 		_parser.Init(script);
 		Parse(Script, result, false);
 		if(_parser.GetToken() != Parser::end)	throw error_t::syntax;
-		if(result.type == value_tag::callback)	result = reinterpret_cast<ISensor*>(result.value)->value();
 	} catch(error_t e) {
 		result = value_t{value_tag::error, (int)e};
 	}
-	return result;
+	return *result;
 }
 
 // Parse "if <cond> <true-part> [else <part>]" statement
 void NScript::ParseIf(value_t& result, bool skip) {
 	bool cond = skip || result.value != 0;
-	Parse(Assignment, result, !cond || skip);
+	Parse(Statement, result, !cond || skip);
 	if(_parser.GetToken() == Parser::ifelse) {
 		_parser.Next();
-		Parse(Assignment, result, cond || skip);
+		Parse(Statement, result, cond || skip);
 	}
 }
 
@@ -108,18 +104,23 @@ void NScript::ParseVar(value_t& result, bool skip)
 	_parser.Next();
 	if(_parser.GetToken() == Parser::setvar) {
 		_parser.Next();
-		Parse(Assignment, result, skip);
+		Parse(Statement, result, skip);
 		if(!skip)	_context.Set(name, result);
 	}	else if(_parser.GetToken() == Parser::lpar) {
-		_parser.Next();
-		Parse(Assignment, result, skip);
+		params_t params;
+		do {
+			_parser.Next();
+			if(_parser.GetToken() == Parser::rpar)	break;
+			Parse(Statement, result, skip);
+			params.push_back(result);
+		} while(_parser.GetToken() == Parser::comma);
 		_parser.CheckPairedToken(Parser::lpar);
 		if(!skip) {
 			if(pcb == _callbacks.end())	throw error_t::name_not_found;
-			result = pcb->second(result);
+			result = pcb->second(params);
 		}
 	}	else {
-		if(!skip)	result = pcb != _callbacks.end() ? pcb->second({ value_tag::error, 0 }) : _context.Get(name);
+		if(!skip)	result = pcb != _callbacks.end() ? pcb->second(params_t{}) : _context.Get(name);
 	}
 }
 
@@ -132,7 +133,7 @@ void NScript::Parse(Precedence level, value_t& result, bool skip)
 		switch(token)	{
 			case Parser::value:		if(!skip)	result = _parser.GetValue();_parser.Next();break;
 			case Parser::name:		ParseVar(result, skip);	break;
-			case Parser::iffunc:	_parser.Next(); Parse(Assignment, result, skip); ParseIf(result, skip); break;
+			case Parser::iffunc:	_parser.Next(); Parse(Statement, result, skip); ParseIf(result, skip); break;
 			case Parser::lpar:
 				_parser.Next();
 				result = value_t{};
@@ -173,7 +174,7 @@ again:
 				result = value_t{};
 
 				// parse right-hand operand
-				if(level == Assignment || is_unary)	Parse(level, right, skip);							// right-associative operators
+				if(is_unary)	Parse(level, right, skip);											// right-associative operators
 				else if(token != Parser::unaryplus && token != Parser::unaryminus && !(level == Script && _parser.GetToken() == Parser::rcurly))
 					Parse((Precedence)((int)level+1), level == Script ? result : right, skip);		// left-associative operators
 

@@ -8,13 +8,13 @@ namespace BlindGuardian
 class action : public IAction
 {
 	string		_name;
-	std::function<void(value_t)> _action;
+	std::function<void(const params_t&)> _action;
 public:
-	action(const char *name, std::function<void(value_t)> func) : _name(name), _action(func) {}
+	action(const char *name, std::function<void(params_t)> func) : _name(name), _action(func) {}
 	string name() const override { return _name; }
-	void activate(value_t value) const override { _action(value); }
-	void operator() (value_t value) const { activate(value); }
-	void operator() () const { activate({ 0 }); }
+	void activate(const params_t& params) const override { _action(params); }
+	void operator() (const params_t& params) const { activate(params); }
+	void operator() () const { activate(params_t{}); }
 };
 
 class actuator : public IActuator

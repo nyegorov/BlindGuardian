@@ -10,6 +10,7 @@ using std::wstring;
 using std::vector;
 
 struct value_t;
+using params_t = vector<value_t>;
 
 struct ISensor
 {
@@ -24,7 +25,7 @@ struct ISensor
 struct IAction
 {
 	virtual string name() const = 0;
-	virtual void activate(value_t value) const = 0;
+	virtual void activate(const params_t& params) const = 0;
 };
 
 struct IActuator

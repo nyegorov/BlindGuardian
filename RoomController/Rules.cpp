@@ -23,14 +23,14 @@ RoomEngine::RoomEngine(const vec_sensors &sensors, const vec_actuators &actuator
 {
 	for(auto& ps : _sensors) {
 		_parser.set(ps->name(), *ps);
-		_parser.set(ps->name() + ".min", [ps](value_t) {return ps->min(); });
-		_parser.set(ps->name() + ".max", [ps](value_t) {return ps->max(); });
-		_parser.set(ps->name() + ".reset", [ps](value_t) {return ps->reset(), ps->value(); });
+		_parser.set(ps->name() + ".min", [ps](auto&) {return ps->min(); });
+		_parser.set(ps->name() + ".max", [ps](auto&) {return ps->max(); });
+		_parser.set(ps->name() + ".reset", [ps](auto&) {return ps->reset(), ps->value(); });
 	}
 	for(auto& pa : _actuators) {
 		string obj = pa->name();
 		for(auto& paction : pa->actions()) {
-			_parser.set(obj + "." + paction->name(), [paction](value_t v) {return paction->activate(v), value_t{ 1 }; });
+			_parser.set(obj + "." + paction->name(), [paction](auto& p) {return paction->activate(p), value_t{ 1 }; });
 		}
 	}
 }
