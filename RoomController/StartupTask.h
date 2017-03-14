@@ -22,8 +22,8 @@ namespace BlindGuardian
 		const int LED_PIN = 5;
 		Windows::Devices::Gpio::GpioPin ^pin;
 
-		TemperatureSensor _tempIn{ "tin" };
+/*		TemperatureSensor _tempIn{ "tin" };
 		TemperatureSensor _tempOut{ "tout" };
-		LightSensor _lightOut{ "light" };
+		LightSensor _lightOut{ "light" };*/
     };
 }

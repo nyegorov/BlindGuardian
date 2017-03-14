@@ -13,20 +13,20 @@ namespace BlindGuardian	{
 // Operators
 
 void OpNull(value_t& op1, value_t& op2, value_t& result) {}
-void OpAdd(value_t& op1, value_t& op2, value_t& result) { result = op1 + op2; }
-void OpNeg(value_t& op1, value_t& op2, value_t& result) { result = value_t{ 0 } - op2; }
-void OpSub(value_t& op1, value_t& op2, value_t& result) { result = op1-op2; }
-void OpMul(value_t& op1, value_t& op2, value_t& result) { result = op1 * op2; }
-void OpDiv(value_t& op1, value_t& op2, value_t& result) { result = op1 / op2; }
-void OpNot(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, !(*op2).value }; }
-void OpOr(value_t& op1, value_t& op2, value_t& result)  { result = value_t{ value_tag::value, (*op1).value != 0 || (*op2).value != 0 }; }
-void OpAnd(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, (*op1).value != 0 && (*op2).value != 0 }; }
-void OpEqu(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, compare(op1, op2) == compare_t::equal ? 1 : 0 }; }
-void OpNeq(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, compare(op1, op2) != compare_t::equal ? 1 : 0 }; }
-void OpLT(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, compare(op1, op2) == compare_t::less? 1 : 0 }; }
-void OpLE(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, compare(op1, op2) != compare_t::greater ? 1 : 0 }; }
-void OpGT(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, compare(op1, op2) == compare_t::greater ? 1 : 0 }; }
-void OpGE(value_t& op1, value_t& op2, value_t& result) { result = value_t{ value_tag::value, compare(op1, op2) != compare_t::less ? 1 : 0 }; }
+void OpAdd(value_t& op1, value_t& op2, value_t& result) { result = std::get<value_type>(*op1) + std::get<value_type>(*op2); }
+void OpNeg(value_t& op1, value_t& op2, value_t& result) { result = -std::get<value_type>(*op2); }
+void OpSub(value_t& op1, value_t& op2, value_t& result) { result = std::get<value_type>(*op1) - std::get<value_type>(*op2); }
+void OpMul(value_t& op1, value_t& op2, value_t& result) { result = std::get<value_type>(*op1) * std::get<value_type>(*op2); }
+void OpDiv(value_t& op1, value_t& op2, value_t& result) { result = std::get<value_type>(*op1) / std::get<value_type>(*op2); }
+void OpNot(value_t& op1, value_t& op2, value_t& result) { result = !std::get<value_type>(*op2); }
+void OpOr(value_t& op1, value_t& op2, value_t& result)  { result = std::get<value_type>(*op1) != 0 || std::get<value_type>(*op2) != 0; }
+void OpAnd(value_t& op1, value_t& op2, value_t& result) { result = std::get<value_type>(*op1) != 0 && std::get<value_type>(*op2) != 0; }
+void OpEqu(value_t& op1, value_t& op2, value_t& result) { result = *op1 == *op2; }
+void OpNeq(value_t& op1, value_t& op2, value_t& result) { result = *op1 != *op2; }
+void OpLT(value_t& op1, value_t& op2, value_t& result)  { result = *op1  < *op2; }
+void OpLE(value_t& op1, value_t& op2, value_t& result)  { result = *op1 <= *op2; }
+void OpGT(value_t& op1, value_t& op2, value_t& result)  { result = *op1  > *op2; }
+void OpGE(value_t& op1, value_t& op2, value_t& result)  { result = *op1 >= *op2; }
 
 Context::vars_t	Context::_globals;
 Context::Context(const Context *base) : _locals(1)
@@ -81,14 +81,16 @@ value_t NScript::eval(string script)
 		Parse(Script, result, false);
 		if(_parser.GetToken() != Parser::end)	throw error_t::syntax;
 	} catch(error_t e) {
-		result = value_t{value_tag::error, (int)e};
+		result = e;
+	} catch(...) {
+		result = error_t::runtime;
 	}
 	return *result;
 }
 
 // Parse "if <cond> <true-part> [else <part>]" statement
 void NScript::ParseIf(value_t& result, bool skip) {
-	bool cond = skip || result.value != 0;
+	bool cond = skip || result != value_t{0};
 	Parse(Statement, result, !cond || skip);
 	if(_parser.GetToken() == Parser::ifelse) {
 		_parser.Next();
@@ -270,7 +272,7 @@ void Parser::ReadNumber(char c)
 		}	else	break;
 	};
 	Back();
-	_value = value_t{ value_tag::value, m };
+	_value = m;
 	_token = Parser::value;
 }
 
@@ -284,7 +286,7 @@ void Parser::ReadTime(char c)
 	auto mins = _value;
 	if(Read() != '#')	throw error_t::syntax;
 	//Back();
-	_value = value_t{ hours.value * 60 + mins.value };
+	_value = hours * 60 + mins;
 	_token = Parser::value;
 }
 

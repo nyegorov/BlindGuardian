@@ -5,8 +5,6 @@
 
 namespace BlindGuardian {
 
-//using Windows::Data::Json;
-
 enum class rule_status { error, active, inactive };
 
 struct rule {
@@ -21,12 +19,13 @@ class RoomEngine
 {
 public:
 	using vec_rules = std::vector<rule>;
-	using vec_sensors = std::vector<ISensor*>;
-	using vec_actuators = std::vector<IActuator*>;
+	using vec_sensors = std::vector<i_sensor*>;
+	using vec_actuators = std::vector<i_actuator*>;
 
 	RoomEngine(const vec_sensors &sensors, const vec_actuators &actuators);
 	void update_rules(const vec_rules& rules);
 	void update_rules(const string& rules);
+	string get_rules();
 	void run();
 	value_t eval(const char *expr);
 

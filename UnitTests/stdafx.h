@@ -23,6 +23,7 @@
 #include <ctime>
 #include <thread>
 #include <codecvt>
+#include <variant>
 #include <cvt/wstring>
 
 using namespace std::literals::string_literals;

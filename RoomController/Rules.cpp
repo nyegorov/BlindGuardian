@@ -22,7 +22,7 @@ string ws2s(const std::wstring& wstr)
 RoomEngine::RoomEngine(const vec_sensors &sensors, const vec_actuators &actuators) : _sensors(sensors), _actuators(actuators)
 {
 	for(auto& ps : _sensors) {
-		_parser.set(ps->name(), *ps);
+		_parser.set(ps->name(), ps);
 		_parser.set(ps->name() + ".min", [ps](auto&) {return ps->min(); });
 		_parser.set(ps->name() + ".max", [ps](auto&) {return ps->max(); });
 		_parser.set(ps->name() + ".reset", [ps](auto&) {return ps->reset(), ps->value(); });
@@ -57,6 +57,22 @@ void RoomEngine::update_rules(const string& rules)
 	update_rules(vr);
 }
 
+string RoomEngine::get_rules()
+{
+	auto json = ref new JsonObject();
+	auto jrules = ref new JsonArray();
+	for(auto& r : _rules) {
+		auto jr = ref new JsonObject();
+		jr->SetNamedValue(L"name", JsonValue::CreateStringValue(ref new Platform::String(s2ws(r.name).c_str())));
+		jr->SetNamedValue(L"condition", JsonValue::CreateStringValue(ref new Platform::String(s2ws(r.condition).c_str())));
+		jr->SetNamedValue(L"body", JsonValue::CreateStringValue(ref new Platform::String(s2ws(r.action).c_str())));
+		jr->SetNamedValue(L"status", JsonValue::CreateNumberValue((double)r.status));
+		jrules->Append(jr);
+	}
+	json->SetNamedValue(L"rules", jrules);
+	return ws2s(json->Stringify()->Data());
+}
+
 value_t RoomEngine::eval(const char *expr)
 {
 	return _parser.eval(expr);
@@ -69,12 +85,12 @@ void RoomEngine::run()
 	for(auto& rule : _rules)
 	{
 		auto result = _parser.eval(rule.condition);
-		auto status = result.type == value_tag::error ? rule_status::error :
-			result.value == 0 ? rule_status::inactive : rule_status::active;
+		auto status = is_error(result) ? rule_status::error :
+			result == value_t{ 0 } ? rule_status::inactive : rule_status::active;
 
 		if(status != rule.status && status == rule_status::active) {
 			result = _parser.eval(rule.action);
-			if(result.type == value_tag::error)	status = rule_status::error;
+			if(is_error(result))	status = rule_status::error;
 		}
 		rule.status = status;
 	}

@@ -18,11 +18,11 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="StartupTask.h" />
-    <ClInclude Include="Sensor.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="Rules.h" />
-    <ClInclude Include="Value.h" />
     <ClInclude Include="ComLite.h" />
+    <ClInclude Include="value.h" />
+    <ClInclude Include="sensor.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />

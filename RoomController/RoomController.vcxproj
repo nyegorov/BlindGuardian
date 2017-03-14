@@ -239,8 +239,8 @@
     <ClInclude Include="parser.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Rules.h" />
-    <ClInclude Include="Sensor.h" />
-    <ClInclude Include="Value.h" />
+    <ClInclude Include="sensor.h" />
+    <ClInclude Include="value.h" />
     <ClInclude Include="StartupTask.h" />
   </ItemGroup>
   <ItemGroup>

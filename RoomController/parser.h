@@ -88,10 +88,11 @@ public:
 	NScript(const Context *pcontext = NULL) : _context(pcontext)	{}
 	~NScript(void)						{};
 	value_t eval(string script);
-	using callback_t = std::function<value_t(const params_t&)>;
+	using callfun_t = std::function<value_t(const params_t&)>;
+	using getvar_t  = std::function<value_t(void)>;
 	void set(string name, value_t value)	{ _context.Set(name, value); }
-	void set(string name, callback_t func)	{ _callbacks.emplace(name, func); }
-	void set(string name, std::function<value_t(void)> func) {_callbacks.emplace(name, [func](const params_t&) {return func(); }); }
+	void set(string name, callfun_t func)	{ _callbacks.emplace(name, func); }
+	void set(string name, getvar_t func)	{ _callbacks.emplace(name, [func](const params_t&) {return func(); }); }
 
 protected:
 	enum Precedence	{Script, Statement, Conditional, Logic, Equality, Relation, Addition,Multiplication,Unary,Primary,Term};
@@ -106,7 +107,7 @@ protected:
 	struct OpInfo { Parser::Token token; OpFunc* op; };
 	static OpInfo _operators[Term][10];
 
-	std::map<string, callback_t, lessi>	_callbacks;
+	std::map<string, callfun_t, lessi>	_callbacks;
 };
 
 }
