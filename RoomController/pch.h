@@ -37,6 +37,7 @@
 #include <ctime>
 #include <thread>
 #include <codecvt>
+#include <variant>
 #include <cvt\utf8>
 
 using namespace std::literals::string_literals;

@@ -37,7 +37,7 @@ struct IActuator
 enum class value_tag { value, temperature, light, time, callback, error };
 enum class error_t { cast, invalid_args, not_implemented, syntax, name_not_found, type_mismatch, empty };
 enum class compare_t { less = -1, equal = 0, greater = 1 };
-using value_type = int64_t;
+using value_type = int32_t;
 
 struct value_t
 {

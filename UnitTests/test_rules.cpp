@@ -48,7 +48,6 @@ namespace Microsoft {
 namespace VisualStudio {
 namespace CppUnitTestFramework {
 template<> inline std::wstring ToString<value_t>(const value_t& v) { return std::to_wstring(v.value); }
-template<> inline std::wstring ToString<int64_t>(const int64_t& v) { return std::to_wstring(v); }
 }}}
 
 
@@ -67,17 +66,17 @@ namespace UnitTests
 			ns.set("myfunc2", [](auto& p) {return p[0]+p[1]; });
 			ns.set("myvar", value_t{ 42 });
 			ns.set("mysens", value_t{ ts });
-			Assert::AreEqual( 4ll, ns.eval("2*2").value);
-			Assert::AreEqual( 1ll, ns.eval("2*(5-3)==4").value);
-			Assert::AreEqual( 1ll, ns.eval("(1>2 || 1>=2 || 1<=2 || 1<2) && !(3==4) && (3!=4) ? 1 : 0").value);
-			Assert::AreEqual( 0ll, ns.eval("(2<=1 || 1<1 || 1>1 || 1<1) && !(3==3) && (3!=3) ? 1 : 0").value);
-			Assert::AreEqual(42ll, ns.eval("x=42; x").value);
-			Assert::AreEqual( 1ll, ns.eval("x=1; y=2; x=x+y; y=y-x; x=x*y; x=x/y; x=x-1; x+y").value);
-			Assert::AreEqual(10ll, ns.eval("myfunc0()").value);
-			Assert::AreEqual(24ll, ns.eval("mysens").value);
-			Assert::AreEqual(48ll, ns.eval("x=3; MyFunc2(x, myVar)+x").value);
-			Assert::AreEqual(40ll, ns.eval("x=#5:40#; x-300").value);
-			Assert::AreEqual(114ll, ns.eval("myVar+mysens+myfunc1(mysens)").value);
+			Assert::AreEqual( 4, ns.eval("2*2").value);
+			Assert::AreEqual( 1, ns.eval("2*(5-3)==4").value);
+			Assert::AreEqual( 1, ns.eval("(1>2 || 1>=2 || 1<=2 || 1<2) && !(3==4) && (3!=4) ? 1 : 0").value);
+			Assert::AreEqual( 0, ns.eval("(2<=1 || 1<1 || 1>1 || 1<1) && !(3==3) && (3!=3) ? 1 : 0").value);
+			Assert::AreEqual(42, ns.eval("x=42; x").value);
+			Assert::AreEqual( 1, ns.eval("x=1; y=2; x=x+y; y=y-x; x=x*y; x=x/y; x=x-1; x+y").value);
+			Assert::AreEqual(10, ns.eval("myfunc0()").value);
+			Assert::AreEqual(24, ns.eval("mysens").value);
+			Assert::AreEqual(48, ns.eval("x=3; MyFunc2(x, myVar)+x").value);
+			Assert::AreEqual(40, ns.eval("x=#5:40#; x-300").value);
+			Assert::AreEqual(114, ns.eval("myVar+mysens+myfunc1(mysens)").value);
 		}
 		TEST_METHOD(Errors)
 		{
@@ -104,17 +103,17 @@ namespace UnitTests
 			ns.set("tin",	ts);
 			ns.set("light",	ls);
 			ns.set("set_blind", [&pos](auto& p) {return pos = p[0], value_t{ 1 }; });
-			Assert::AreEqual( 1ll, ns.eval("#5:40# == time").value);
-			Assert::AreEqual( 1ll, ns.eval("if(tin > 20) set_blind(66)").value);
-			Assert::AreEqual(66ll, pos.value);
-			Assert::AreEqual( 1ll, ns.eval("if(tin > 20 && light > 1000) set_blind(99)").value);
-			Assert::AreEqual(99ll, pos.value);
+			Assert::AreEqual( 1, ns.eval("#5:40# == time").value);
+			Assert::AreEqual( 1, ns.eval("if(tin > 20) set_blind(66)").value);
+			Assert::AreEqual(66, pos.value);
+			Assert::AreEqual( 1, ns.eval("if(tin > 20 && light > 1000) set_blind(99)").value);
+			Assert::AreEqual(99, pos.value);
 			ls.set(500);
-			Assert::AreEqual( 0ll, ns.eval("if(tin > 20 && light > 1000) set_blind(24)").value);
-			Assert::AreEqual(99ll, pos.value);
+			Assert::AreEqual( 0, ns.eval("if(tin > 20 && light > 1000) set_blind(24)").value);
+			Assert::AreEqual(99, pos.value);
 			ls.set(1500);
-			Assert::AreEqual( 1ll, ns.eval("if(tin > 20 && light > 1000) set_blind(24)").value);
-			Assert::AreEqual(24ll, pos.value);
+			Assert::AreEqual( 1, ns.eval("if(tin > 20 && light > 1000) set_blind(24)").value);
+			Assert::AreEqual(24, pos.value);
 		}
 
 		TEST_METHOD(Sensors)
@@ -137,19 +136,19 @@ namespace UnitTests
 			// temperature
 			re.eval("lasttime = time");
 			re.run();
-			Assert::AreEqual(0ll, mot1.value().value);
+			Assert::AreEqual(0, mot1.value().value);
 			ts.set(35);
 			re.run();
-			Assert::AreEqual(100ll, mot1.value().value);
-			Assert::AreEqual(50ll, mot2.value().value);
+			Assert::AreEqual(100, mot1.value().value);
+			Assert::AreEqual(50, mot2.value().value);
 
 			// time sensor
 			re.eval("lasttime = time - 5");
 			re.run();
-			Assert::AreEqual(42ll, mot1.value().value);
+			Assert::AreEqual(42, mot1.value().value);
 			mot1.close();
 			re.run();
-			Assert::AreEqual(0ll, mot1.value().value);
+			Assert::AreEqual(0, mot1.value().value);
 		}
 		TEST_METHOD(Sensitivity)
 		{
@@ -163,26 +162,26 @@ namespace UnitTests
 
 			// temperature
 			re.run();
-			Assert::AreEqual(0ll, mot1.value().value);
+			Assert::AreEqual(0, mot1.value().value);
 			ts.set(35); re.run();
-			Assert::AreEqual(100ll, mot1.value().value);
-			Assert::AreEqual(100ll, mot2.value().value);
+			Assert::AreEqual(100, mot1.value().value);
+			Assert::AreEqual(100, mot2.value().value);
 			mot1.close();
 			mot2.close(); re.run();
-			Assert::AreEqual(0ll, mot1.value().value);
-			Assert::AreEqual(0ll, mot2.value().value);
+			Assert::AreEqual(0, mot1.value().value);
+			Assert::AreEqual(0, mot2.value().value);
 			ts.set(27); re.run();
-			Assert::AreEqual(0ll, mot1.value().value);
-			Assert::AreEqual(0ll, mot2.value().value);
+			Assert::AreEqual(0, mot1.value().value);
+			Assert::AreEqual(0, mot2.value().value);
 			ts.set(35); re.run();
-			Assert::AreEqual(100ll, mot1.value().value);
-			Assert::AreEqual(0ll, mot2.value().value);
+			Assert::AreEqual(100, mot1.value().value);
+			Assert::AreEqual(0, mot2.value().value);
 			ts.set(20); re.run();
-			Assert::AreEqual(100ll, mot1.value().value);
-			Assert::AreEqual(0ll, mot2.value().value);
+			Assert::AreEqual(100, mot1.value().value);
+			Assert::AreEqual(0, mot2.value().value);
 			ts.set(35); re.run();
-			Assert::AreEqual(100ll, mot1.value().value);
-			Assert::AreEqual(100ll, mot2.value().value);
+			Assert::AreEqual(100, mot1.value().value);
+			Assert::AreEqual(100, mot2.value().value);
 		}
 		TEST_METHOD(Json)
 		{
@@ -198,8 +197,8 @@ namespace UnitTests
 			RoomEngine re( { &ts }, { &mot1, &mot2 } );
 			re.update_rules(rules);
 			re.run();
-			Assert::AreEqual(100ll, mot1.value().value);
-			Assert::AreEqual(50ll, mot2.value().value);
+			Assert::AreEqual(100, mot1.value().value);
+			Assert::AreEqual(50, mot2.value().value);
 		}
 
 
