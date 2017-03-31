@@ -1,11 +1,10 @@
 #pragma once
 
-namespace BlindGuardian
+namespace roomctrl
 {
 
 #undef min
 #undef max
-using std::string;
 using std::wstring;
 using std::vector;
 
@@ -20,7 +19,7 @@ inline bool is_error(value_t& v) { return std::get_if<error_t>(&v); }
 
 struct i_sensor
 {
-	virtual string name() const = 0;
+	virtual wstring name() const = 0;
 	virtual value_t value() const = 0;
 	virtual value_t min() const = 0;
 	virtual value_t max() const = 0;
@@ -30,13 +29,13 @@ struct i_sensor
 
 struct i_action
 {
-	virtual string name() const = 0;
+	virtual wstring name() const = 0;
 	virtual void activate(const params_t& params) const = 0;
 };
 
 struct i_actuator
 {
-	virtual string name() const = 0;
+	virtual wstring name() const = 0;
 	virtual vector<const i_action*> actions() const = 0;
 };
 

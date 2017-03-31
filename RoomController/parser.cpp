@@ -8,7 +8,7 @@
 
 #pragma warning(disable:4503)
 
-namespace BlindGuardian	{
+namespace roomctrl	{
 
 // Operators
 
@@ -39,7 +39,7 @@ Context::Context(const Context *base) : _locals(1)
 	}
 }
 
-value_t& Context::Get(const string& name, bool local)
+value_t& Context::Get(const wstring& name, bool local)
 {
 	if(!local)	{
 		for(int i = (int)_locals.size() - 1; i >= -1; i--)	{
@@ -51,7 +51,7 @@ value_t& Context::Get(const string& name, bool local)
 	return _locals.back()[name] = value_t{};
 }
 
-bool Context::Get(const string& name, value_t& result) const
+bool Context::Get(const wstring& name, value_t& result) const
 {
 	for(std::vector<vars_t>::const_reverse_iterator ri = _locals.rbegin(); ri != _locals.rend(); ri++)	{
 		vars_t::const_iterator p = ri->find(name);
@@ -73,7 +73,7 @@ NScript::OpInfo NScript::_operators[Term][10] = {
 	{{Parser::minus,	&OpNeg},	{Parser::lnot, &OpNot},		{Parser::end, NULL}},
 };
 
-value_t NScript::eval(string script)
+value_t NScript::eval(wstring script)
 {
 	value_t result;
 	try	{
@@ -101,7 +101,7 @@ void NScript::ParseIf(value_t& result, bool skip) {
 // Parse "var[:=]" statement
 void NScript::ParseVar(value_t& result, bool skip)
 {
-	string name = _parser.GetName();
+	wstring name = _parser.GetName();
 	auto pcb = _callbacks.find(name);
 	_parser.Next();
 	if(_parser.GetToken() == Parser::setvar) {
@@ -201,8 +201,8 @@ char Parser::_decpt;
 Parser::Parser() {
 	_decpt = std::use_facet<std::numpunct<char> >(std::locale()).decimal_point();
 	if(_keywords.empty()) {
-		_keywords["if"] = Parser::iffunc;
-		_keywords["else"] = Parser::ifelse;
+		_keywords[L"if"] = Parser::iffunc;
+		_keywords[L"else"] = Parser::ifelse;
 		_decpt = std::use_facet<std::numpunct<char> >(std::locale()).decimal_point();
 		srand((unsigned)time(NULL));
 	}
