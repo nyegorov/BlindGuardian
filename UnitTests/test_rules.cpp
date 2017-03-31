@@ -22,9 +22,9 @@ class DumbMotor : public actuator
 {
 public:
 	value_t	_value = { 0 };
-	action open{ "open", [this](auto) { _value = 100; } };
-	action close{ "close", [this](auto) { _value = 0; } };
-	action setpos{ "set_pos", [this](const params_t& v) { _value = v.empty() ? 0 : v.front(); } };
+	action open{ "open", [this](auto&) { _value = 100; } };
+	action close{ "close", [this](auto&) { _value = 0; } };
+	action setpos{ "set_pos", [this](auto& v) { _value = v.empty() ? 0 : v.front(); } };
 	DumbMotor(const char *name) : actuator(name) { }
 	value_t value() { return _value; };
 	std::vector<const i_action*> actions() const { return{ &open, &close, &setpos }; }

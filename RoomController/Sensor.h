@@ -10,7 +10,7 @@ class action : public i_action
 	string		_name;
 	std::function<void(const params_t&)> _action;
 public:
-	action(const char *name, std::function<void(params_t)> func) : _name(name), _action(func) {}
+	action(const char *name, std::function<void(const params_t&)> func) : _name(name), _action(func) {}
 	string name() const override { return _name; }
 	void activate(const params_t& params) const override { _action(params); }
 	void operator() (const params_t& params) const { activate(params); }
