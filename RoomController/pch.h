@@ -37,3 +37,6 @@
 
 using namespace std::literals::string_literals;
 using namespace std::literals::chrono_literals;
+
+#undef min
+#undef max

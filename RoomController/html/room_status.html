@@ -1,0 +1,132 @@
+﻿<HTML>
+<head><meta charset="utf-8">
+    <title>Show values from various room sensors</title>
+    <style type="text/css">
+        h1 {
+            font-family: segoe-ui_light, 'Segoe UI Light', 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
+            font-weight: normal;
+            color: #0066cc;
+        }
+        body {
+            font-family: segoe-ui_normal, 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
+        }
+        .sensors {}
+        .sensor-row {
+            width: 197px;
+        }
+        .actions {
+            width: 100%;
+            text-align: center;
+        }
+        .rules {
+            width: 100%;
+        }
+        .rules-header {
+            background-color: steelblue; 
+            color: white; 
+            font-weight: bold;
+        }
+        .rules-even {
+            background-color: powderblue
+        }
+        .rules-odd {
+            background-color: white
+        }
+        .error { color: red; }
+        .active{ color: green; }
+    </style>
+</head>
+<body>
+    <script>
+        function edit_rule(id) {
+            window.location.href = 'edit?id=' + id;
+        }
+        function load_status() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'room.json', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState != 4) return;
+                if (xhr.status == 200) {
+                    var room = JSON.parse(xhr.responseText);
+                    update_status(room);
+                }
+            }
+            xhr.send();
+
+            var xhr2 = new XMLHttpRequest();
+            xhr2.open('GET', 'rules.json', true);
+            xhr2.onreadystatechange = function () {
+                if (xhr2.readyState != 4) return;
+                if (xhr2.status == 200) {
+                    var rules = JSON.parse(xhr2.responseText);
+                    update_rules(rules);
+                }
+            }
+            xhr2.send();
+        };
+
+        function update_rules(room) {
+            var html = '';
+            html += '<tr class="rules-header">';
+            html += '<td>Rule</td>';
+            html += '<td>Status</td>';
+            html += '</tr>';
+
+            for (var i = 0; i < room.rules.length; i++) {
+                id = room.rules[i].id;
+                html += '<tr class="' + (i % 2 ? 'rules-even' : 'rules-odd') + '" onclick="edit_rule(' + id + ')">';
+                html += '<td><a href="edit?id=' + id + '">' + room.rules[i].name + '</a></td>';
+                status = room.rules[i].status;
+                html += '<td>' + (status == 0 ? '<p class="error">Failed</p>' : (status == 1 ? '<p class="active">Active</p>' : 'Inactive')) + '</td>';
+                html += '</tr>';
+            }
+            rules.innerHTML = html;
+        }
+
+        function update_status(room) {
+            temp_in.innerHTML = room.sensors.temp_in;
+            temp_out.innerHTML = room.sensors.temp_out;
+            light.innerHTML = room.sensors.light;
+            motion.innerHTML = room.sensors.motion;
+            pos.innerHTML = room.position == 0 ? 'closed' : (room.position == 100 ? 'open' : room.position);
+        }
+
+        load_status();
+        //setInterval(load_status, 5000);
+    </script>
+    <h1>Room status</h1>
+    <table class="sensors">
+        <tr>
+            <td class="sensor-row">Inner temperature</td>
+            <td><span id="temp_in">--</span>&deg;C</td>
+        </tr>
+        <tr>
+            <td class="sensor-row">Outer temperature</td>
+            <td><span id="temp_out">--</span>&deg;C</td>
+        </tr>
+        <tr>
+            <td class="sensor-row">Light</td>
+            <td><span id="light">---</span> lux</td>
+        </tr>
+        <tr>
+            <td class="sensor-row">Motion detector</td>
+            <td><span id="motion">--</span> minutes of inactivity</td>
+        </tr>
+        <tr>
+            <td class="sensor-row">Position</td>
+            <td><span id="pos"></span></td>
+        </tr>
+    </table>
+    <hr />
+    <table id="rules" class="rules">
+    </table>
+    <button id="add_rule" onclick="edit_rule(0)">Add rule...</Button>
+    <hr />
+    <table class="actions">
+        <tr>           
+            <td><form action="status" method="post"><button id="open_blind" name="set_pos" value="100">Open blinds</button></form></td>
+            <td><form action="status" method="post"><button id="close_blinds" name="set_pos" value="0">Close blinds</button></form></td>
+        </tr>
+    </table>
+</body>
+</HTML>

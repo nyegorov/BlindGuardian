@@ -1,0 +1,9 @@
+{
+  "sensors": {
+    "temp_in": "20",
+    "temp_out": "-5",
+    "light": "73900",
+    "motion": "25"
+  },
+  "position": "25"
+}

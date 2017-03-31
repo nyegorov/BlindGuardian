@@ -8,6 +8,12 @@
       <UniqueIdentifier>4947ac97-c447-421a-b681-e5ba8d8a5ea5</UniqueIdentifier>
       <Extensions>bmp;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
     </Filter>
+    <Filter Include="Html">
+      <UniqueIdentifier>{6676814f-8e95-4cd0-97ca-825e13d676be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Html\img">
+      <UniqueIdentifier>{72040bf4-fd5e-478c-a15a-094c5732d8c8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -15,6 +21,8 @@
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="Rules.cpp" />
     <ClCompile Include="ActivationFactory.cpp" />
+    <ClCompile Include="http_server.cpp" />
+    <ClCompile Include="rules_db.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -24,6 +32,8 @@
     <ClInclude Include="value.h" />
     <ClInclude Include="sensor.h" />
     <ClInclude Include="ActivationFactory.h" />
+    <ClInclude Include="http_server.h" />
+    <ClInclude Include="rules_db.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -31,6 +41,13 @@
   <ItemGroup>
     <None Include="RoomController_TemporaryKey.pfx" />
     <None Include="packages.config" />
+    <None Include="html\edit_rule.html">
+      <Filter>Html</Filter>
+    </None>
+    <None Include="html\room_status.html">
+      <Filter>Html</Filter>
+    </None>
+    <None Include="status.json" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">
@@ -53,6 +70,12 @@
     </Image>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
       <Filter>Assets</Filter>
+    </Image>
+    <Image Include="html\img\background.jpg">
+      <Filter>Html\img</Filter>
+    </Image>
+    <Image Include="html\img\favicon.ico">
+      <Filter>Html\img</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>

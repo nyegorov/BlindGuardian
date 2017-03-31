@@ -136,7 +136,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalOptions>/std:c++latest</AdditionalOptions>
+      <AdditionalOptions>/std:c++latest /await</AdditionalOptions>
       <DisableSpecificWarnings>28204</DisableSpecificWarnings>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -153,7 +153,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalOptions>/std:c++latest</AdditionalOptions>
+      <AdditionalOptions>/std:c++latest /await</AdditionalOptions>
       <DisableSpecificWarnings>28204</DisableSpecificWarnings>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -172,7 +172,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalOptions>/std:c++latest</AdditionalOptions>
+      <AdditionalOptions>/std:c++latest /await</AdditionalOptions>
       <DisableSpecificWarnings>28204</DisableSpecificWarnings>
       <CompileAsWinRT>false</CompileAsWinRT>
     </ClCompile>
@@ -189,7 +189,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalOptions>/std:c++latest</AdditionalOptions>
+      <AdditionalOptions>/std:c++latest /await</AdditionalOptions>
       <DisableSpecificWarnings>28204</DisableSpecificWarnings>
       <CompileAsWinRT>false</CompileAsWinRT>
     </ClCompile>
@@ -206,7 +206,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalOptions>/std:c++latest</AdditionalOptions>
+      <AdditionalOptions>/std:c++latest /await</AdditionalOptions>
       <DisableSpecificWarnings>28204</DisableSpecificWarnings>
       <CompileAsWinRT>false</CompileAsWinRT>
     </ClCompile>
@@ -223,7 +223,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalOptions>/std:c++latest</AdditionalOptions>
+      <AdditionalOptions>/std:c++latest /await</AdditionalOptions>
       <DisableSpecificWarnings>28204</DisableSpecificWarnings>
       <CompileAsWinRT>false</CompileAsWinRT>
     </ClCompile>
@@ -237,8 +237,17 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+    <None Include="html\edit_rule.html">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="html\room_status.html">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="packages.config" />
     <None Include="RoomController_TemporaryKey.pfx" />
+    <None Include="status.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png" />
@@ -248,18 +257,23 @@
     <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Image Include="Assets\StoreLogo.png" />
     <Image Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Image Include="html\img\background.jpg" />
+    <Image Include="html\img\favicon.ico" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActivationFactory.h" />
+    <ClInclude Include="http_server.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Rules.h" />
+    <ClInclude Include="rules_db.h" />
     <ClInclude Include="sensor.h" />
     <ClInclude Include="value.h" />
     <ClInclude Include="StartupTask.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ActivationFactory.cpp" />
+    <ClCompile Include="http_server.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -270,6 +284,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Rules.cpp" />
+    <ClCompile Include="rules_db.cpp" />
     <ClCompile Include="StartupTask.cpp" />
   </ItemGroup>
   <ItemGroup>
