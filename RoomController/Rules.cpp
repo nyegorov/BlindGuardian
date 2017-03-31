@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Rules.h"
 
-using namespace Windows::Data::Json;
+using namespace winrt::Windows::Data::Json;
 
 namespace BlindGuardian {
 
@@ -42,16 +42,16 @@ void RoomEngine::update_rules(const vec_rules& rules)
 
 void RoomEngine::update_rules(const string& rules)
 {
-	auto json = JsonObject::Parse(ref new Platform::String(s2ws(rules).c_str()));
-	auto jrules = json->GetNamedArray(L"rules");
+	auto json = JsonObject::Parse(s2ws(rules).c_str());
+	auto jrules = json.GetNamedArray(L"rules");
 	vec_rules vr;
-	for(auto jri = jrules->First(); jri->HasCurrent; jri->MoveNext())
+	for(auto jri : jrules)
 	{
-		auto jr = jri->Current->GetObject();
+		auto jr = jri.GetObject();
 		vr.emplace_back(
-			ws2s(jr->GetNamedString(L"name")->Data()),
-			ws2s(jr->GetNamedString(L"condition")->Data()),
-			ws2s(jr->GetNamedString(L"body")->Data())
+			ws2s(jr.GetNamedString(L"name")),
+			ws2s(jr.GetNamedString(L"condition")),
+			ws2s(jr.GetNamedString(L"body"))
 		);
 	}
 	update_rules(vr);
@@ -59,18 +59,18 @@ void RoomEngine::update_rules(const string& rules)
 
 string RoomEngine::get_rules()
 {
-	auto json = ref new JsonObject();
-	auto jrules = ref new JsonArray();
+	auto json = JsonObject();
+	auto jrules = JsonArray();
 	for(auto& r : _rules) {
-		auto jr = ref new JsonObject();
-		jr->SetNamedValue(L"name", JsonValue::CreateStringValue(ref new Platform::String(s2ws(r.name).c_str())));
-		jr->SetNamedValue(L"condition", JsonValue::CreateStringValue(ref new Platform::String(s2ws(r.condition).c_str())));
-		jr->SetNamedValue(L"body", JsonValue::CreateStringValue(ref new Platform::String(s2ws(r.action).c_str())));
-		jr->SetNamedValue(L"status", JsonValue::CreateNumberValue((double)r.status));
-		jrules->Append(jr);
+		auto jr = JsonObject();
+		jr.SetNamedValue(L"name", JsonValue::CreateStringValue(s2ws(r.name)));
+		jr.SetNamedValue(L"condition", JsonValue::CreateStringValue(s2ws(r.condition).c_str()));
+		jr.SetNamedValue(L"body", JsonValue::CreateStringValue(s2ws(r.action).c_str()));
+		jr.SetNamedValue(L"status", JsonValue::CreateNumberValue((double)r.status));
+		jrules.Append(jr);
 	}
-	json->SetNamedValue(L"rules", jrules);
-	return ws2s(json->Stringify()->Data());
+	json.SetNamedValue(L"rules", jrules);
+	return ws2s(json.Stringify());
 }
 
 value_t RoomEngine::eval(const char *expr)

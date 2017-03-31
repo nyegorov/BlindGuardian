@@ -1,29 +1,29 @@
-#pragma once
+#include "ActivationFactory.h"
 
-#include "pch.h"
-#include "Sensor.h"
+#include "roomctrl_h.h"
 
-namespace BlindGuardian
-{
-	[Windows::Foundation::Metadata::WebHostHidden]
-    public ref class StartupTask sealed : public Windows::ApplicationModel::Background::IBackgroundTask
-    {
-    public:
+using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::ApplicationModel::Background;
+using namespace winrt::Windows::Devices::Gpio;
+using namespace winrt::Windows::System::Threading;
+
+namespace roomctrl {
+
+	class StartupTask : public winrt::implements<StartupTask, IBackgroundTask>
+	{
+	public:
 		StartupTask();
-        virtual void Run(Windows::ApplicationModel::Background::IBackgroundTaskInstance^ taskInstance);
-
+		void Run(IBackgroundTaskInstance taskInstance);
 	private:
 		void InitGpio();
-	private:
-		Platform::Agile<Windows::ApplicationModel::Background::BackgroundTaskDeferral> Deferral;
-		Windows::ApplicationModel::Background::IBackgroundTaskInstance^ TaskInstance;
-		Windows::System::Threading::ThreadPoolTimer ^Timer;
-		Windows::Devices::Gpio::GpioPinValue pinValue;
-		const int LED_PIN = 5;
-		Windows::Devices::Gpio::GpioPin ^pin;
 
-/*		TemperatureSensor _tempIn{ "tin" };
-		TemperatureSensor _tempOut{ "tout" };
-		LightSensor _lightOut{ "light" };*/
-    };
+		IBackgroundTaskDeferral Deferral;
+		ThreadPoolTimer Timer{ nullptr };
+		GpioPinValue pinValue;
+		const int LED_PIN = 5;
+		GpioPin pin{ nullptr };
+	};
+
+	ACTIVATABLE_OBJECT(StartupTask, RuntimeClass_roomctrl_StartupTask);
+
 }

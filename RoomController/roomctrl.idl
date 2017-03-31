@@ -1,0 +1,16 @@
+import "inspectable.idl";
+import "Windows.Foundation.idl";
+import "Windows.ApplicationModel.background.idl";
+
+#define COMPONENT_VERSION 1.0
+
+namespace roomctrl
+{
+	runtimeclass StartupTask;
+
+	[version(COMPONENT_VERSION), activatable(COMPONENT_VERSION)]
+	runtimeclass StartupTask
+	{
+		[default] interface Windows.ApplicationModel.Background.IBackgroundTask;
+	}
+}

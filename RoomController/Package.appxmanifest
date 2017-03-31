@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10" IgnorableNamespaces="uap mp iot">
-  <Identity Name="BlindGuardian" Publisher="CN=MSFT" Version="1.0.0.0" />
+  <Identity Name="roomctrl" Publisher="CN=Logis" Version="1.0.0.0" />
   <mp:PhoneIdentity PhoneProductId="6a16edfe-065d-4487-b598-4b72d44dae50" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>BlindGuardian</DisplayName>
-    <PublisherDisplayName>MSFT</PublisherDisplayName>
+    <DisplayName>Room Controller</DisplayName>
+    <PublisherDisplayName>Logis</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
@@ -14,14 +14,14 @@
     <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="App" EntryPoint="BlindGuardian.StartupTask">
-      <uap:VisualElements DisplayName="BlindGuardian" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="BlindGuardian" BackgroundColor="transparent" AppListEntry="none">
+    <Application Id="App">
+      <uap:VisualElements DisplayName="roomctrl" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="Room Controller" BackgroundColor="transparent" AppListEntry="none">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png">
         </uap:DefaultTile>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
       <Extensions>
-        <Extension Category="windows.backgroundTasks" EntryPoint="BlindGuardian.StartupTask">
+        <Extension Category="windows.backgroundTasks" EntryPoint="roomctrl.StartupTask">
           <BackgroundTasks>
             <iot:Task Type="startup" />
           </BackgroundTasks>
