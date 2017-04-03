@@ -15,26 +15,66 @@
     <Filter Include="Html\img">
       <UniqueIdentifier>{72040bf4-fd5e-478c-a15a-094c5732d8c8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{e25b7008-38c1-4ae2-bb30-8455d1cd3470}</UniqueIdentifier>
+      <Extensions>c;cpp;idl</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{66234756-4645-48e0-92f1-7a4874604a21}</UniqueIdentifier>
+      <Extensions>h;hpp</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp" />
-    <ClCompile Include="StartupTask.cpp" />
-    <ClCompile Include="parser.cpp" />
-    <ClCompile Include="ActivationFactory.cpp" />
-    <ClCompile Include="http_server.cpp" />
-    <ClCompile Include="rules_db.cpp" />
-    <ClCompile Include="room_engine.cpp" />
+    <ClCompile Include="ActivationFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="http_server.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="room_engine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rules_db.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StartupTask.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="StartupTask.h" />
-    <ClInclude Include="parser.h" />
-    <ClInclude Include="value.h" />
-    <ClInclude Include="sensor.h" />
-    <ClInclude Include="ActivationFactory.h" />
-    <ClInclude Include="http_server.h" />
-    <ClInclude Include="rules_db.h" />
-    <ClInclude Include="room_engine.h" />
+    <ClInclude Include="http_server.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="room_engine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rules_db.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StartupTask.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ActivationFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -79,6 +119,8 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="roomctrl.idl" />
+    <Midl Include="roomctrl.idl">
+      <Filter>Source Files</Filter>
+    </Midl>
   </ItemGroup>
 </Project>

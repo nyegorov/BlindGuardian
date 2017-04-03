@@ -37,7 +37,7 @@ void write_rules(path path, const wstring& rules)
 	ofs << rules;
 }
 
-void write_rules(path path, const RoomEngine::vec_rules& rules)
+void write_rules(path path, const room_server::vec_rules& rules)
 {
 	JsonArray jrules;
 	unsigned id = 0;
@@ -69,7 +69,7 @@ using std::get;
 
 namespace UnitTests
 {		
-	TEST_CLASS(TestRules)
+	TEST_CLASS(RulesEngine)
 	{
 	public:
 		
@@ -145,7 +145,7 @@ namespace UnitTests
 			time_sensor tm(L"time");
 			tm.update();
 			DumbMotor mot1(L"mot1"), mot2(L"mot2");
-			RoomEngine re(p, 
+			room_server re(p, 
 				{ &ts, &ls, &tm },
 				{ &mot1, &mot2 }
 			);
@@ -178,7 +178,7 @@ namespace UnitTests
 
 			DumbSensor ts(L"temp", 0);
 			DumbMotor mot1(L"mot1"), mot2(L"mot2");
-			RoomEngine re(p, { &ts }, { &mot1, &mot2 } );
+			room_server re(p, { &ts }, { &mot1, &mot2 } );
 
 			// temperature
 			re.run();
@@ -217,13 +217,13 @@ namespace UnitTests
 			write_rules(p1, rules);
 			DumbSensor ts(L"temp", 35);
 			DumbMotor mot1(L"mot1"), mot2(L"mot2");
-			RoomEngine re(p1, { &ts }, { &mot1, &mot2 } );
+			room_server re(p1, { &ts }, { &mot1, &mot2 } );
 			re.run();
 			Assert::AreEqual(100, get<int32_t>(mot1.value()));
 			Assert::AreEqual(50, get<int32_t>(mot2.value()));
 			auto s1 = re.get_rules();
 			write_rules(p2, s1);
-			RoomEngine re2(p2, { &ts }, { &mot1, &mot2 });
+			room_server re2(p2, { &ts }, { &mot1, &mot2 });
 			re2.run();
 			auto s2 = re2.get_rules();
 			Assert::AreEqual(s1, s2);

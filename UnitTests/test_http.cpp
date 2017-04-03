@@ -18,7 +18,7 @@ namespace UnitTests
 	{
 		winrt::init_apartment(winrt::apartment_type::single_threaded);
 	}
-	TEST_CLASS(UnitTest)
+	TEST_CLASS(HtmlConfig)
 	{
 	public:
 		

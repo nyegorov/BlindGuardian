@@ -5,21 +5,7 @@ using namespace winrt::Windows::Data::Json;
 
 namespace roomctrl {
 
-/*wstring s2ws(const std::string& str)
-{
-	using convert_typeX = std::codecvt_utf8<wchar_t>;
-	std::wstring_convert<convert_typeX, wchar_t> converterX;
-	return converterX.from_bytes(str);
-}
-
-string ws2s(const std::wstring& wstr)
-{
-	using convert_typeX = std::codecvt_utf8<wchar_t>;
-	std::wstring_convert<convert_typeX, wchar_t> converterX;
-	return converterX.to_bytes(wstr);
-}*/
-
-RoomEngine::RoomEngine(const path& db_path, const vec_sensors &sensors, const vec_actuators &actuators) :
+room_server::room_server(const path& db_path, const vec_sensors &sensors, const vec_actuators &actuators) :
 	_sensors(sensors), _actuators(actuators), _rules(db_path)
 {
 	for(auto& ps : _sensors) {
@@ -36,40 +22,46 @@ RoomEngine::RoomEngine(const path& db_path, const vec_sensors &sensors, const ve
 	}
 }
 
-void RoomEngine::update_rules(const vec_rules& rules)
-{
-	// TODO: _rules = rules;
-}
-
-void RoomEngine::update_rules(const wstring& rules)
-{
-/*	_rules.
-	auto json = JsonObject::Parse(rules);
-	auto jrules = json.GetNamedArray(L"rules");
-	vec_rules vr;
-	for(auto jri : jrules)
-	{
-		auto jr = jri.GetObject();
-		vr.emplace_back(
-			ws2s(jr.GetNamedString(L"name")),
-			ws2s(jr.GetNamedString(L"condition")),
-			ws2s(jr.GetNamedString(L"body"))
-		);
-	}
-	update_rules(vr);*/
-}
-
-wstring RoomEngine::get_rules()
+wstring room_server::get_rules()
 {
 	return _rules.to_string();
 }
 
-value_t RoomEngine::eval(const wchar_t *expr)
+wstring room_server::get_sensors()
+{
+	JsonObject json;
+	for (auto& s : _sensors) {
+		json.SetNamedValue(s->name(), is_error(s->value()) ? JsonValue::CreateStringValue(L"--") :
+			JsonValue::CreateNumberValue(std::get<value_type>(*s->value())));
+	}
+	return json.ToString();
+}
+
+value_t room_server::eval(const wchar_t *expr)
 {
 	return _parser.eval(expr);
 }
 
-void RoomEngine::run()
+std::future<void> room_server::start()
+{
+	_server.add(L"/", L"html/room_status.html");
+	_server.add(L"/status", L"html/room_status.html");
+	_server.add(L"/edit", L"html/edit_rule.html");
+	_server.add(L"/back.jpg", L"html/img/background.jpg");
+	_server.add(L"/favicon.ico", L"html/img/favicon.ico");
+	_server.add(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
+	_server.add(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
+	_server.add(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
+	_server.add_action(L"set_pos", [this](auto&, auto& value) { });
+	_server.add_action(L"save_rule", [this](auto& req, auto& value) {
+		_rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s] });
+	});
+	_server.add_action(L"delete_rule", [this](auto&, auto& value) { _rules.remove(std::stoul(value)); });
+	co_await _server.start();
+	co_return;
+}
+
+void room_server::run()
 {
 	for(auto& sensor : _sensors) sensor->update();
 
