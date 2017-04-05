@@ -33,10 +33,6 @@ void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessa
 
 udns_resolver::udns_resolver()
 {
-	try {
-	} catch(const winrt::hresult_error& hr) {
-		OutputDebugStringW(wstring(hr.message()).c_str());
-	}
 }
 
 udns_resolver::~udns_resolver()

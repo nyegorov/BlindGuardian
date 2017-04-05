@@ -5,6 +5,7 @@
 #include "../RoomController/sensors.h"
 #include "../RoomController/room_engine.h"
 #include "../RoomController/parser.h"
+#include "common.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace winrt::Windows::Data::Json;
@@ -12,55 +13,6 @@ using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace std::experimental;
 using namespace roomctrl;
-
-class DumbRemote
-{
-	uint8_t					_cmd_byte;
-	value_type				_value;
-	StreamSocketListener	_listener;
-public:
-	DumbRemote(uint8_t cmd, value_type val) : _value(val), _cmd_byte(cmd) { listen(); }
-
-	void set(value_type val) { _value = val; }
-	std::future<void> listen() {
-		_listener.ConnectionReceived([this](auto&& listener, auto&& args) { on_connect(listener, args); });
-		co_await _listener.BindServiceNameAsync(L"4760");
-		co_return;
-	}
-
-	std::future<void> on_connect(StreamSocketListener listener, StreamSocketListenerConnectionReceivedEventArgs args)
-	{
-		co_await winrt::resume_background();
-		DataReader reader(args.Socket().InputStream());
-		co_await reader.LoadAsync(sizeof(uint8_t));
-		auto cmd = reader.ReadByte();
-		if(cmd == _cmd_byte) {
-			DataWriter writer(args.Socket().OutputStream());
-			writer.WriteUInt32(cmd == _cmd_byte ? _value : 0);
-			co_await writer.StoreAsync();
-		}
-	}
-};
-
-class DumbSensor : public sensor
-{
-public:
-	DumbSensor(const wchar_t *name,value_type val) : sensor(name, val) { }
-	void set(value_type val) { _value = val; _min = std::min(_min, _value); _max = std::max(_max, _value); }
-	void update() {}
-};
-
-class DumbMotor : public actuator
-{
-public:
-	value_t	_value = { 0 };
-	action open{ L"open", [this](auto&) { _value = 100; } };
-	action close{ L"close", [this](auto&) { _value = 0; } };
-	action setpos{ L"set_pos", [this](auto& v) { _value = v.empty() ? 0 : v.front(); } };
-	DumbMotor(const wchar_t *name) : actuator(name) { }
-	value_t value() { return _value; };
-	std::vector<const i_action*> actions() const { return{ &open, &close, &setpos }; }
-};
 
 void write_rules(path path, const wstring& rules)
 {
@@ -86,87 +38,13 @@ void write_rules(path path, const room_server::vec_rules& rules)
 	return write_rules(path, wstring(json.Stringify()));
 }
 
-namespace Microsoft {
-namespace VisualStudio {
-namespace CppUnitTestFramework {
-template<> inline std::wstring ToString<value_t>(const value_t& v) {
-	if(auto pv = std::get_if<value_type>(&v))	return std::to_wstring(*pv);
-	if(auto pe = std::get_if<error_t>(&v))		return L"error: "s + std::to_wstring((int)*pe);
-	return L"unknown type!";
-}
-}}}
-
 using std::get;
 
 namespace UnitTests
 {		
-	TEST_CLASS(RulesEngine)
+	TEST_CLASS(RoomEngine)
 	{
 	public:
-		
-		TEST_METHOD(Parsing)
-		{
-			DumbSensor ts(L"temp", 24);
-			NScript ns;
-			ns.set(L"myfunc0", [](auto& p) {return 10; });
-			ns.set(L"myfunc1", [](auto& p) {return p[0] + p[0]; });
-			ns.set(L"myfunc2", [](auto& p) {return p[0]+p[1]; });
-			ns.set(L"myvar", 42);
-			ns.set(L"mysens", &ts);
-			Assert::AreEqual( 4, get<int32_t>(ns.eval(L"2*2")));
-			Assert::AreEqual( 1, get<int32_t>(ns.eval(L"2*(5-3)==4")));
-			Assert::AreEqual( 1, get<int32_t>(ns.eval(L"(1>2 || 1>=2 || 1<=2 || 1<2) && !(3==4) && (3!=4) ? 1 : 0")));
-			Assert::AreEqual( 0, get<int32_t>(ns.eval(L"(2<=1 || 1<1 || 1>1 || 1<1) && !(3==3) && (3!=3) ? 1 : 0")));
-			Assert::AreEqual(42, get<int32_t>(ns.eval(L"x=42; x")));
-			Assert::AreEqual( 1, get<int32_t>(ns.eval(L"x=1; y=2; x=x+y; y=y-x; x=x*y; x=x/y; x=x-1; x+y")));
-			Assert::AreEqual(10, get<int32_t>(ns.eval(L"myfunc0()")));
-			Assert::AreEqual(24, get<int32_t>(ns.eval(L"mysens")));
-			Assert::AreEqual(48, get<int32_t>(ns.eval(L"x=3; MyFunc2(x, myVar)+x")));
-			Assert::AreEqual(40, get<int32_t>(ns.eval(L"x=#5:40#; x-300")));
-			Assert::AreEqual(114, get<int32_t>(ns.eval(L"myVar+mysens+myfunc1(mysens)")));
-		}
-		TEST_METHOD(Errors)
-		{
-			DumbSensor ts(L"temp",  24);
-			DumbSensor ls(L"light", 2000);
-			DumbRemote remote('t', 42);
-			remote_sensor rls(L"light", 'l');
-
-			NScript ns;
-			ns.set(L"myfunc", [](auto& p) {return p[0]; });
-			ns.set(L"t", [&]() {return ts.value(); });
-			ns.set(L"l", [&]() {return ls.value(); });
-			Assert::AreEqual(value_t{ error_t::name_not_found }, ns.eval(L"my_func(3)"));
-			rls.update();
-			Assert::AreEqual(value_t{ error_t::not_implemented}, rls.value());
-			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t + l"));
-			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t == l"));
-			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t < l"));
-		}
-		TEST_METHOD(Rules)
-		{
-			NScript ns;
-			DumbSensor ts(L"temp",  24);
-			DumbSensor ls(L"light", 2000);
-			DumbSensor tm(L"time",  340);
-			value_t pos = 0;
-
-			ns.set(L"time",	&tm);
-			ns.set(L"tin",	&ts);
-			ns.set(L"light",	&ls);
-			ns.set(L"set_blind", [&pos](auto& p) {return pos = p[0], value_t{ 1 }; });
-			Assert::AreEqual( 1, get<int32_t>(ns.eval(L"#5:40# == time")));
-			Assert::AreEqual( 1, get<int32_t>(ns.eval(L"if(tin > 20) set_blind(66)")));
-			Assert::AreEqual(66, get<int32_t>(pos));
-			Assert::AreEqual( 1, get<int32_t>(ns.eval(L"if(tin > 20 && light > 1000) set_blind(99)")));
-			Assert::AreEqual(99, get<int32_t>(pos));
-			ls.set(500);
-			Assert::AreEqual( 0, get<int32_t>(ns.eval(L"if(tin > 20 && light > 1000) set_blind(24)")));
-			Assert::AreEqual(99, get<int32_t>(pos));
-			ls.set(1500);
-			Assert::AreEqual( 1, get<int32_t>(ns.eval(L"if(tin > 20 && light > 1000) set_blind(24)")));
-			Assert::AreEqual(24, get<int32_t>(pos));
-		}
 
 		TEST_METHOD(Sensors)
 		{

@@ -1,9 +1,11 @@
 #include "pch.h"
 #include "CppUnitTest.h"
 
+#include "../RoomController/parser.h"
 #include "../RoomController/rules_db.h"
 #include "../RoomController/http_server.h"
 #include "../RoomController/debug_stream.h"
+#include "common.h"
 
 using namespace std;
 using namespace std::experimental;
@@ -12,6 +14,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Web::Http;
 using namespace winrt::Windows::Storage::Streams;
+using namespace roomctrl;
 
 wdebugstream wdebug;
 debugstream debug;
@@ -22,10 +25,73 @@ namespace UnitTests
 	{
 		winrt::init_apartment(winrt::apartment_type::single_threaded);
 	}
-	TEST_CLASS(HtmlConfig)
+	TEST_CLASS(Components)
 	{
 	public:
-		
+		TEST_METHOD(Parser)
+		{
+			DumbSensor ts(L"temp", 24);
+			NScript ns;
+			ns.set(L"myfunc0", [](auto& p) {return 10; });
+			ns.set(L"myfunc1", [](auto& p) {return p[0] + p[0]; });
+			ns.set(L"myfunc2", [](auto& p) {return p[0] + p[1]; });
+			ns.set(L"myvar", 42);
+			ns.set(L"mysens", &ts);
+			Assert::AreEqual(4, get<int32_t>(ns.eval(L"2*2")));
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"2*(5-3)==4")));
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"(1>2 || 1>=2 || 1<=2 || 1<2) && !(3==4) && (3!=4) ? 1 : 0")));
+			Assert::AreEqual(0, get<int32_t>(ns.eval(L"(2<=1 || 1<1 || 1>1 || 1<1) && !(3==3) && (3!=3) ? 1 : 0")));
+			Assert::AreEqual(42, get<int32_t>(ns.eval(L"x=42; x")));
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"x=1; y=2; x=x+y; y=y-x; x=x*y; x=x/y; x=x-1; x+y")));
+			Assert::AreEqual(10, get<int32_t>(ns.eval(L"myfunc0()")));
+			Assert::AreEqual(24, get<int32_t>(ns.eval(L"mysens")));
+			Assert::AreEqual(48, get<int32_t>(ns.eval(L"x=3; MyFunc2(x, myVar)+x")));
+			Assert::AreEqual(40, get<int32_t>(ns.eval(L"x=#5:40#; x-300")));
+			Assert::AreEqual(114, get<int32_t>(ns.eval(L"myVar+mysens+myfunc1(mysens)")));
+		}
+		TEST_METHOD(Errors)
+		{
+			DumbSensor ts(L"temp", 24);
+			DumbSensor ls(L"light", 2000);
+			DumbRemote remote('t', 42);
+			remote_sensor rls(L"light", 'l');
+
+			NScript ns;
+			ns.set(L"myfunc", [](auto& p) {return p[0]; });
+			ns.set(L"t", [&]() {return ts.value(); });
+			ns.set(L"l", [&]() {return ls.value(); });
+			Assert::AreEqual(value_t{ error_t::name_not_found }, ns.eval(L"my_func(3)"));
+			rls.update();
+			Assert::AreEqual(value_t{ error_t::not_implemented }, rls.value());
+			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t + l"));
+			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t == l"));
+			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t < l"));
+		}
+		TEST_METHOD(RulesExecution)
+		{
+			NScript ns;
+			DumbSensor ts(L"temp", 24);
+			DumbSensor ls(L"light", 2000);
+			DumbSensor tm(L"time", 340);
+			value_t pos = 0;
+
+			ns.set(L"time", &tm);
+			ns.set(L"tin", &ts);
+			ns.set(L"light", &ls);
+			ns.set(L"set_blind", [&pos](auto& p) {return pos = p[0], value_t{ 1 }; });
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"#5:40# == time")));
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"if(tin > 20) set_blind(66)")));
+			Assert::AreEqual(66, get<int32_t>(pos));
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"if(tin > 20 && light > 1000) set_blind(99)")));
+			Assert::AreEqual(99, get<int32_t>(pos));
+			ls.set(500);
+			Assert::AreEqual(0, get<int32_t>(ns.eval(L"if(tin > 20 && light > 1000) set_blind(24)")));
+			Assert::AreEqual(99, get<int32_t>(pos));
+			ls.set(1500);
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"if(tin > 20 && light > 1000) set_blind(24)")));
+			Assert::AreEqual(24, get<int32_t>(pos));
+		}
+
 		TEST_METHOD(RulesDatabase)
 		{
 			path p("test.db");
