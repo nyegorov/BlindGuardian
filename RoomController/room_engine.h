@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Sensor.h"
+#include "sensors.h"
 #include "parser.h"
 #include "http_server.h"
 #include "rules_db.h"

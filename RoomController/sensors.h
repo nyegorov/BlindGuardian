@@ -44,7 +44,7 @@ public:
 class time_sensor : public sensor
 {
 public:
-	time_sensor(const wchar_t *name) : sensor(name) { }
+	time_sensor(const wchar_t *name) : sensor(name) { update(); }
 	void update() override {
 		auto now = std::chrono::system_clock::now();
 		auto now_t = std::chrono::system_clock::to_time_t(now);
@@ -52,6 +52,16 @@ public:
 		localtime_s(&tm, &now_t);
 		_value = tm.tm_hour * 60 + tm.tm_min;
 	};
+};
+
+class remote_sensor : public sensor
+{
+	std::future<value_t> value_async();
+	uint8_t	_cmdbyte;
+public:
+	remote_sensor(const wchar_t *name, uint8_t cmd_byte) : sensor(name), _cmdbyte(cmd_byte) { }
+	void update() override;
+
 };
 
 }

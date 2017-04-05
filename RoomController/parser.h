@@ -5,13 +5,14 @@
 
 #pragma once
 
-#include "sensor.h"
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
 #include <functional>
 #include <cctype>
+
+#include "value.h"
 
 using std::wstring;
 

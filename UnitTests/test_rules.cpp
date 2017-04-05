@@ -1,15 +1,46 @@
 #include "pch.h"
 #include "CppUnitTest.h"
 
-#include "../RoomController/Value.h"
-#include "../RoomController/Sensor.h"
+#include "../RoomController/value.h"
+#include "../RoomController/sensors.h"
 #include "../RoomController/room_engine.h"
 #include "../RoomController/parser.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace winrt::Windows::Data::Json;
+using namespace winrt::Windows::Storage::Streams;
+using namespace winrt::Windows::Networking::Sockets;
 using namespace std::experimental;
 using namespace roomctrl;
+
+class DumbRemote
+{
+	uint8_t					_cmd_byte;
+	value_type				_value;
+	StreamSocketListener	_listener;
+public:
+	DumbRemote(uint8_t cmd, value_type val) : _value(val), _cmd_byte(cmd) { listen(); }
+
+	void set(value_type val) { _value = val; }
+	std::future<void> listen() {
+		_listener.ConnectionReceived([this](auto&& listener, auto&& args) { on_connect(listener, args); });
+		co_await _listener.BindServiceNameAsync(L"4760");
+		co_return;
+	}
+
+	std::future<void> on_connect(StreamSocketListener listener, StreamSocketListenerConnectionReceivedEventArgs args)
+	{
+		co_await winrt::resume_background();
+		DataReader reader(args.Socket().InputStream());
+		co_await reader.LoadAsync(sizeof(uint8_t));
+		auto cmd = reader.ReadByte();
+		if(cmd == _cmd_byte) {
+			DataWriter writer(args.Socket().OutputStream());
+			writer.WriteUInt32(cmd == _cmd_byte ? _value : 0);
+			co_await writer.StoreAsync();
+		}
+	}
+};
 
 class DumbSensor : public sensor
 {
@@ -98,11 +129,16 @@ namespace UnitTests
 		{
 			DumbSensor ts(L"temp",  24);
 			DumbSensor ls(L"light", 2000);
+			DumbRemote remote('t', 42);
+			remote_sensor rls(L"light", 'l');
+
 			NScript ns;
 			ns.set(L"myfunc", [](auto& p) {return p[0]; });
 			ns.set(L"t", [&]() {return ts.value(); });
 			ns.set(L"l", [&]() {return ls.value(); });
 			Assert::AreEqual(value_t{ error_t::name_not_found }, ns.eval(L"my_func(3)"));
+			rls.update();
+			Assert::AreEqual(value_t{ error_t::not_implemented}, rls.value());
 			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t + l"));
 			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t == l"));
 			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t < l"));
@@ -139,15 +175,16 @@ namespace UnitTests
 				{ L"r1", L"temp > 30", L"mot1.open()" },
 				{ L"r2", L"temp > 30", L"mot2.set_pos(50)" },
 				{ L"r3", L"time - lasttime >= 5 && time - lasttime < 6", L"mot1.set_pos(42)" },
+				{ L"r4", L"light > 1000", L"mot3.open()" },
 			});
+			DumbRemote remote('l', 42);
 			DumbSensor ts(L"temp", 24);
-			DumbSensor ls(L"light", 2000);
 			time_sensor tm(L"time");
-			tm.update();
-			DumbMotor mot1(L"mot1"), mot2(L"mot2");
+			remote_sensor ls(L"light", 'l');
+			DumbMotor mot1(L"mot1"), mot2(L"mot2"), mot3(L"mot3");
 			room_server re(p, 
 				{ &ts, &ls, &tm },
-				{ &mot1, &mot2 }
+				{ &mot1, &mot2, &mot3 }
 			);
 
 			// temperature
@@ -166,6 +203,13 @@ namespace UnitTests
 			mot1.close();
 			re.run();
 			Assert::AreEqual(0, get<int32_t>(mot1.value()));
+
+			// remote
+			Assert::AreEqual(0, get<int32_t>(mot3.value()));
+			remote.set(2000);
+			re.run();
+			Assert::AreEqual(100, get<int32_t>(mot3.value()));
+
 			filesystem::remove(p);
 		}
 		TEST_METHOD(Sensitivity)

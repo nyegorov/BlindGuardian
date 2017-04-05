@@ -46,6 +46,9 @@
     <ClCompile Include="StartupTask.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sensors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="http_server.h">
@@ -63,9 +66,6 @@
     <ClInclude Include="rules_db.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sensor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="StartupTask.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -75,12 +75,14 @@
     <ClInclude Include="ActivationFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="sensors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="html\edit_rule.html">
       <Filter>Html</Filter>
     </None>
@@ -88,6 +90,7 @@
       <Filter>Html</Filter>
     </None>
     <None Include="status.json" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">
