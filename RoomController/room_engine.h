@@ -1,5 +1,6 @@
 #pragma once
 
+#include "udns_resolver.h"
 #include "sensors.h"
 #include "parser.h"
 #include "http_server.h"
@@ -29,6 +30,7 @@ private:
 	vec_sensors			_sensors;
 	vec_actuators		_actuators;
 	NScript				_parser;
+	udns_resolver		_udns;
 };
 
 }

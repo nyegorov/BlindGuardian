@@ -44,6 +44,7 @@ value_t room_server::eval(const wchar_t *expr)
 
 std::future<void> room_server::start()
 {
+	co_await _udns.refresh();
 	_server.add(L"/", L"html/room_status.html");
 	_server.add(L"/status", L"html/room_status.html");
 	_server.add(L"/edit", L"html/edit_rule.html");

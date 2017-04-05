@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "StartupTask.h"
+#include "debug_stream.h"
 
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::ApplicationModel;
@@ -9,6 +10,9 @@ using namespace std::chrono;
 using namespace std::chrono_literals;
 
 wchar_t msg[] = L"Http server started.\r\n";
+
+wdebugstream wdebug;
+debugstream debug;
 
 namespace roomctrl {
 

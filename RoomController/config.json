@@ -1,0 +1,24 @@
+{
+  "sensors": [
+    {
+      "name": "tout",
+      "type": "remote",
+      "remote_ctrl": "motctrl",
+      "remote_cmd": "t"
+    },
+    {
+      "name": "light",
+      "type": "remote",
+      "remote_ctrl": "motctrl",
+      "remote_cmd": "t"
+    },
+    {
+      "name": "tin",
+      "type": "local"
+    },
+    {
+      "name": "motion",
+      "type": "local"
+    }
+  ]
+}

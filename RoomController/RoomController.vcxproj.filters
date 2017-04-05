@@ -49,6 +49,12 @@
     <ClCompile Include="sensors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="motor_ctrl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="udns_resolver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="http_server.h">
@@ -78,6 +84,15 @@
     <ClInclude Include="sensors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="debug_stream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="motor_ctrl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="udns_resolver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -91,6 +106,7 @@
     </None>
     <None Include="status.json" />
     <None Include="packages.config" />
+    <None Include="config.json" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">

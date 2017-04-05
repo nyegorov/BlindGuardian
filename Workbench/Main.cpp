@@ -22,7 +22,11 @@ std::future<void> test() {
 	motor_ctrl mot(L"motctrl", udns);
 	auto t = co_await mot.get_sensor('t');
 	auto l = co_await mot.get_sensor('l');
-	debug << "Temp: " << get<int32_t>(t) << ", Light: " << get<int32_t>(l) << std::endl;
+	if(is_error(t) || is_error(l)) {
+		debug << "Error reading sensors." << std::endl;
+	} else {
+		debug << "Temp: " << get<int32_t>(t) << ", Light: " << get<int32_t>(l) << std::endl;
+	}
 	co_return;
 }
 

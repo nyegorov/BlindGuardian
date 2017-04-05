@@ -3,6 +3,7 @@
 
 #include "../RoomController/rules_db.h"
 #include "../RoomController/http_server.h"
+#include "../RoomController/debug_stream.h"
 
 using namespace std;
 using namespace std::experimental;
@@ -11,6 +12,9 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Web::Http;
 using namespace winrt::Windows::Storage::Streams;
+
+wdebugstream wdebug;
+debugstream debug;
 
 namespace UnitTests
 {		

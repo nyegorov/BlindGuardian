@@ -34,10 +34,6 @@ void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessa
 udns_resolver::udns_resolver()
 {
 	try {
-		_socket.MessageReceived([this](auto& socket, auto& args) { on_message(socket, args); });
-		_socket.Control().MulticastOnly(true);
-		_socket.BindServiceNameAsync(udns_port_in).get();
-		_socket.JoinMulticastGroup(_multicast_group);
 	} catch(const winrt::hresult_error& hr) {
 		OutputDebugStringW(wstring(hr.message()).c_str());
 	}
@@ -50,6 +46,11 @@ udns_resolver::~udns_resolver()
 std::future<void> udns_resolver::refresh()
 {
 	try {
+		_socket = DatagramSocket();
+		_socket.MessageReceived([this](auto& socket, auto& args) { on_message(socket, args); });
+		_socket.Control().MulticastOnly(true);
+		co_await _socket.BindServiceNameAsync(udns_port_in);
+		_socket.JoinMulticastGroup(_multicast_group);
 		auto os = co_await _socket.GetOutputStreamAsync(_multicast_group, udns_port_out);
 		DataWriter writer(os);
 		writer.WriteByte('$');

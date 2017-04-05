@@ -237,6 +237,7 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+    <None Include="config.json" />
     <None Include="html\edit_rule.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
@@ -261,18 +262,22 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActivationFactory.h" />
+    <ClInclude Include="debug_stream.h" />
     <ClInclude Include="http_server.h" />
+    <ClInclude Include="motor_ctrl.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="room_engine.h" />
     <ClInclude Include="rules_db.h" />
     <ClInclude Include="sensors.h" />
+    <ClInclude Include="udns_resolver.h" />
     <ClInclude Include="value.h" />
     <ClInclude Include="StartupTask.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ActivationFactory.cpp" />
     <ClCompile Include="http_server.cpp" />
+    <ClCompile Include="motor_ctrl.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -286,6 +291,7 @@
     <ClCompile Include="rules_db.cpp" />
     <ClCompile Include="sensors.cpp" />
     <ClCompile Include="StartupTask.cpp" />
+    <ClCompile Include="udns_resolver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <SDKReference Include="WindowsIoT, Version=10.0.14393.0" />
