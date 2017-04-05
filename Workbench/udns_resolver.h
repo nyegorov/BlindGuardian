@@ -9,9 +9,11 @@ using std::wstring;
 class udns_resolver
 {
 	void on_message(const DatagramSocket&, const DatagramSocketMessageReceivedEventArgs&);
-	std::vector<std::pair<HostName, DatagramSocket>>	_listeners;
-	std::map<wstring, HostName>							_names;
-	HostName											_multicast_group{ L"239.255.1.2" };
+	using lock_t = std::lock_guard<std::mutex>;
+	mutable std::mutex			_mutex;
+	DatagramSocket				_socket;
+	std::map<wstring, HostName>	_names;
+	HostName					_multicast_group{ L"239.255.1.2" };
 public:
 	udns_resolver();
 	~udns_resolver();

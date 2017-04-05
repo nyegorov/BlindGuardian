@@ -1,21 +1,23 @@
 #pragma once
 
+#include "value.h"
+#include "udns_resolver.h"
+
 using winrt::Windows::Networking::Sockets::DatagramSocket;
 using winrt::Windows::Networking::Connectivity::NetworkAdapter;
 
-struct ip_address {
-	bool empty() { return *(uint32_t*)addr == 0u; }
-	uint8_t	addr[4];
-};
+namespace roomctrl {
 
 class motor_ctrl
 {
 public:
-	motor_ctrl();
+	motor_ctrl(std::wstring_view name, udns_resolver& udns);
 	~motor_ctrl();
 
-	std::future<ip_address> resolve(std::wstring_view name);
+	std::future<value_t> get_sensor(uint8_t sensor);
 private:
-	DatagramSocket udp;
+	wstring			_name;
+	udns_resolver&	_udns;
 };
 
+}

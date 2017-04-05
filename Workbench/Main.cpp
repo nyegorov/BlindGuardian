@@ -6,6 +6,7 @@
 
 using namespace winrt;
 using namespace std;
+using namespace roomctrl;
 
 wdebugstream wdebug;
 debugstream debug;
@@ -17,11 +18,12 @@ std::future<void> test() {
 	debug << "IP: " << ip.addr[0] << "." << ip.addr[1] << "." << ip.addr[2] << "." << ip.addr[3] << endl; // */
 	udns_resolver udns;
 	co_await udns.refresh();
-	co_await 5s;
-	auto host = udns.get_address(L"motctrl");
-	if(host)
-		wdebug << wstring(host.DisplayName()) << std::endl; // */
-	co_return; 
+	co_await 1s;
+	motor_ctrl mot(L"motctrl", udns);
+	auto t = co_await mot.get_sensor('t');
+	auto l = co_await mot.get_sensor('l');
+	debug << "Temp: " << get<int32_t>(t) << ", Light: " << get<int32_t>(l) << std::endl;
+	co_return;
 }
 
 int main()

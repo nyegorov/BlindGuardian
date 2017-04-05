@@ -41,3 +41,6 @@ private:
 
 typedef basic_debugstream<char, char_traits<char>> debugstream;
 typedef basic_debugstream<wchar_t, char_traits<wchar_t>> wdebugstream;
+
+extern wdebugstream wdebug;
+extern debugstream  debug;
