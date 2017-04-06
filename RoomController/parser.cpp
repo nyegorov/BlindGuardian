@@ -182,7 +182,9 @@ again:
 					Parse((Precedence)((int)level+1), level == Script ? result : right, skip);		// left-associative operators
 
 				// perform operator's action
-				(*pinfo->op)(left, right, result);
+				if(is_error(*left))			result = *left;
+				else if(is_error(*right))	result = *right;
+				else						(*pinfo->op)(left, right, result);
 				noop = false;
 
 				if(is_unary)	break;
@@ -197,7 +199,7 @@ again:
 // Parser
 
 Parser::Keywords Parser::_keywords;
-char Parser::_decpt;
+wchar_t Parser::_decpt;
 
 Parser::Parser() {
 	_decpt = std::use_facet<std::numpunct<char> >(std::locale()).decimal_point();
@@ -215,7 +217,7 @@ Parser::Parser() {
 Parser::Token Parser::Next()
 {
 	_lastpos = _pos;
-	char c;
+	wchar_t c;
 	while(isspace(c = Read()));
 	switch(c)	{
 		case '\0':	_token = end;break;
@@ -259,7 +261,7 @@ Parser::Token Parser::Next()
 }
 
 // Parse integer value from input stream
-void Parser::ReadNumber(char c)
+void Parser::ReadNumber(wchar_t c)
 {
 	int base = 10, m = c - '0';
 	int e1 = 0, e2 = 0, esign = 1;
@@ -278,7 +280,7 @@ void Parser::ReadNumber(char c)
 }
 
 // Parse time from input stream
-void Parser::ReadTime(char c)
+void Parser::ReadTime(wchar_t c)
 {
 	ReadNumber(Read());
 	auto hours = _value;
@@ -296,7 +298,7 @@ void Parser::ReadTime(char c)
 void Parser::ReadArgList()	{
 	_args.clear();
 	_temp.clear();
-	char c;
+	wchar_t c;
 	while(isspace(c = Read()));
 	if(c != '(')	{Back(); return;}		// function without parameters
 
@@ -315,7 +317,7 @@ void Parser::ReadArgList()	{
 }
 
 // Parse object name from input stream
-void Parser::ReadName(char c)	
+void Parser::ReadName(wchar_t c)
 {
 	if(!isalpha(c) && c != '@' && c != '_')	throw error_t::syntax;
 	_name = c;

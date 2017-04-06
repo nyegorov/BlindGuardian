@@ -3,9 +3,11 @@
 #include "debug_stream.h"
 #include "motor_ctrl.h"
 #include "udns_resolver.h"
+#include "room_engine.h"
 
 using namespace winrt;
 using namespace std;
+using namespace std::experimental;
 using namespace roomctrl;
 
 wdebugstream wdebug;
@@ -16,7 +18,7 @@ std::future<void> test() {
 	auto ip = co_await mot.resolve(L"motctrl");
 	co_await 5s;
 	debug << "IP: " << ip.addr[0] << "." << ip.addr[1] << "." << ip.addr[2] << "." << ip.addr[3] << endl; // */
-	udns_resolver udns;
+/*	udns_resolver udns;
 	co_await udns.refresh();
 	co_await 1s;
 	motor_ctrl mot(L"motctrl", udns);
@@ -27,12 +29,26 @@ std::future<void> test() {
 	} else {
 		debug << "Temp: " << get<int32_t>(t) << ", Light: " << get<int32_t>(l) << std::endl;
 	}
-	co_return;
+	co_return;*/
+	path p("test.db");
+	room_server srv(p);
+	co_await srv.start();
+
+	for(;;) {
+		srv.run();
+		auto t1 = std::chrono::high_resolution_clock::now();
+		co_await 1s;
+		auto t2 = std::chrono::high_resolution_clock::now();
+		if(t2 - t1 > 1500ms) {
+			cout << "#";
+		}
+		cout << ".";
+	}
+
 }
 
 int main()
 {
 	init_apartment();
 	test().get();
-
 }

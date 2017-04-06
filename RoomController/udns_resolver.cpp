@@ -35,6 +35,7 @@ void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessa
 udns_resolver::udns_resolver()
 {
 	_names.emplace(L"localhost", HostName(L"localhost"));
+	_names.emplace(L"motctrl", HostName(L"192.168.6.53"));
 }
 
 udns_resolver::~udns_resolver()
@@ -43,7 +44,7 @@ udns_resolver::~udns_resolver()
 
 std::future<void> udns_resolver::refresh()
 {
-	try {
+/*	try {
 		_socket = DatagramSocket();
 		_socket.MessageReceived([this](auto& socket, auto& args) { on_message(socket, args); });
 		_socket.Control().MulticastOnly(true);
@@ -57,7 +58,7 @@ std::future<void> udns_resolver::refresh()
 		OutputDebugStringW(L"UDNS: ");
 		OutputDebugStringW(wstring(hr.message()).c_str());
 		OutputDebugStringW(L"\n");
-	}
+	}*/
 	co_return;
 }
 

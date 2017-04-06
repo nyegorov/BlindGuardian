@@ -59,7 +59,7 @@ namespace UnitTests
 			DumbSensor ts(L"temp", 24);
 			time_sensor tm(L"time");
 			udns_resolver udns;
-			motor_ctrl motc(L"localhost", udns);
+			motor_ctrl motc(L"blind", L"localhost", udns);
 			remote_sensor ls(L"light", 'l', motc);
 			DumbMotor mot1(L"mot1"), mot2(L"mot2"), mot3(L"mot3");
 			room_server re(p);

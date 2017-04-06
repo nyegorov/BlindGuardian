@@ -41,7 +41,7 @@ wstring room_server::get_sensors()
 			JsonValue::CreateNumberValue(std::get<value_type>(*s->value())));
 	}
 	auto mot_ip = _udns.get_address(_motctrl.host_name());
-	json.SetNamedValue(_motctrl.host_name(), JsonValue::CreateStringValue(mot_ip ? mot_ip.DisplayName() : wstring(L"--")) );
+	json.SetNamedValue(_motctrl.host_name(), JsonValue::CreateStringValue(mot_ip ? mot_ip.DisplayName() : L"") );
 	JsonObject sensors;
 	sensors.SetNamedValue(L"sensors", json);
 	return sensors.ToString();

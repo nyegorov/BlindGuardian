@@ -60,7 +60,7 @@ public:
 	void CheckPairedToken(Token token);
 	Token Next();
 private:
-	static char	_decpt;
+	static wchar_t	_decpt;
 
 	typedef std::map<wstring, Token, lessi> Keywords;
 	static Keywords	_keywords;
@@ -73,13 +73,13 @@ private:
 	ArgList			_args;
 	wstring			_temp;
 
-	char Peek()			{return _pos >= _content.length() ? 0 : _content[_pos];}
-	char Read()			{char c = Peek();_pos++;return c;}
+	wchar_t Peek()			{return _pos >= _content.length() ? 0 : _content[_pos];}
+	wchar_t Read()			{wchar_t c = Peek();_pos++;return c;}
 	void Back()				{_pos--;}
-	void ReadNumber(char c);
-	void ReadTime(char c);
+	void ReadNumber(wchar_t c);
+	void ReadTime(wchar_t c);
 	void ReadArgList();
-	void ReadName(char c);
+	void ReadName(wchar_t c);
 };
 
 // Main class for executing scripts

@@ -5,6 +5,8 @@
 #include "../RoomController/rules_db.h"
 #include "../RoomController/http_server.h"
 #include "../RoomController/debug_stream.h"
+#include "../RoomController/udns_resolver.h"
+#include "../RoomController/motor_ctrl.h"
 #include "common.h"
 
 using namespace std;
@@ -55,7 +57,7 @@ namespace UnitTests
 			DumbSensor ls(L"light", 2000);
 			DumbRemote remote('t', 42);
 			udns_resolver udns;
-			motor_ctrl motc(L"localhost", udns);
+			motor_ctrl motc(L"blind", L"localhost", udns);
 			remote_sensor rls(L"light", 'l', motc);
 
 			NScript ns;

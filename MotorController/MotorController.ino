@@ -12,10 +12,22 @@ WiFiUDP Udp;
 WiFiServer Tcp(cmdPort);
 IPAddress multicast_group(239, 255, 1, 2);
 
-int32_t get_temp() { return 42; }
-int32_t get_light() {return 76000; }
-void open_blind() {}
-void close_blind() {}
+int32_t get_temp() { 
+	int32_t temp = 42;
+	Serial.printf("ask temp (%d)\n", (int)temp);
+	return temp;
+}
+int32_t get_light() {
+	int32_t light = 76000;
+	Serial.printf("ask light (%d)\n", (int)light);
+	return light;
+}
+void open_blind() {
+	Serial.println("blind opened!");
+}
+void close_blind() {
+	Serial.println("blind closed!");
+}
 
 void write(WiFiClient& client, int32_t value)
 {
@@ -84,12 +96,13 @@ void loop() {
 	if(client) {
 		while(!client.available())  delay(1);
 		char cmd = client.read();
-		Serial.print(cmd); Serial.println(" - query sensor");
+		client.flush();
 		switch(cmd) {
 		case 't': write(client, get_temp()); break;
 		case 'l': write(client, get_light()); break;
 		case 'o': open_blind(); break;
 		case 'c': close_blind(); break;
+		default:  Serial.printf("%c (%d) - unknown command", cmd, (int)cmd);
 		}
 	}
 }

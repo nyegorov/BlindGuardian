@@ -35,9 +35,9 @@ public:
 		udns_resolver udns;
 		thread([&udns]() { udns.refresh().get(); Sleep(100); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
-		motor_ctrl mot(L"motctrl", udns);
+		motor_ctrl mot(L"blind", L"motctrl", udns);
 		value_t l, t;
-		thread([&mot, &t, &l]() { t = mot.get_sensor('t').get(); l = mot.get_sensor('l').get(); }).join();
+		thread([&mot, &t, &l]() { t = mot.get_sensor_async('t').get(); l = mot.get_sensor_async('l').get(); }).join();
 		Assert::AreEqual(42,   get<int32_t>(t));
 		Assert::AreEqual(7600, get<int32_t>(l));
 	}

@@ -21,9 +21,10 @@ public:
 
 	std::future<value_t> get_sensor_async(uint8_t sensor);
 	value_t get_sensor(uint8_t sensor);
-	std::future<void> send_command_async(uint8_t command);
+	std::future<void> do_action_async(uint8_t command);
 	void send_command(uint8_t command);
 private:
+	std::future<bool> send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf);
 	udns_resolver&	_udns;
 	wstring			_host;
 };
