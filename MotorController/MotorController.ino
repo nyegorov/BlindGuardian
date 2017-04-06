@@ -10,11 +10,12 @@ unsigned int udnsPortIn = 4761;
 unsigned int udnsPortOut = 4762;
 WiFiUDP Udp;
 WiFiServer Tcp(cmdPort);
-char ReplyBuffer[255] = { 0 };
 IPAddress multicast_group(239, 255, 1, 2);
 
 int32_t get_temp() { return 42; }
-int32_t get_light() {return 7600; }
+int32_t get_light() {return 76000; }
+void open_blind() {}
+void close_blind() {}
 
 void write(WiFiClient& client, int32_t value)
 {
@@ -55,9 +56,8 @@ void setup() {
 	Serial.print("IP address:\t");
 	Serial.println(WiFi.localIP());           // Send the IP address of the ESP8266 to the computer*/
 
-	if(!MDNS.begin(host_name)) {             // Start the mDNS responder for motctrl.local
-		Serial.println("Error setting up MDNS responder!");
-	}
+	//if(!MDNS.begin(host_name)) 		Serial.println("Error setting up MDNS responder!");
+
 	//Udp.begin(localPortIn);
 	Udp.beginMulticast(WiFi.localIP(), multicast_group, udnsPortIn);
 	Tcp.begin();
@@ -88,6 +88,8 @@ void loop() {
 		switch(cmd) {
 		case 't': write(client, get_temp()); break;
 		case 'l': write(client, get_light()); break;
+		case 'o': open_blind(); break;
+		case 'c': close_blind(); break;
 		}
 	}
 }

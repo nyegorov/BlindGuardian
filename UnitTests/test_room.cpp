@@ -58,9 +58,12 @@ namespace UnitTests
 			DumbRemote remote('l', 42);
 			DumbSensor ts(L"temp", 24);
 			time_sensor tm(L"time");
-			remote_sensor ls(L"light", 'l');
+			udns_resolver udns;
+			motor_ctrl motc(L"localhost", udns);
+			remote_sensor ls(L"light", 'l', motc);
 			DumbMotor mot1(L"mot1"), mot2(L"mot2"), mot3(L"mot3");
-			room_server re(p, 
+			room_server re(p);
+			re.init(
 				{ &ts, &ls, &tm },
 				{ &mot1, &mot2, &mot3 }
 			);
@@ -100,7 +103,8 @@ namespace UnitTests
 
 			DumbSensor ts(L"temp", 0);
 			DumbMotor mot1(L"mot1"), mot2(L"mot2");
-			room_server re(p, { &ts }, { &mot1, &mot2 } );
+			room_server re(p);
+			re.init( { &ts }, { &mot1, &mot2 } );
 
 			// temperature
 			re.run();
@@ -139,13 +143,15 @@ namespace UnitTests
 			write_rules(p1, rules);
 			DumbSensor ts(L"temp", 35);
 			DumbMotor mot1(L"mot1"), mot2(L"mot2");
-			room_server re(p1, { &ts }, { &mot1, &mot2 } );
+			room_server re(p1);
+			re.init( { &ts }, { &mot1, &mot2 } );
 			re.run();
 			Assert::AreEqual(100, get<int32_t>(mot1.value()));
 			Assert::AreEqual(50, get<int32_t>(mot2.value()));
 			auto s1 = re.get_rules();
 			write_rules(p2, s1);
-			room_server re2(p2, { &ts }, { &mot1, &mot2 });
+			room_server re2(p2);
+			re2.init( { &ts }, { &mot1, &mot2 });
 			re2.run();
 			auto s2 = re2.get_rules();
 			Assert::AreEqual(s1, s2);

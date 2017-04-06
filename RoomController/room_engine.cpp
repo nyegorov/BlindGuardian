@@ -5,9 +5,15 @@ using namespace winrt::Windows::Data::Json;
 
 namespace roomctrl {
 
-room_server::room_server(const path& db_path, const vec_sensors &sensors, const vec_actuators &actuators) :
-	_sensors(sensors), _actuators(actuators), _rules(db_path)
+room_server::room_server(const path& db_path) : _rules(db_path)
 {
+	init({ &_temp_in, &_temp_out, &_light, &_motion, &_time }, { &_motctrl });
+}
+
+void room_server::init(const vec_sensors &sensors, const vec_actuators &actuators)
+{
+	_sensors = sensors;
+	_actuators = actuators;
 	for(auto& ps : _sensors) {
 		_parser.set(ps->name(), ps);
 		_parser.set(ps->name() + L".min", [ps](auto&) {return ps->min(); });
@@ -34,7 +40,11 @@ wstring room_server::get_sensors()
 		json.SetNamedValue(s->name(), is_error(s->value()) ? JsonValue::CreateStringValue(L"--") :
 			JsonValue::CreateNumberValue(std::get<value_type>(*s->value())));
 	}
-	return json.ToString();
+	auto mot_ip = _udns.get_address(_motctrl.host_name());
+	json.SetNamedValue(_motctrl.host_name(), JsonValue::CreateStringValue(mot_ip ? mot_ip.DisplayName() : wstring(L"--")) );
+	JsonObject sensors;
+	sensors.SetNamedValue(L"sensors", json);
+	return sensors.ToString();
 }
 
 value_t room_server::eval(const wchar_t *expr)

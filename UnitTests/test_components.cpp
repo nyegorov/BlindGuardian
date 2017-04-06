@@ -54,18 +54,18 @@ namespace UnitTests
 			DumbSensor ts(L"temp", 24);
 			DumbSensor ls(L"light", 2000);
 			DumbRemote remote('t', 42);
-			remote_sensor rls(L"light", 'l');
+			udns_resolver udns;
+			motor_ctrl motc(L"localhost", udns);
+			remote_sensor rls(L"light", 'l', motc);
 
 			NScript ns;
 			ns.set(L"myfunc", [](auto& p) {return p[0]; });
 			ns.set(L"t", [&]() {return ts.value(); });
 			ns.set(L"l", [&]() {return ls.value(); });
 			Assert::AreEqual(value_t{ error_t::name_not_found }, ns.eval(L"my_func(3)"));
-			rls.update();
-			Assert::AreEqual(value_t{ error_t::not_implemented }, rls.value());
-			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t + l"));
-			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t == l"));
-			//Assert::AreEqual(value_t{ error_t::type_mismatch }, ns.eval(L"t < l"));
+			Assert::AreEqual(value_t{ error_t::name_not_found }, ns.eval(L"my_var"));
+			//rls.update();
+			//Assert::AreEqual(value_t{ error_t::not_implemented }, rls.value());
 		}
 		TEST_METHOD(RulesExecution)
 		{

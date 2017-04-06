@@ -2,6 +2,8 @@
 
 #pragma comment(lib, "windowsapp") 
 
+#define _ENABLE_ATOMIC_ALIGNMENT_FIX
+
 #include "winrt\base.h"
 #include "winrt\Windows.Devices.Enumeration.h"
 #include "winrt\Windows.Networking.Sockets.h"

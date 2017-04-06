@@ -5,6 +5,8 @@
 
 #pragma once
 
+#define _ENABLE_ATOMIC_ALIGNMENT_FIX
+
 #pragma comment(lib, "windowsapp")
 
 #include "winrt\base.h"

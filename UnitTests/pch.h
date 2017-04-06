@@ -7,6 +7,8 @@
 
 #include "targetver.h"
 
+#define _ENABLE_ATOMIC_ALIGNMENT_FIX
+
 #include "winrt\base.h"
 #include "winrt\Windows.ApplicationModel.Background.h"
 #include "winrt\Windows.Data.Json.h"
@@ -21,7 +23,6 @@
 // Headers for CppUnitTest
 #include "CppUnitTest.h"
 
-// TODO: reference additional headers your program requires here
 #include <algorithm>
 #include <chrono>
 #include <codecvt>

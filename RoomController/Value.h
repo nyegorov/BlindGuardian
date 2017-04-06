@@ -6,6 +6,7 @@ namespace roomctrl
 #undef min
 #undef max
 using std::wstring;
+using std::wstring_view;
 using std::vector;
 
 struct i_sensor;

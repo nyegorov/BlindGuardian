@@ -42,6 +42,7 @@ public:
 		auto cmd = reader.ReadByte();
 		if(cmd == _cmd_byte) {
 			DataWriter writer(args.Socket().OutputStream());
+			writer.ByteOrder(ByteOrder::LittleEndian);
 			writer.WriteUInt32(cmd == _cmd_byte ? _value : 0);
 			co_await writer.StoreAsync();
 		}
@@ -52,7 +53,6 @@ class DumbSensor : public sensor
 {
 public:
 	DumbSensor(const wchar_t *name, value_type val) : sensor(name, val) { }
-	void set(value_type val) { _value = val; _min = std::min(_min, _value); _max = std::max(_max, _value); }
 	void update() {}
 };
 

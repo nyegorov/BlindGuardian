@@ -48,7 +48,8 @@ value_t& Context::Get(const wstring& name, bool local)
 			if(p != plane.end()) return	p->second;
 		}
 	}
-	return _locals.back()[name] = value_t{};
+	//return _locals.back()[name] = value_t{};
+	throw error_t::name_not_found;
 }
 
 bool Context::Get(const wstring& name, value_t& result) const

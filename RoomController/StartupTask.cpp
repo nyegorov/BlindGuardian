@@ -16,7 +16,7 @@ debugstream debug;
 
 namespace roomctrl {
 
-StartupTask::StartupTask() : _server(path(wstring(ApplicationData::Current().LocalFolder().Path())) / "rules.json", {}, {})
+StartupTask::StartupTask() : _server(path(wstring(ApplicationData::Current().LocalFolder().Path())) / "rules.json")
 {
 }
 
@@ -27,19 +27,15 @@ void StartupTask::Run(IBackgroundTaskInstance taskInstance)
 	InitGpio();
 
 	TimerElapsedHandler handler([this](ThreadPoolTimer timer) {
-		pinValue = (pinValue == GpioPinValue::High) ? GpioPinValue::Low : GpioPinValue::High;
-		pin.Write(pinValue);
+		//pinValue = (pinValue == GpioPinValue::High) ? GpioPinValue::Low : GpioPinValue::High;
+		//pin.Write(pinValue);
+		_server.run();
 	});
 
-	TimeSpan interval = 500ms;
+	TimeSpan interval = 1000ms;
 	Timer = ThreadPoolTimer::CreatePeriodicTimer(handler, interval);
 
 	_server.start();
-/*	std::wifstream ifs(L"status.json", std::ios::binary);
-	ifs.imbue(std::locale{ std::locale(), new std::codecvt_utf8<wchar_t>() });
-	wstringstream str;
-	str << ifs.rdbuf();
-	wstring content = str.str();*/
 }
 
 void StartupTask::InitGpio()

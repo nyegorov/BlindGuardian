@@ -3,6 +3,7 @@
 #include "debug_stream.h"
 
 using namespace winrt::Windows::Networking;
+using namespace winrt::Windows::Networking::Connectivity;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Networking::Connectivity;
 using namespace winrt::Windows::Storage::Streams;
@@ -33,6 +34,7 @@ void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessa
 
 udns_resolver::udns_resolver()
 {
+	_names.emplace(L"localhost", HostName(L"localhost"));
 }
 
 udns_resolver::~udns_resolver()
@@ -51,8 +53,10 @@ std::future<void> udns_resolver::refresh()
 		DataWriter writer(os);
 		writer.WriteByte('$');
 		co_await writer.StoreAsync();
-	} catch(const winrt::hresult_error& hr) {
+	} catch(winrt::hresult_error& hr) {
+		OutputDebugStringW(L"UDNS: ");
 		OutputDebugStringW(wstring(hr.message()).c_str());
+		OutputDebugStringW(L"\n");
 	}
 	co_return;
 }
