@@ -33,7 +33,7 @@ public:
 
 	i_sensor* get_light()	{ return &_light; }
 	i_sensor* get_temp()	{ return &_temp; }
-	bool online()			{ return _online; }
+	bool online()			{ return _retries < 5; }
 
 	std::future<void> do_action(uint8_t command);
 protected:
@@ -44,7 +44,7 @@ protected:
 	udns_resolver&		_udns;
 	wstring				_host;
 	std::atomic<bool>	_inprogress{ false };
-	std::atomic<bool>	_online{ false };
+	std::atomic<int>	_retries{ 0 };
 	remote_sensor		_light{ L"light", *this };
 	remote_sensor		_temp{ L"temp_out", *this };
 };

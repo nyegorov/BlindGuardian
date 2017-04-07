@@ -120,9 +120,9 @@ std::future<void> motor_ctrl::update_sensors()
 	if(ok) {
 		_light.set(cmd.light);
 		_temp.set(cmd.temp);
-		_online = true;
+		_retries = 0;
 	} else {
-		_online = false;
+		_retries++;
 	}
 	_inprogress = false;
 }
