@@ -5,23 +5,33 @@
 
 char host_name[] = "motctrl";
 
-unsigned int cmdPort = 4760;
-unsigned int udnsPortIn = 4761;
-unsigned int udnsPortOut = 4762;
+const unsigned int cmdPort = 4760;
+const unsigned int udnsPortIn = 4761;
+const unsigned int udnsPortOut = 4762;
 WiFiUDP Udp;
 WiFiServer Tcp(cmdPort);
-IPAddress multicast_group(239, 255, 1, 2);
+IPAddress multicast_group(224, 0, 2, 100);
 
-int32_t get_temp() { 
-	int32_t temp = 42;
-	Serial.printf("ask temp (%d)\n", (int)temp);
-	return temp;
+int32_t	light = 0;
+int8_t	temp_out = 0;
+
+#pragma pack(push, 1)
+union cmd_buf {
+	struct {
+		uint8_t status;
+		uint8_t temp;
+		uint32_t light;
+	};
+	uint8_t data[6];
+};
+#pragma pack(pop)
+
+uint8_t update_sensors() { 
+	temp_out = 42;
+	light = 76000;
+	return 0;
 }
-int32_t get_light() {
-	int32_t light = 76000;
-	Serial.printf("ask light (%d)\n", (int)light);
-	return light;
-}
+
 void open_blind() {
 	Serial.println("blind opened!");
 }
@@ -37,6 +47,7 @@ void write(WiFiClient& client, int32_t value)
 
 void announce(char *hostname, const IPAddress& addr)
 {
+  Serial.printf("# - announce: %s -> ", hostname); Serial.println(addr);
 	WiFiUDP udp;
 	//udp.beginPacket(IPAddress(255,255,255,255), localPortOut);
 	udp.beginPacketMulticast(multicast_group, udnsPortOut, addr);
@@ -67,6 +78,8 @@ void setup() {
 	Serial.println(WiFi.SSID());              // Tell us what network we're connected to
 	Serial.print("IP address:\t");
 	Serial.println(WiFi.localIP());           // Send the IP address of the ESP8266 to the computer*/
+  Serial.print("Multicast group:\t");
+  Serial.println(multicast_group);           // IP address for the name discovery*/
 
 	//if(!MDNS.begin(host_name)) 		Serial.println("Error setting up MDNS responder!");
 
@@ -83,26 +96,33 @@ void loop() {
 	if(Udp.parsePacket()) {
 		// read the packet into packetBufffer
 		char cmd = Udp.read();
+    Udp.flush();
 		switch(cmd) {
 		case '$':
 			Serial.print("$ - uDNS query, remote IP: "); Serial.println(Udp.remoteIP());
 			announce(host_name, WiFi.localIP());
-			break;
+			return;
 		}
-		Udp.flush();
 	}
 
 	WiFiClient client = Tcp.available();
+	cmd_buf response;
 	if(client) {
 		while(!client.available())  delay(1);
 		char cmd = client.read();
 		client.flush();
 		switch(cmd) {
-		case 't': write(client, get_temp()); break;
-		case 'l': write(client, get_light()); break;
+		case 's': 
+			response.status = update_sensors();
+			response.light = light;
+			response.temp = temp_out;
+			Serial.printf("s - status: %02x, temp: %d, light: %d\n", response.status, (int)temp_out, light);
+			//Serial.print(".");
+			client.write((uint8_t*)response.data, sizeof(response));
+      return;
 		case 'o': open_blind(); break;
 		case 'c': close_blind(); break;
-		default:  Serial.printf("%c (%d) - unknown command", cmd, (int)cmd);
+		default:  Serial.printf("%c (%d) - unknown command\n", cmd, (int)cmd);
 		}
 	}
 }

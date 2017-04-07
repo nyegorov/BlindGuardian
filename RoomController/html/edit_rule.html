@@ -1,11 +1,18 @@
 <HTML>
 <HEAD>
+    <meta name="viewport" content="width=400, initial-scale=1">
     <TITLE>Add/Edit blind control rules</TITLE>
     <style type="text/css">
         h1 {
             font-family: segoe-ui_light, 'Segoe UI Light', 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
             font-weight: normal;
             color: #0066cc;
+        }
+        h3 {
+            font-family: segoe-ui_normal, 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
+            font-weight: normal;
+            margin-bottom: 4px;
+            color: #003366;
         }
         body {
             font-family: segoe-ui_normal, 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
@@ -43,6 +50,10 @@
         load_rule(rule_id);
 
         window.onload = function () {
+            var siteWidth = 400;
+            var scale = screen.width / siteWidth
+            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale + '');
+
             if (rule_id == 0) {
                 header.innerHTML = "Add rule";
                 delete_rule.hidden = true;
@@ -53,31 +64,17 @@
     </script>
     <h1 id="header">Edit rule</h1>
     <form action="status" method="post" accept-charset="utf-8">
-        <p>Rule name<br />
-        <input id="rule_name" name="rule_name" type="text" required="required" size="80"></p>
-        Condition
-        <table>
-            <tr>
-                <td><textarea id="condition" cols="36" name="condition" rows="7"></textarea></td>
-                <td style="color:green">Available sensors:<br />
-                    <B>temp_in</B> - inner temperature<br />
-                    <B>temp_out</B> - outer temperature<br />
-                    <B>light</B> - light sensor<br />
-                    <B>inactivity</B> - motion detector</td>
-            </tr>
-        </table>
-        <br />Action
-        <table>
-            <tr>
-                <td><textarea id="action" cols="36" name="action" rows="4"></textarea></td>
-                <td style="color:green">Available actions:<br />
-                    <B>blind.open()</B> - open blinds<br />
-                    <B>blind.close()</B> - close blinds<br />
-            </tr>
-        </table>
-        <br />
+        <h3>Rule name</h3>
+        <input id="rule_name" name="rule_name" type="text" required="required" size="48"><br />
+        <h3>Condition</h3>
+        <textarea id="condition" cols="46" name="condition" rows="7"></textarea><br />
+        <span style="color:green">Sensors: <B>temp_in, temp_out, light, inactivity, time</B></span><br />
+        <h3>Action</h3>
+        <textarea id="action" cols="46" name="action" rows="4"></textarea><br />
+        <span style="color:green">Actions: <B>blind.open(), blind.close()</B></span>
+        <br /><br />
         <button id="save_rule" name="save_rule" value="rule_id" type="submit">Save</button>
         <button id="delete_rule" name="delete_rule" value="rule_id">Delete</button>
-    </form>
+</form>
 </BODY>
 </HTML>

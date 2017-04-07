@@ -55,16 +55,15 @@ namespace UnitTests
 				{ L"r3", L"time - lasttime >= 5 && time - lasttime < 6", L"mot1.set_pos(42)" },
 				{ L"r4", L"light > 1000", L"mot3.open()" },
 			});
-			DumbRemote remote('l', 42);
+			DumbRemote remote(42, 0);
 			DumbSensor ts(L"temp", 24);
 			time_sensor tm(L"time");
 			udns_resolver udns;
 			motor_ctrl motc(L"blind", L"localhost", udns);
-			remote_sensor ls(L"light", 'l', motc);
 			DumbMotor mot1(L"mot1"), mot2(L"mot2"), mot3(L"mot3");
 			room_server re(p);
 			re.init(
-				{ &ts, &ls, &tm },
+				{ &ts, motc.get_light(), &tm },
 				{ &mot1, &mot2, &mot3 }
 			);
 
@@ -87,8 +86,11 @@ namespace UnitTests
 
 			// remote
 			Assert::AreEqual(0, get<int32_t>(mot3.value()));
-			remote.set(2000);
+			remote.set_light(2000);
 			re.run();
+			Sleep(100);
+			re.run();
+			Sleep(100);
 			Assert::AreEqual(100, get<int32_t>(mot3.value()));
 
 			filesystem::remove(p);

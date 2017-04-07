@@ -35,8 +35,6 @@ private:
 	udns_resolver	_udns;
 	motor_ctrl		_motctrl{ L"blind", L"motctrl", _udns };
 
-	remote_sensor	_temp_out{  L"temp_out",  't', _motctrl };
-	remote_sensor	_light{ L"light", 'l', _motctrl };
 	time_sensor		_time{ L"time" };
 	missing_sensor	_temp_in{ L"temp_in" };
 	missing_sensor	_motion{ L"inactivity" };

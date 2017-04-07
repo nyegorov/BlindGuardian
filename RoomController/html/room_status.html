@@ -1,5 +1,6 @@
 ﻿<HTML>
 <head><meta charset="utf-8">
+    <meta name="viewport" content="width=400, initial-scale=1">
     <title>Show values from various room sensors</title>
     <style type="text/css">
         h1 {
@@ -88,12 +89,18 @@
             temp_out.innerHTML = room.sensors.temp_out;
             light.innerHTML = room.sensors.light;
             inactivity.innerHTML = room.sensors.inactivity;
-            mot_ip.innerHTML = room.sensors.motctrl == '' ? "offline" : "online: " + room.sensors.motctrl;
+            mot_ip.innerHTML = room.sensors.motctrl == '' ? '<p class="error">offline</p>' : '<p class="active">online: ' + room.sensors.motctrl + '</p>';
             //pos.innerHTML = room.position == 0 ? 'closed' : (room.position == 100 ? 'open' : room.position);
         }
 
         load_status();
         setInterval(load_status, 5000);
+
+        window.onload = function () {
+            var siteWidth = 400;
+            var scale = screen.width / siteWidth
+            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale + '');
+        }
     </script>
     <h1>Room status</h1>
     <table class="sensors">

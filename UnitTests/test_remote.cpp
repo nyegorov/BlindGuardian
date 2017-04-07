@@ -23,23 +23,23 @@ public:
 	TEST_METHOD(MicroDNS)
 	{
 		udns_resolver udns;
-		thread([&udns]() { udns.refresh().get(); Sleep(100); }).join();
+		thread([&udns]() { udns.start().get(); Sleep(100); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
 		udns_resolver udns1;
-		thread([&udns1]() { udns1.refresh().get(); Sleep(100); }).join();
+		thread([&udns1]() { udns1.start().get(); Sleep(100); }).join();
 		Assert::IsTrue(udns1.get_address(L"motctrl") != nullptr);
 	}
 
 	TEST_METHOD(RemoteSensors)
 	{
 		udns_resolver udns;
-		thread([&udns]() { udns.refresh().get(); Sleep(100); }).join();
+		thread([&udns]() { udns.start().get(); Sleep(100); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
 		motor_ctrl mot(L"blind", L"motctrl", udns);
 		value_t l, t;
-		thread([&mot, &t, &l]() { t = mot.get_sensor_async('t').get(); l = mot.get_sensor_async('l').get(); }).join();
-		Assert::AreEqual(42,   get<int32_t>(t));
-		Assert::AreEqual(7600, get<int32_t>(l));
+		thread([&mot]() { mot.get_light()->update(); Sleep(500); }).join();
+		Assert::AreEqual(42,   get<int32_t>(mot.get_temp()->value()));
+		Assert::AreEqual(76000,get<int32_t>(mot.get_light()->value()));
 	}
 
 };

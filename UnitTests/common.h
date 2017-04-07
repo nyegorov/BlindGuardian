@@ -22,12 +22,14 @@ template<> inline std::wstring ToString<value_t>(const value_t& v) {
 class DumbRemote
 {
 	uint8_t					_cmd_byte;
-	value_type				_value;
+	value_type				_temp;
+	value_type				_light;
 	StreamSocketListener	_listener;
 public:
-	DumbRemote(uint8_t cmd, value_type val) : _value(val), _cmd_byte(cmd) { listen(); }
+	DumbRemote(value_type temp, value_type light) : _temp(temp), _light(light) { listen(); }
 
-	void set(value_type val) { _value = val; }
+	void set_temp(value_type val) { _temp = val; }
+	void set_light(value_type val) { _light = val; }
 	std::future<void> listen() {
 		_listener.ConnectionReceived([this](auto&& listener, auto&& args) { on_connect(listener, args); });
 		co_await _listener.BindServiceNameAsync(L"4760");
@@ -40,10 +42,12 @@ public:
 		DataReader reader(args.Socket().InputStream());
 		co_await reader.LoadAsync(sizeof(uint8_t));
 		auto cmd = reader.ReadByte();
-		if(cmd == _cmd_byte) {
+		if(cmd == 's') {
 			DataWriter writer(args.Socket().OutputStream());
 			writer.ByteOrder(ByteOrder::LittleEndian);
-			writer.WriteUInt32(cmd == _cmd_byte ? _value : 0);
+			writer.WriteByte(0);
+			writer.WriteByte((int8_t)_temp);
+			writer.WriteUInt32(_light);
 			co_await writer.StoreAsync();
 		}
 	}

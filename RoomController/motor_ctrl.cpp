@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "common.h"
 #include "motor_ctrl.h"
 #include "debug_stream.h"
 
@@ -16,117 +17,125 @@ namespace roomctrl {
 
 motor_ctrl::motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns) : actuator(name), _udns(udns), _host(remote_host)
 {
-
+	_light.set(error_t::not_implemented);
+	_temp.set(error_t::not_implemented);
 }
 
 motor_ctrl::~motor_ctrl()
 {
 }
 
-union uint_buf {
-	uint32_t u32;
-	uint8_t u8[4];
+#pragma pack(push, 1)
+union cmd_buf {
+	struct {
+		uint8_t status;
+		uint8_t temp;
+		uint32_t light;
+	};
+	uint8_t data[6];
 };
+#pragma pack(pop)
+/*
+bool motor_ctrl::send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf)
+{
+	try {
+		if(!host)	return false;
+		StreamSocket socket;
+		auto conn_action = socket.ConnectAsync(host, cmd_port, SocketProtectionLevel::PlainSocket);
+		auto start = std::chrono::high_resolution_clock::now();
+		while(true) {
+			auto status = conn_action.Status();
+			if(status == AsyncStatus::Completed)	break;
+			if(status == AsyncStatus::Error)		return false;
+			if(std::chrono::high_resolution_clock::now() - start > 500ms) {
+				log_hresult(L"MOTC", winrt::hresult_canceled());
+				conn_action.Cancel();
+				return false;
+			}
+			Sleep(10);
+		}
+		DataWriter writer(socket.OutputStream());
+		writer.WriteByte(cmd);
+		if(inbuf.size())	writer.WriteBytes(inbuf);
+		writer.StoreAsync().get();
+
+		if(outbuf.size() > 0)	{
+			DataReader reader(socket.InputStream());
+			reader.LoadAsync(outbuf.size()).get();
+			reader.ByteOrder(ByteOrder::LittleEndian);
+			reader.ReadBytes(outbuf);
+		}
+		//socket.Close();
+		return true;
+	} catch(winrt::hresult_error& hr) {
+		log_hresult(L"MOTC", hr);
+	}
+	return false;
+}*/
 
 std::future<bool> motor_ctrl::send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf)
 {
 	try {
 		if(!host)	co_return false;
 		StreamSocket socket;
-		auto conn = socket.ConnectAsync(host, cmd_port, SocketProtectionLevel::PlainSocket);
+		auto conn_action = socket.ConnectAsync(host, cmd_port, SocketProtectionLevel::PlainSocket);
 		auto start = std::chrono::high_resolution_clock::now();
 		while(true) {
-			auto status = conn.Status();
+			auto status = conn_action.Status();
 			if(status == AsyncStatus::Completed)	break;
 			if(status == AsyncStatus::Error)		co_return false;
 			if(std::chrono::high_resolution_clock::now() - start > 500ms) {
-				OutputDebugStringW(L"MOTC: timeout\n");
-				conn.Cancel();
+				log_hresult(L"MOTC", winrt::hresult_canceled());
+				conn_action.Cancel();
 				co_return false;
 			}
 			co_await 10ms;
 		}
 		DataWriter writer(socket.OutputStream());
 		writer.WriteByte(cmd);
-		writer.WriteBytes(inbuf);
+		if(!inbuf.empty())	writer.WriteBytes(inbuf);
 		co_await writer.StoreAsync();
 
-		DataReader reader(socket.InputStream());
-		co_await reader.LoadAsync(outbuf.size());
-		reader.ByteOrder(ByteOrder::LittleEndian);
-		reader.ReadBytes(outbuf);
-		socket.Close();
+		if(!outbuf.empty()) {
+			DataReader reader(socket.InputStream());
+			co_await reader.LoadAsync(outbuf.size());
+			reader.ByteOrder(ByteOrder::LittleEndian);
+			reader.ReadBytes(outbuf);
+		}
+		//socket.Close();
 		co_return true;
 	} catch(winrt::hresult_error& hr) {
-		OutputDebugStringW(L"MOTC.send_cmd: ");
-		OutputDebugStringW(wstring(hr.message()).c_str());
-		OutputDebugStringW(L"\n");
+		log_hresult(L"MOTC", hr);
 	}
 	co_return false;
 }
 
-std::future<value_t> motor_ctrl::get_sensor_async(uint8_t sensor)
+std::future<void> motor_ctrl::update_sensors()
 {
+	if(_inprogress)	co_return;
+	_inprogress = true;
 	co_await winrt::resume_background();
-	uint_buf buf;
-	bool ok = co_await send_cmd(_udns.get_address(_host), sensor, {}, buf.u8);
-	if(ok)	co_return buf.u32;
-
-	co_await _udns.refresh();
-	co_return error_t::not_implemented;
-}
-
-value_t motor_ctrl::get_sensor(uint8_t sensor)
-{
-	try {
-		auto host = _udns.get_address(_host);
-		StreamSocket socket;
-		socket.ConnectAsync(host, cmd_port, SocketProtectionLevel::PlainSocket).get();
-		DataWriter writer(socket.OutputStream());
-		writer.WriteByte(sensor);
-		writer.StoreAsync().get();
-
-		DataReader reader(socket.InputStream());
-		reader.LoadAsync(4).get();
-		reader.ByteOrder(ByteOrder::LittleEndian);
-		auto value = reader.ReadUInt32();
-		return value;
-	} catch(winrt::hresult_error& hr) {
-		OutputDebugStringW(L"MOTC.get_sensor: ");
-		OutputDebugStringW(wstring(hr.message()).c_str());
-		OutputDebugStringW(L"\n");
+	cmd_buf cmd;
+	bool ok = co_await send_cmd(_udns.get_address(_host), 's', {}, cmd.data);
+	if(ok) {
+		_light.set(cmd.light);
+		_temp.set(cmd.temp);
+		_online = true;
+	} else {
+		_online = false;
 	}
-	_udns.refresh();
-	return error_t::not_implemented;
+	_inprogress = false;
 }
 
-std::future<void> motor_ctrl::do_action_async(uint8_t action)
+std::future<void> motor_ctrl::do_action(uint8_t action)
 {
 	co_await send_cmd(_udns.get_address(_host), action, {}, {});
 	co_return;
 }
 
-void motor_ctrl::send_command(uint8_t sensor)
-{
-	try {
-		auto host = _udns.get_address(_host);
-		StreamSocket socket;
-		socket.ConnectAsync(host, cmd_port, SocketProtectionLevel::PlainSocket).get();
-		DataWriter writer(socket.OutputStream());
-		writer.WriteByte(sensor);
-		writer.StoreAsync().get();
-	} catch(winrt::hresult_error& hr) {
-		OutputDebugStringW(L"MOTC.send_command: ");
-		OutputDebugStringW(wstring(hr.message()).c_str());
-		OutputDebugStringW(L"\n");
-	}
-	_udns.refresh();
-}
-
 void remote_sensor::update()
 {
-	set(_remote.get_sensor_async(_cmdbyte).get());
-	//set(_remote.get_sensor(_cmdbyte));
+	_remote.update_sensors();
 }
 
 }

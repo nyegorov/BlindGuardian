@@ -13,10 +13,11 @@ class udns_resolver
 	mutable std::mutex			_mutex;
 	DatagramSocket				_socket;
 	std::map<wstring, HostName>	_names;
-	HostName					_multicast_group{ L"239.255.1.2" };
+	HostName					_multicast_group{ L"224.0.2.100" };
 public:
 	udns_resolver();
 	~udns_resolver();
+	std::future<void> start();
 	std::future<void> refresh();
 	HostName get_address(const std::wstring& name) const;
 };

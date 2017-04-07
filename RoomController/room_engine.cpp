@@ -7,7 +7,7 @@ namespace roomctrl {
 
 room_server::room_server(const path& db_path) : _rules(db_path)
 {
-	init({ &_temp_in, &_temp_out, &_light, &_motion, &_time }, { &_motctrl });
+	init({ &_temp_in, _motctrl.get_temp(), _motctrl.get_light(), &_motion, &_time }, { &_motctrl });
 }
 
 void room_server::init(const vec_sensors &sensors, const vec_actuators &actuators)
@@ -41,7 +41,7 @@ wstring room_server::get_sensors()
 			JsonValue::CreateNumberValue(std::get<value_type>(*s->value())));
 	}
 	auto mot_ip = _udns.get_address(_motctrl.host_name());
-	json.SetNamedValue(_motctrl.host_name(), JsonValue::CreateStringValue(mot_ip ? mot_ip.DisplayName() : L"") );
+	json.SetNamedValue(_motctrl.host_name(), JsonValue::CreateStringValue(_motctrl.online() && mot_ip ? mot_ip.DisplayName() : L"") );
 	JsonObject sensors;
 	sensors.SetNamedValue(L"sensors", json);
 	return sensors.ToString();
@@ -54,7 +54,7 @@ value_t room_server::eval(const wchar_t *expr)
 
 std::future<void> room_server::start()
 {
-	co_await _udns.refresh();
+	co_await _udns.start();
 	_server.add(L"/", L"html/room_status.html");
 	_server.add(L"/status", L"html/room_status.html");
 	_server.add(L"/edit", L"html/edit_rule.html");
@@ -63,7 +63,10 @@ std::future<void> room_server::start()
 	_server.add(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
 	_server.add(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
 	_server.add(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
-	_server.add_action(L"set_pos", [this](auto&, auto& value) { });
+	_server.add_action(L"set_pos", [this](auto&, auto& value) { 
+		if(std::stoul(value) == 100)	_motctrl.open();
+		if(std::stoul(value) == 0)		_motctrl.close();
+	});
 	_server.add_action(L"save_rule", [this](auto& req, auto& value) {
 		_rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s] });
 	});

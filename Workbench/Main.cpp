@@ -36,12 +36,7 @@ std::future<void> test() {
 
 	for(;;) {
 		srv.run();
-		auto t1 = std::chrono::high_resolution_clock::now();
 		co_await 1s;
-		auto t2 = std::chrono::high_resolution_clock::now();
-		if(t2 - t1 > 1500ms) {
-			cout << "#";
-		}
 		cout << ".";
 	}
 

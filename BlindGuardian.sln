@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.10
+VisualStudioVersion = 15.0.26403.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RoomController", "RoomController\RoomController.vcxproj", "{F3038CCB-C88B-42DE-9BEC-D116DCC19C87}"
 EndProject
@@ -64,6 +64,7 @@ Global
 		{D8A9D25F-485F-493E-AB2E-9ED16C22903A}.Release|x86.ActiveCfg = Release|Win32
 		{D8A9D25F-485F-493E-AB2E-9ED16C22903A}.Release|x86.Build.0 = Release|Win32
 		{079790FD-97A0-428D-BF8D-83D24C1D6A56}.Debug|ARM.ActiveCfg = Debug|Win32
+		{079790FD-97A0-428D-BF8D-83D24C1D6A56}.Debug|ARM.Build.0 = Debug|Win32
 		{079790FD-97A0-428D-BF8D-83D24C1D6A56}.Debug|ESP8266.ActiveCfg = Debug|Win32
 		{079790FD-97A0-428D-BF8D-83D24C1D6A56}.Debug|x64.ActiveCfg = Debug|x64
 		{079790FD-97A0-428D-BF8D-83D24C1D6A56}.Debug|x64.Build.0 = Debug|x64
@@ -77,8 +78,8 @@ Global
 		{079790FD-97A0-428D-BF8D-83D24C1D6A56}.Release|x86.ActiveCfg = Release|Win32
 		{079790FD-97A0-428D-BF8D-83D24C1D6A56}.Release|x86.Build.0 = Release|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|ARM.ActiveCfg = Debug|Win32
-		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|ESP8266.ActiveCfg = Debug|Win32
-		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|ESP8266.Build.0 = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|ESP8266.ActiveCfg = Release|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|ESP8266.Build.0 = Release|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x64.ActiveCfg = Debug|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.ActiveCfg = Debug|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|ARM.ActiveCfg = Release|Win32

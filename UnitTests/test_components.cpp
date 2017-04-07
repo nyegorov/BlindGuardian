@@ -58,7 +58,6 @@ namespace UnitTests
 			DumbRemote remote('t', 42);
 			udns_resolver udns;
 			motor_ctrl motc(L"blind", L"localhost", udns);
-			remote_sensor rls(L"light", 'l', motc);
 
 			NScript ns;
 			ns.set(L"myfunc", [](auto& p) {return p[0]; });
