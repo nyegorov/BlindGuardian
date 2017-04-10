@@ -1,0 +1,94 @@
+<HTML>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=400, initial-scale=1">
+    <title>Server log</title>
+    <style type="text/css">
+        h1 {
+            font-family: segoe-ui_light, 'Segoe UI Light', 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
+            font-weight: normal;
+            color: #0066cc;
+        }
+
+        body {
+            font-family: segoe-ui_normal, 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
+        }
+
+        .log {
+            width: 100%;
+        }
+
+        .log-header {
+            background-color: steelblue;
+            color: white;
+            font-weight: bold;
+        }
+
+        .log-even {
+            background-color: powderblue
+        }
+
+        .log-odd {
+            background-color: white
+        }
+
+        .error {
+            color: red;
+        }
+
+        .active {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        function load_servlog() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'log.json', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState != 4) return;
+                if (xhr.status == 200) {
+                    var log = JSON.parse(xhr.responseText);
+                    update_log(log);
+                }
+            }
+            xhr.send();
+        };
+
+        function update_log(log) {
+            var html = '';
+            html += '<tr class="log-header">';
+            html += '<td>Type</td>';
+            html += '<td>Timestamp</td>';
+            html += '<td>Elapsed</td>';
+            html += '<td>Module</td>';
+            html += '<td>Message</td>';
+            html += '</tr>';
+
+            start.innerHTML = log.start;
+            for (var i = 0; i < log.entries.length; i++) {
+                html += '<tr class="' + (i % 2 ? 'log-even' : 'log-odd') + '">';
+                html += '<td>' + (log.entries[i].level == 0 ? '<p class="error">Err</p>' : '<p class="active">Msg</p>') + '</td>';
+                html += '<td>' + log.entries[i].timestamp + '</td>';
+                html += '<td align="right">' + log.entries[i].elapsed + '</td>';
+                html += '<td>' + log.entries[i].module + '</td>';
+                html += '<td>' + log.entries[i].message + '</td>';
+                html += '</tr>';
+            }
+            table_log.innerHTML = html;
+        }
+
+        load_servlog();
+
+        window.onload = function () {
+            var siteWidth = 400;
+            var scale = screen.width / siteWidth
+            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale + '');
+        }
+    </script>
+    <h1>Server log</h1>
+    Log started: <span id="start"></span><br/>
+    <table id="table_log" class="log"></table>
+</body>
+</HTML>

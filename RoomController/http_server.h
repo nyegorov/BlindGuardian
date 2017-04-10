@@ -1,5 +1,7 @@
 #pragma once
 
+#include "log_manager.h"
+
 using std::wstring;
 using std::wstring_view;
 using std::wstringstream;
@@ -61,7 +63,7 @@ public:
 	using process_fun_t = std::function<std::tuple<content_type, content_t>(http_request&, http_response&)>;
 	using action_fun_t = std::function<void(http_request&, const wstring& value)>;
 
-	http_server(const wchar_t* port_name, const wchar_t *server_name);
+	http_server(const wchar_t* port_name, const wchar_t *server_name, log_manager& log);
 	std::future<void> start();
 	void add(const wchar_t* url, process_fun_t callback) { _callbacks.emplace( url, callback); }
 	void add(const wchar_t* url, path file_name);
@@ -73,8 +75,9 @@ private:
 	void write_content(DataWriter& writer, const content_t& content);
 	std::future<void> on_connection(StreamSocket socket);
 	
-	wstring _port;
-	wstring _server_name;
+	wstring				_port;
+	wstring				_server_name;
+	log_manager&		_log;
 	StreamSocketListener _listener;
 	std::unordered_map<wstring, content_type>	_content_types;
 	std::unordered_map<wstring, process_fun_t>	_callbacks;

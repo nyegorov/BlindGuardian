@@ -2,6 +2,7 @@
 
 #include "value.h"
 #include "sensors.h"
+#include "log_manager.h"
 #include "udns_resolver.h"
 #include "config_manager.h"
 
@@ -24,7 +25,7 @@ class motor_ctrl : public actuator
 {
 public:
 	friend class remote_sensor;
-	motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns, config_manager& config);
+	motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns, config_manager& config, log_manager& log);
 	~motor_ctrl();
 
 	wstring host_name() const { return _host; }
@@ -42,6 +43,7 @@ protected:
 	std::future<bool> send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf);
 	//bool send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf);
 
+	log_manager&		_log;
 	config_manager&		_config;
 	udns_resolver&		_udns;
 	wstring				_host;

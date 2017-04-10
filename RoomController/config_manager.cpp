@@ -11,28 +11,40 @@ config_manager::~config_manager()
 {
 }
 
-void config_manager::set(const wstring& name, const wstring & value)
+void config_manager::set(const wchar_t name[], const wstring& value)
 {
 	lock_t lock(_mutex);
 	_data.SetNamedValue(name, JsonValue::CreateStringValue(value));
 }
 
-void config_manager::set(const wstring& name, long value)
+void config_manager::set(const wchar_t name[], int value)
 {
 	lock_t lock(_mutex);
 	_data.SetNamedValue(name, JsonValue::CreateNumberValue(value));
 }
 
-wstring config_manager::get(const wstring& name, const wstring& default) const
+void config_manager::set(const wchar_t name[], bool value)
+{
+	lock_t lock(_mutex);
+	_data.SetNamedValue(name, JsonValue::CreateBooleanValue(value));
+}
+
+wstring config_manager::get(const wchar_t name[], const wchar_t default[]) const
 {
 	lock_t lock(_mutex);
 	return _data.GetNamedString(name, default);
 }
 
-long config_manager::get(const wstring& name, long default) const
+int config_manager::get(const wchar_t name[], int default) const
 {
 	lock_t lock(_mutex);
-	return (long)_data.GetNamedNumber(name, default);
+	return (int)_data.GetNamedNumber(name, default);
+}
+
+bool config_manager::get(const wchar_t name[], bool default) const
+{
+	lock_t lock(_mutex);
+	return _data.GetNamedBoolean(name, default);
 }
 
 void config_manager::load()
@@ -57,7 +69,7 @@ void config_manager::save() const
 		ofs.imbue(_utf8_locale);
 		JsonObject json;
 		json.SetNamedValue(L"config", _data);
-		ofs << wstring(json.ToString());
+		ofs << wstring(json.Stringify());
 	} catch(const std::exception&) {
 	}
 }

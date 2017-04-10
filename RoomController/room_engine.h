@@ -1,5 +1,6 @@
 #pragma once
 
+#include "log_manager.h"
 #include "udns_resolver.h"
 #include "motor_ctrl.h"
 #include "sensors.h"
@@ -21,6 +22,7 @@ public:
 	room_server(const path& path);
 	void init(const vec_sensors &sensors, const vec_actuators &actuators);
 	std::future<void> start();
+	wstring get_log();
 	wstring get_rules();
 	wstring get_sensors();
 	void run();
@@ -28,14 +30,15 @@ public:
 	config_manager& config() { return _config; }
 
 private:
-	http_server		_server{ L"80", L"Room configuration server" };
 	rules_db		_rules;
 	vec_sensors		_sensors;
 	vec_actuators	_actuators;
 	NScript			_parser;
+	log_manager		_log;
 	config_manager	_config;
-	udns_resolver	_udns{ _config };
-	motor_ctrl		_motctrl{ L"blind", L"motctrl", _udns, _config };
+	http_server		_server{ L"80", L"Room configuration server", _log };
+	udns_resolver	_udns{ _config, _log };
+	motor_ctrl		_motctrl{ L"blind", L"motctrl", _udns, _config, _log };
 
 	time_sensor		_time{ L"time" };
 	missing_sensor	_temp_in{ L"temp_in" };

@@ -11,12 +11,13 @@ using namespace winrt::Windows::Networking::Connectivity;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Storage::Streams;
 
+const wchar_t module_name[] = L"MOTC";
 const wchar_t cmd_port[] = L"4760";
 
 namespace roomctrl {
 
-motor_ctrl::motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns, config_manager& config) : 
-	actuator(name), _udns(udns), _host(remote_host), _config(config)
+motor_ctrl::motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns, config_manager& config, log_manager& log) : 
+	actuator(name), _udns(udns), _host(remote_host), _config(config), _log(log)
 {
 	_light.set(error_t::not_implemented);
 	_temp.set(error_t::not_implemented);
@@ -85,9 +86,9 @@ std::future<bool> motor_ctrl::send_cmd(HostName host, uint8_t cmd, winrt::array_
 		while(true) {
 			auto status = conn_action.Status();
 			if(status == AsyncStatus::Completed)	break;
-			if(status == AsyncStatus::Error)		co_return false;
+			if(status == AsyncStatus::Error)		throw winrt::hresult_error(conn_action.ErrorCode());
 			if(std::chrono::high_resolution_clock::now() - start > 500ms) {
-				log_message(L"MOTC", L"tcp connect timeout");
+				_log.error(module_name, L"tcp connect timeout");
 				conn_action.Cancel();
 				co_return false;
 			}
@@ -107,7 +108,7 @@ std::future<bool> motor_ctrl::send_cmd(HostName host, uint8_t cmd, winrt::array_
 		//socket.Close();
 		co_return true;
 	} catch(winrt::hresult_error& hr) {
-		log_hresult(L"MOTC", hr);
+		_log.error(module_name, hr);
 	}
 	co_return false;
 }
@@ -122,7 +123,7 @@ std::future<void> motor_ctrl::update_sensors()
 	if(ok) {
 		_light.set(cmd.light);
 		_temp.set(cmd.temp);
-		wdebug << L"MOTC: got status, temp = " << cmd.temp << L", light = " << cmd.light << std::endl;
+		_log.message(module_name, L"status: temp=%d, light=%d", cmd.temp, cmd.light);
 		_retries = 0;
 	} else {
 		_retries++;

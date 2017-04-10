@@ -7,6 +7,8 @@ using namespace winrt::Windows::Storage::Streams;
 
 using winrt::Windows::Foundation::WwwFormUrlDecoder;
 
+const wchar_t module_name[] = L"HTTP";
+
 const wchar_t *status_codes[] = {
 	L"200 OK",
 	L"302 Found",
@@ -60,7 +62,8 @@ http_response http_error(http_status status, http_server::content_t& content)
 	return http_response{ status, content_type::html };
 }
 
-http_server::http_server(const wchar_t* port_name, const wchar_t* server_name) : _port(port_name), _server_name(server_name)
+http_server::http_server(const wchar_t* port_name, const wchar_t* server_name, log_manager& log) : 
+	_port(port_name), _server_name(server_name), _log(log)
 {
 	_content_types.emplace(L".htm"s,	content_type::html);
 	_content_types.emplace(L".html"s,	content_type::html);
@@ -189,7 +192,7 @@ std::future<void> http_server::on_connection(StreamSocket socket)
 			if (!read_request(socket.InputStream(), content))	co_return;
 			parse_request(content, req);
 
-			OutputDebugStringW((req.type + L" " + req.path + L"\r\n").c_str());
+			_log.message(module_name, L"%s %s", req.type.c_str(), req.path.c_str());
 
 			for(auto p : req.params) {
 				auto pc = _actions.find(p.first);
@@ -219,9 +222,11 @@ std::future<void> http_server::on_connection(StreamSocket socket)
 		co_await writer.StoreAsync();
 		co_return;
 	} catch(winrt::hresult_error& hr) {
-		log_hresult(L"HTTP", hr);
+		_log.error(module_name, hr);
+	} catch(std::exception& ex) {
+		_log.error(module_name, ex);
 	}	catch (...) {
-		log_message(L"HTTP", L"oops, unknown error.");
+		_log.error(module_name, L"unknown error");
 	}
 }
 

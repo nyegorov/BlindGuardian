@@ -244,6 +244,9 @@
     <None Include="html\room_status.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="html\server_log.html">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="packages.config" />
     <None Include="status.json">
       <DeploymentContent>true</DeploymentContent>
@@ -262,10 +265,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActivationFactory.h" />
+    <ClInclude Include="circular_buffer.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="config_manager.h" />
     <ClInclude Include="debug_stream.h" />
     <ClInclude Include="http_server.h" />
+    <ClInclude Include="log_manager.h" />
     <ClInclude Include="motor_ctrl.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="pch.h" />
@@ -280,6 +285,7 @@
     <ClCompile Include="ActivationFactory.cpp" />
     <ClCompile Include="config_manager.cpp" />
     <ClCompile Include="http_server.cpp" />
+    <ClCompile Include="log_manager.cpp" />
     <ClCompile Include="motor_ctrl.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="pch.cpp">

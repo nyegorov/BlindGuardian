@@ -20,6 +20,7 @@ StartupTask::StartupTask() : _server(path(wstring(ApplicationData::Current().Loc
 {
 	_server.config().set(L"poll_interval", 1000);
 	_server.config().set(L"socket_timeout", 500);
+	_server.config().set(L"enable_debug", true);
 }
 
 void StartupTask::Run(IBackgroundTaskInstance taskInstance)

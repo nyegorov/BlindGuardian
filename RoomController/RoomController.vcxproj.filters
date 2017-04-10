@@ -58,6 +58,9 @@
     <ClCompile Include="config_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="log_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="http_server.h">
@@ -102,6 +105,12 @@
     <ClInclude Include="config_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="log_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="circular_buffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -116,6 +125,9 @@
     <None Include="status.json" />
     <None Include="packages.config" />
     <None Include="config.json" />
+    <None Include="html\server_log.html">
+      <Filter>Html</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">

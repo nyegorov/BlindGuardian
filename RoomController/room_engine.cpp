@@ -7,6 +7,7 @@ namespace roomctrl {
 
 room_server::room_server(const path& path) : _rules(path / "rules.json"), _config(path / "config.json")
 {
+	_log.enable_debug(_config.get(L"enable_debug", false));
 	init({ &_temp_in, _motctrl.get_temp(), _motctrl.get_light(), &_motion, &_time }, { &_motctrl });
 }
 
@@ -26,6 +27,11 @@ void room_server::init(const vec_sensors &sensors, const vec_actuators &actuator
 			_parser.set(obj + L"." + paction->name(), [paction](auto& p) {return paction->activate(p), value_t{ 1 }; });
 		}
 	}
+}
+
+wstring room_server::get_log()
+{
+	return _log.to_string();
 }
 
 wstring room_server::get_rules()
@@ -58,12 +64,14 @@ std::future<void> room_server::start()
 	_server.add(L"/", L"html/room_status.html");
 	_server.add(L"/status", L"html/room_status.html");
 	_server.add(L"/edit", L"html/edit_rule.html");
+	_server.add(L"/log", L"html/server_log.html");
 	_server.add(L"/back.jpg", L"html/img/background.jpg");
 	_server.add(L"/favicon.ico", L"html/img/favicon.ico");
 	_server.add(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
 	_server.add(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
 	_server.add(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
-	_server.add_action(L"set_pos", [this](auto&, auto& value) { 
+	_server.add(L"/log.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_log()); });
+	_server.add_action(L"set_pos", [this](auto&, auto& value) {
 		if(std::stoul(value) == 100)	_motctrl.open();
 		if(std::stoul(value) == 0)		_motctrl.close();
 	});

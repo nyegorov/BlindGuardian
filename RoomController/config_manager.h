@@ -16,11 +16,13 @@ class config_manager
 public:
 	config_manager(const path& storage);
 	~config_manager();
-	void set(const wstring& name, const wstring& value);
-	void set(const wstring& name, long value);
+	void set(const wchar_t name[], const wstring& value);
+	void set(const wchar_t name[], int value);
+	void set(const wchar_t name[], bool value);
 
-	wstring get(const wstring& name, const wstring&  default = L"") const;
-	long get(const wstring& name, long default) const;
+	wstring get(const wchar_t name[], const wchar_t default[] = L"") const;
+	int get(const wchar_t name[], int default) const;
+	bool get(const wchar_t name[], bool default) const;
 
 	void load();
 	void save() const;

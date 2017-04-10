@@ -4,6 +4,7 @@
 #include "motor_ctrl.h"
 #include "udns_resolver.h"
 #include "room_engine.h"
+#include "log_manager.h"
 
 using namespace winrt;
 using namespace std;
@@ -45,5 +46,19 @@ std::future<void> test() {
 int main()
 {
 	init_apartment();
+
+	log_manager log;
+	try
+	{
+		log.message(L"WORK", L"message");
+		//throw hresult_canceled();
+		throw std::runtime_error("somthing wrong");
+	} catch(const std::exception &ex)	{
+		log.error(L"WORK", ex);
+	} catch(const winrt::hresult_error& hr)	{
+		log.error(L"WORK", hr);
+	}
+	wstring s = log.to_string();
+
 	test().get();
 }
