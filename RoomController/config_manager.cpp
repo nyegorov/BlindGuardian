@@ -4,6 +4,7 @@
 
 config_manager::config_manager(const path & config) : _config(config)
 {
+	load();
 }
 
 config_manager::~config_manager()

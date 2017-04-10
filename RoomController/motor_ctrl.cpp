@@ -122,6 +122,7 @@ std::future<void> motor_ctrl::update_sensors()
 	if(ok) {
 		_light.set(cmd.light);
 		_temp.set(cmd.temp);
+		wdebug << L"MOTC: got status, temp = " << cmd.temp << L", light = " << cmd.light << std::endl;
 		_retries = 0;
 	} else {
 		_retries++;
