@@ -16,14 +16,15 @@ debugstream debug;
 
 namespace roomctrl {
 
-StartupTask::StartupTask() : _server(path(wstring(ApplicationData::Current().LocalFolder().Path())) / "rules.json")
+StartupTask::StartupTask() : _server(path(wstring(ApplicationData::Current().LocalFolder().Path())))
 {
+	_server.config().set(L"poll_interval", 1000);
+	_server.config().set(L"socket_timeout", 500);
 }
 
 void StartupTask::Run(IBackgroundTaskInstance taskInstance)
 {
 	Deferral = taskInstance.GetDeferral();
-	OutputDebugString(msg);
 	InitGpio();
 
 	TimerElapsedHandler handler([this](ThreadPoolTimer timer) {
@@ -32,10 +33,12 @@ void StartupTask::Run(IBackgroundTaskInstance taskInstance)
 		_server.run();
 	});
 
-	TimeSpan interval = 1000ms;
+	TimeSpan interval = milliseconds(_server.config().get(L"poll_interval", 1000));
 	Timer = ThreadPoolTimer::CreatePeriodicTimer(handler, interval);
 
 	_server.start();
+
+	OutputDebugString(msg);
 }
 
 void StartupTask::InitGpio()

@@ -10,7 +10,7 @@ const unsigned int udnsPortIn = 4761;
 const unsigned int udnsPortOut = 4762;
 WiFiUDP Udp;
 WiFiServer Tcp(cmdPort);
-IPAddress multicast_group(224, 0, 2, 100);
+IPAddress multicast_group(224, 0, 0, 100);
 
 int32_t	light = 0;
 int8_t	temp_out = 0;
@@ -101,7 +101,7 @@ void loop() {
 		case '$':
 			Serial.print("$ - uDNS query, remote IP: "); Serial.println(Udp.remoteIP());
 			announce(host_name, WiFi.localIP());
-			return;
+			break;
 		}
 	}
 
@@ -119,11 +119,16 @@ void loop() {
 			Serial.printf("s - status: %02x, temp: %d, light: %d\n", response.status, (int)temp_out, light);
 			//Serial.print(".");
 			client.write((uint8_t*)response.data, sizeof(response));
-      return;
+      break;
 		case 'o': open_blind(); break;
 		case 'c': close_blind(); break;
 		default:  Serial.printf("%c (%d) - unknown command\n", cmd, (int)cmd);
 		}
+   while(client.connected()) delay(1);
+   client.stop();
 	}
+
+  long  fh = ESP.getFreeHeap();
+  Serial.printf(": %d\n", (int)fh);
 }
 

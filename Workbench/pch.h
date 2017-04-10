@@ -9,6 +9,7 @@
 #include "winrt\Windows.Networking.Sockets.h"
 #include "winrt\Windows.Networking.Connectivity.h"
 #include "winrt\Windows.Storage.Streams.h"
+#include "winrt\Windows.Data.Json.h"
 
 #include <algorithm>
 #include <chrono>

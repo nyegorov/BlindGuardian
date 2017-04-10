@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "common.h"
 #include "http_server.h"
 
 using namespace std::string_literals;
@@ -217,8 +218,10 @@ std::future<void> http_server::on_connection(StreamSocket socket)
 		if(resp.content_size > 0)	write_content(writer, answer);
 		co_await writer.StoreAsync();
 		co_return;
+	} catch(winrt::hresult_error& hr) {
+		log_hresult(L"HTTP", hr);
 	}	catch (...) {
-		OutputDebugStringW(L"oops...\r\n");
+		log_message(L"HTTP", L"oops, unknown error.");
 	}
 }
 

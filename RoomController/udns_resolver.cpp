@@ -29,11 +29,15 @@ void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessa
 	ws << ip_addr[0] << '.' << ip_addr[1] << '.' << ip_addr[2] << '.' << ip_addr[3];
 	wdebug << L"# - announce: " << name << L" -> " << ws.str() << std::endl;
 
+	// persistence
+	_config.set(name, ws.str());
+	_config.save();
+
 	lock_t lock(_mutex);
 	_names.emplace(name, ws.str());
 }
 
-udns_resolver::udns_resolver()
+udns_resolver::udns_resolver(config_manager& config) : _config(config)
 {
 	_names.emplace(L"localhost", HostName(L"localhost"));
 	//_names.emplace(L"motctrl", HostName(L"192.168.6.53"));
@@ -75,5 +79,7 @@ HostName udns_resolver::get_address(const std::wstring& name) const
 {
 	lock_t lock(_mutex);
 	auto it = _names.find(name);
-	return it == _names.end() ? HostName{ nullptr } : it->second;
+	if(it != _names.end()) return it->second;
+	auto ip = _config.get(name, L"");
+	return ip.empty() ? HostName{ nullptr } : HostName{ ip };
 }

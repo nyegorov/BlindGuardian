@@ -10,6 +10,13 @@ inline long long gettime() {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
 }
 
+inline void log_message(const wchar_t *module, const wchar_t *message)
+{
+	wchar_t buf[1024];
+	swprintf(buf, _countof(buf), L"% 8lld %s: %s\n", gettime(), module, message);
+	OutputDebugStringW(buf);
+}
+
 inline void log_hresult(const wchar_t *module, const winrt::hresult_error& hr)
 {
 	wchar_t buf[1024];

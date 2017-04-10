@@ -22,24 +22,28 @@ public:
 
 	TEST_METHOD(MicroDNS)
 	{
-		udns_resolver udns;
-		thread([&udns]() { udns.start().get(); Sleep(100); }).join();
+		config_manager cm{ "config.db" };
+		udns_resolver udns{ cm };
+		thread([&udns]() { udns.start().get(); Sleep(500); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
-		udns_resolver udns1;
-		thread([&udns1]() { udns1.start().get(); Sleep(100); }).join();
+		udns_resolver udns1{ cm };
+		thread([&udns1]() { udns1.start().get(); Sleep(500); }).join();
 		Assert::IsTrue(udns1.get_address(L"motctrl") != nullptr);
+		filesystem::remove("config.db" );
 	}
 
 	TEST_METHOD(RemoteSensors)
 	{
-		udns_resolver udns;
+		config_manager cm{ "config.db" };
+		udns_resolver udns{ cm };
 		thread([&udns]() { udns.start().get(); Sleep(100); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
-		motor_ctrl mot(L"blind", L"motctrl", udns);
+		motor_ctrl mot(L"blind", L"motctrl", udns, cm);
 		value_t l, t;
 		thread([&mot]() { mot.get_light()->update(); Sleep(500); }).join();
 		Assert::AreEqual(42,   get<int32_t>(mot.get_temp()->value()));
 		Assert::AreEqual(76000,get<int32_t>(mot.get_light()->value()));
+		filesystem::remove("config.db");
 	}
 
 };

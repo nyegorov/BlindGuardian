@@ -15,10 +15,12 @@ const wchar_t cmd_port[] = L"4760";
 
 namespace roomctrl {
 
-motor_ctrl::motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns) : actuator(name), _udns(udns), _host(remote_host)
+motor_ctrl::motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns, config_manager& config) : 
+	actuator(name), _udns(udns), _host(remote_host), _config(config)
 {
 	_light.set(error_t::not_implemented);
 	_temp.set(error_t::not_implemented);
+	_timeout = std::chrono::milliseconds(_config.get(L"poll_interval", 500));
 }
 
 motor_ctrl::~motor_ctrl()
@@ -26,7 +28,7 @@ motor_ctrl::~motor_ctrl()
 }
 
 #pragma pack(push, 1)
-union cmd_buf {
+union cmd_status {
 	struct {
 		uint8_t status;
 		uint8_t temp;
@@ -85,7 +87,7 @@ std::future<bool> motor_ctrl::send_cmd(HostName host, uint8_t cmd, winrt::array_
 			if(status == AsyncStatus::Completed)	break;
 			if(status == AsyncStatus::Error)		co_return false;
 			if(std::chrono::high_resolution_clock::now() - start > 500ms) {
-				log_hresult(L"MOTC", winrt::hresult_canceled());
+				log_message(L"MOTC", L"tcp connect timeout");
 				conn_action.Cancel();
 				co_return false;
 			}
@@ -115,7 +117,7 @@ std::future<void> motor_ctrl::update_sensors()
 	if(_inprogress)	co_return;
 	_inprogress = true;
 	co_await winrt::resume_background();
-	cmd_buf cmd;
+	cmd_status cmd;
 	bool ok = co_await send_cmd(_udns.get_address(_host), 's', {}, cmd.data);
 	if(ok) {
 		_light.set(cmd.light);

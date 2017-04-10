@@ -5,7 +5,7 @@ using namespace winrt::Windows::Data::Json;
 
 namespace roomctrl {
 
-room_server::room_server(const path& db_path) : _rules(db_path)
+room_server::room_server(const path& path) : _rules(path / "rules.json"), _config(path / "config.json")
 {
 	init({ &_temp_in, _motctrl.get_temp(), _motctrl.get_light(), &_motion, &_time }, { &_motctrl });
 }

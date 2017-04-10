@@ -48,8 +48,8 @@ namespace UnitTests
 
 		TEST_METHOD(Sensors)
 		{
-			path p("test.db");
-			write_rules(p, {
+			path p(".");
+			write_rules(p / "rules.json", {
 				{ L"r1", L"temp > 30", L"mot1.open()" },
 				{ L"r2", L"temp > 30", L"mot2.set_pos(50)" },
 				{ L"r3", L"time - lasttime >= 5 && time - lasttime < 6", L"mot1.set_pos(42)" },
@@ -58,8 +58,9 @@ namespace UnitTests
 			DumbRemote remote(42, 0);
 			DumbSensor ts(L"temp", 24);
 			time_sensor tm(L"time");
-			udns_resolver udns;
-			motor_ctrl motc(L"blind", L"localhost", udns);
+			config_manager cm{ "config.db" };
+			udns_resolver udns{ cm };
+			motor_ctrl motc(L"blind", L"localhost", udns, cm);
 			DumbMotor mot1(L"mot1"), mot2(L"mot2"), mot3(L"mot3");
 			room_server re(p);
 			re.init(
@@ -93,12 +94,12 @@ namespace UnitTests
 			Sleep(100);
 			Assert::AreEqual(100, get<int32_t>(mot3.value()));
 
-			filesystem::remove(p);
+			filesystem::remove(p / "rules.json");
 		}
 		TEST_METHOD(Sensitivity)
 		{
-			path p("test.db");
-			write_rules(p, {
+			path p(".");
+			write_rules(p / "rules.json", {
 				{ L"r1", L"temp > 30", L"mot1.open()" },
 				{ L"r2", L"temp > 30 & temp.min < 25", L"mot2.open(); temp.reset()" },
 			});
@@ -130,11 +131,11 @@ namespace UnitTests
 			ts.set(35); re.run();
 			Assert::AreEqual(100, get<int32_t>(mot1.value()));
 			Assert::AreEqual(100, get<int32_t>(mot2.value()));
-			filesystem::remove(p);
+			filesystem::remove(p / "rules.json");
 		}
 		TEST_METHOD(Json)
 		{
-			path p1("test1.db"), p2("test2.db");
+			path p1(".");
 			auto rules = LR"(
 			{
 				"rules": [
@@ -142,7 +143,7 @@ namespace UnitTests
 					{ "id": 2, "name": "r2", "condition" : "temp > 30", "action" : "mot2.set_pos(50) "}
 				]
 			})";
-			write_rules(p1, rules);
+			write_rules(p1 / "rules.json", rules);
 			DumbSensor ts(L"temp", 35);
 			DumbMotor mot1(L"mot1"), mot2(L"mot2");
 			room_server re(p1);
@@ -151,14 +152,13 @@ namespace UnitTests
 			Assert::AreEqual(100, get<int32_t>(mot1.value()));
 			Assert::AreEqual(50, get<int32_t>(mot2.value()));
 			auto s1 = re.get_rules();
-			write_rules(p2, s1);
-			room_server re2(p2);
+			write_rules(p1 / "rules.json", s1);
+			room_server re2(p1);
 			re2.init( { &ts }, { &mot1, &mot2 });
 			re2.run();
 			auto s2 = re2.get_rules();
 			Assert::AreEqual(s1, s2);
-			filesystem::remove(p1);
-			filesystem::remove(p2);
+			filesystem::remove(p1 / "rules.json");
 		}
 
 

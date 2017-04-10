@@ -3,6 +3,7 @@
 
 #include "../RoomController/parser.h"
 #include "../RoomController/rules_db.h"
+#include "../RoomController/config_manager.h"
 #include "../RoomController/http_server.h"
 #include "../RoomController/debug_stream.h"
 #include "../RoomController/udns_resolver.h"
@@ -56,8 +57,9 @@ namespace UnitTests
 			DumbSensor ts(L"temp", 24);
 			DumbSensor ls(L"light", 2000);
 			DumbRemote remote('t', 42);
-			udns_resolver udns;
-			motor_ctrl motc(L"blind", L"localhost", udns);
+			config_manager cm{ "config.db" };
+			udns_resolver udns{ cm };
+			motor_ctrl motc(L"blind", L"localhost", udns, cm);
 
 			NScript ns;
 			ns.set(L"myfunc", [](auto& p) {return p[0]; });
@@ -93,6 +95,26 @@ namespace UnitTests
 			Assert::AreEqual(24, get<int32_t>(pos));
 		}
 
+		TEST_METHOD(ConfigDatabase)
+		{
+			path p("config.db");
+			filesystem::remove(p);
+			config_manager cm(p);
+			cm.set(L"nkey", 42l);
+			cm.set(L"skey", L"value");
+			Assert::AreEqual(42l, cm.get(L"nkey", 0l));
+			Assert::AreEqual(L"value"s, cm.get(L"skey", L""));
+			cm.set(L"nkey", -42l);
+			cm.set(L"skey", L"another");
+			Assert::AreEqual(-42l, cm.get(L"nkey", 0l));
+			Assert::AreEqual(L"another"s, cm.get(L"skey", L""));
+			cm.save();
+			config_manager cm1(p);
+			cm1.load();
+			Assert::AreEqual(-42l, cm.get(L"nkey", 0l));
+			Assert::AreEqual(L"another"s, cm.get(L"skey", L""));
+			filesystem::remove(p);
+		}
 		TEST_METHOD(RulesDatabase)
 		{
 			path p("test.db");

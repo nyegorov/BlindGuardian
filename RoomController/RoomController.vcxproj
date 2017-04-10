@@ -263,6 +263,7 @@
   <ItemGroup>
     <ClInclude Include="ActivationFactory.h" />
     <ClInclude Include="common.h" />
+    <ClInclude Include="config_manager.h" />
     <ClInclude Include="debug_stream.h" />
     <ClInclude Include="http_server.h" />
     <ClInclude Include="motor_ctrl.h" />
@@ -277,6 +278,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ActivationFactory.cpp" />
+    <ClCompile Include="config_manager.cpp" />
     <ClCompile Include="http_server.cpp" />
     <ClCompile Include="motor_ctrl.cpp" />
     <ClCompile Include="parser.cpp" />
