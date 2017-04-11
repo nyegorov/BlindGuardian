@@ -32,7 +32,7 @@ void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessa
 	_log.message(module_name, L"# - announce: %s -> %s", name.c_str(), ip.c_str());
 
 	// persistence
-	_config.set(name.c_str(), ip);
+	_config.set(name.c_str(), ip.c_str());
 	_config.save();
 
 	lock_t lock(_mutex);

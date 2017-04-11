@@ -38,13 +38,15 @@ public:
 		log_manager log;
 		config_manager cm{ "config.db" };
 		udns_resolver udns{ cm, log };
-		thread([&udns]() { udns.start().get(); Sleep(100); }).join();
+		thread([&udns]() { udns.start().get(); Sleep(500); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
 		motor_ctrl mot(L"blind", L"motctrl", udns, cm, log);
 		value_t l, t;
-		thread([&mot]() { mot.get_light()->update(); Sleep(500); }).join();
-		Assert::AreEqual(42,   get<int32_t>(mot.get_temp()->value()));
-		Assert::AreEqual(76000,get<int32_t>(mot.get_light()->value()));
+		mot.get_light()->update();
+		auto temp = get<int32_t>(mot.get_temp()->value());
+		auto light = get<int32_t>(mot.get_light()->value());
+		Assert::IsTrue(temp >= 42 && temp < 50);
+		Assert::IsTrue(light >= 76000 && temp < 77000);
 		filesystem::remove("config.db");
 	}
 

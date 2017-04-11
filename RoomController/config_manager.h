@@ -16,7 +16,7 @@ class config_manager
 public:
 	config_manager(const path& storage);
 	~config_manager();
-	void set(const wchar_t name[], const wstring& value);
+	void set(const wchar_t name[], const wchar_t value[]);
 	void set(const wchar_t name[], int value);
 	void set(const wchar_t name[], bool value);
 

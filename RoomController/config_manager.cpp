@@ -11,7 +11,7 @@ config_manager::~config_manager()
 {
 }
 
-void config_manager::set(const wchar_t name[], const wstring& value)
+void config_manager::set(const wchar_t name[], const wchar_t value[])
 {
 	lock_t lock(_mutex);
 	_data.SetNamedValue(name, JsonValue::CreateStringValue(value));
