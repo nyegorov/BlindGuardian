@@ -1,41 +1,9 @@
-﻿<HTML>
-<head><meta charset="utf-8">
+﻿<html>
+<head>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=400, initial-scale=1">
     <title>Room status</title>
-    <style type="text/css">
-        h1 {
-            font-family: segoe-ui_light, 'Segoe UI Light', 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
-            font-weight: normal;
-            color: #0066cc;
-        }
-        body {
-            font-family: segoe-ui_normal, 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
-        }
-        .sensors {}
-        .sensor-row {
-            width: 197px;
-        }
-        .actions {
-            width: 100%;
-            text-align: center;
-        }
-        .rules {
-            width: 100%;
-        }
-        .rules-header {
-            background-color: steelblue; 
-            color: white; 
-            font-weight: bold;
-        }
-        .rules-even {
-            background-color: powderblue
-        }
-        .rules-odd {
-            background-color: white
-        }
-        .error { color: red; }
-        .active{ color: green; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <script>
@@ -67,15 +35,11 @@
         };
 
         function update_rules(room) {
-            var html = '';
-            html += '<tr class="rules-header">';
-            html += '<td>Rule</td>';
-            html += '<td>Status</td>';
-            html += '</tr>';
+            var html = '<thead><tr class="row-header"><td>Rule</td><td>Status</td></tr></thead>';
 
             for (var i = 0; i < room.rules.length; i++) {
                 id = room.rules[i].id;
-                html += '<tr class="' + (i % 2 ? 'rules-even' : 'rules-odd') + '" onclick="edit_rule(' + id + ')">';
+                html += '<tr class="' + (i % 2 ? 'row-even' : 'row-odd') + '" onclick="edit_rule(' + id + ')">';
                 html += '<td><a href="edit?id=' + id + '">' + room.rules[i].name + '</a></td>';
                 status = room.rules[i].status;
                 html += '<td>' + (status == 0 ? '<p class="error">Failed</p>' : (status == 1 ? '<p class="active">Active</p>' : 'Inactive')) + '</td>';
@@ -102,39 +66,27 @@
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale + '');
         }
     </script>
+
     <h1>Room status</h1>
-    <table class="sensors">
-        <tr>
-            <td class="sensor-row">Inner temperature</td>
-            <td><span id="temp_in">--</span>&deg;C</td>
-        </tr>
-        <tr>
-            <td class="sensor-row">Outer temperature</td>
-            <td><span id="temp_out">--</span>&deg;C</td>
-        </tr>
-        <tr>
-            <td class="sensor-row">Light</td>
-            <td><span id="light">--</span> lux</td>
-        </tr>
-        <tr>
-            <td class="sensor-row">Motion detector</td>
-            <td><span id="inactivity">--</span> minutes of inactivity</td>
-        </tr>
-        <tr>
-            <td class="sensor-row">Position</td>
-            <td><span id="pos"></span></td>
-        </tr>
-        <tr>
-            <td class="sensor-row">Motor controller</td>
-            <td><span id="mot_ip"></span></td>
-        </tr>
+
+    <!-- sensors -->
+    <table>
+        <tr><td class="sensor-row">Inner temperature</td>   <td><span id="temp_in">--</span>&deg;C</td></tr>
+        <tr><td class="sensor-row">Outer temperature</td>   <td><span id="temp_out">--</span>&deg;C</td></tr>
+        <tr><td class="sensor-row">Light</td>               <td><span id="light">--</span> lux</td></tr>
+        <tr><td class="sensor-row">Motion detector</td>     <td><span id="inactivity">--</span> minutes of inactivity</td></tr>
+        <tr><td class="sensor-row">Position</td>            <td><span id="pos"></span></td></tr>
+        <tr><td class="sensor-row">Motor controller</td>    <td><span id="mot_ip"></span></td></tr>
     </table>
     <hr />
-    <table id="rules" class="rules">
-    </table>
+
+    <!-- rules -->
+    <table id="rules" style="width:100%"></table>
     <button id="add_rule" onclick="edit_rule(0)">Add rule...</Button>
     <hr />
-    <table class="actions">
+
+    <!-- action bar -->
+    <table style="width:100%; text-align:center">
         <tr>           
             <td><form action="status" method="post"><button id="open_blind" name="set_pos" value="100">Open blinds</button></form></td>
             <td><form action="status" method="post"><button id="close_blinds" name="set_pos" value="0">Close blinds</button></form></td>
@@ -142,4 +94,4 @@
         </tr>
     </table>
 </body>
-</HTML>
+</html>

@@ -1,38 +1,20 @@
 <HTML>
 <HEAD>
     <meta name="viewport" content="width=400, initial-scale=1">
-    <TITLE>Add/Edit blind control rules</TITLE>
-    <style type="text/css">
-        h1 {
-            font-family: segoe-ui_light, 'Segoe UI Light', 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
-            font-weight: normal;
-            color: #0066cc;
-        }
-        h3 {
-            font-family: segoe-ui_normal, 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
-            font-weight: normal;
-            margin-bottom: 4px;
-            color: #003366;
-        }
-        body {
-            font-family: segoe-ui_normal, 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
-            font-size: medium;
-        }
-    </style>
-</HEAD>
-<BODY>
+    <title>Add/Edit blind control rules</title>
+    <link rel="stylesheet" href="styles.css">
     <script>
-        function GetURLParameter(sParam)    {
+        function GetURLParameter(sParam) {
             var sPageURL = window.location.search.substring(1);
             var sURLVariables = sPageURL.split('&');
-            for (var i = 0; i < sURLVariables.length; i++)  {
+            for (var i = 0; i < sURLVariables.length; i++) {
                 var sParameterName = sURLVariables[i].split('=');
-                if (sParameterName[0] == sParam)    return sParameterName[1];
+                if (sParameterName[0] == sParam) return sParameterName[1];
             }
         }
         function load_rule(id) {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'rule.json?id='+id, true);
+            xhr.open('GET', 'rule.json?id=' + id, true);
             xhr.onreadystatechange = function () {
                 if (xhr.readyState != 4) return;
                 if (xhr.status == 200) {
@@ -60,20 +42,25 @@
                 delete_rule.hidden = true;
             }
         }
-        
+
         document.addEventListener('keyup', (event) => { if (event.keyCode == 27) history.back(); }, false);
     </script>
+</HEAD>
+<BODY>
     <h1 id="header">Edit rule</h1>
     <form action="status" method="post" accept-charset="utf-8">
         <h3>Rule name</h3>
         <input id="rule_name" name="rule_name" type="text" required="required" size="48"><br />
+
         <h3>Condition</h3>
         <textarea id="condition" cols="46" name="condition" rows="7"></textarea><br />
         <span style="color:green">Sensors: <B>temp_in, temp_out, light, inactivity, time</B></span><br />
+
         <h3>Action</h3>
         <textarea id="action" cols="46" name="action" rows="4"></textarea><br />
-        <span style="color:green">Actions: <B>blind.open(), blind.close()</B></span></br>
+        <span style="color:green">Actions: <B>blind.open(), blind.close()</B></span><br/>
         <br />
+
         <button id="save_rule" name="save_rule" value="rule_id" type="submit">Save</button>
         <button id="delete_rule" name="delete_rule" value="rule_id">Delete</button>
 </form>

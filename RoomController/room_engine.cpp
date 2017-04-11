@@ -65,6 +65,7 @@ std::future<void> room_server::start()
 	_server.add(L"/status", L"html/room_status.html");
 	_server.add(L"/edit", L"html/edit_rule.html");
 	_server.add(L"/log", L"html/server_log.html");
+	_server.add(L"/styles.css", L"html/styles.css");
 	_server.add(L"/back.jpg", L"html/img/background.jpg");
 	_server.add(L"/favicon.ico", L"html/img/favicon.ico");
 	_server.add(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });

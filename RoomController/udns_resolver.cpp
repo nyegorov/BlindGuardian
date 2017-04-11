@@ -29,7 +29,6 @@ void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessa
 	std::wstringstream ws;
 	ws << ip_addr[0] << '.' << ip_addr[1] << '.' << ip_addr[2] << '.' << ip_addr[3];
 	wstring ip = ws.str();
-	//wdebug << L"# - announce: " << name << L" -> " << ws.str() << std::endl;
 	_log.message(module_name, L"# - announce: %s -> %s", name.c_str(), ip.c_str());
 
 	// persistence

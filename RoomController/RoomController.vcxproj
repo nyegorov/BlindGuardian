@@ -247,6 +247,9 @@
     <None Include="html\server_log.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="html\styles.css">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="packages.config" />
     <None Include="status.json">
       <DeploymentContent>true</DeploymentContent>

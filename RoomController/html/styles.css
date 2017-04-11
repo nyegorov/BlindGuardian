@@ -1,0 +1,31 @@
+h1 {
+    font-family: segoe-ui_light, 'Segoe UI Light', 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
+    font-weight: normal;
+    color: #0066cc;
+}
+
+h3 {
+    font-family: segoe-ui_normal, 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
+    font-weight: normal;
+    margin-bottom: 4px;
+    color: #003366;
+}
+
+body {
+    font-family: segoe-ui_normal, 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', Helvetica, sans-serif;
+    font-size: medium;
+}
+
+thead {
+    background-color: steelblue;
+    color: white;
+    font-weight: bold;
+}
+
+.row-even { background-color: powderblue }
+.row-odd { background-color: white }
+
+.sensor-row { width: 197px; }
+
+.error { color: red; }
+.active { color: green; }
