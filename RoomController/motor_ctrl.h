@@ -23,6 +23,8 @@ public:
 
 class motor_ctrl : public actuator
 {
+	using IAsyncInfo = winrt::Windows::Foundation::IAsyncInfo;
+	using StreamSocket = winrt::Windows::Networking::Sockets::StreamSocket;
 public:
 	friend class remote_sensor;
 	motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns, config_manager& config, log_manager& log);
@@ -35,18 +37,20 @@ public:
 
 	i_sensor* get_light()	{ return &_light; }
 	i_sensor* get_temp()	{ return &_temp; }
-	bool online()			{ return _retries < 5; }
+	bool online()			{ return _retries < 3; }
 
-	std::future<void> do_action(uint8_t command);
 protected:
-	std::future<void> update_sensors();
-	std::future<bool> send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf);
-	//bool send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf);
+	bool wait_timeout(IAsyncInfo action);
+	bool connect(HostName host);
+	void do_action(uint8_t command);
+	bool send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf);
+	void update_sensors();
 
 	log_manager&		_log;
 	config_manager&		_config;
 	udns_resolver&		_udns;
 	wstring				_host;
+	StreamSocket		_socket{ nullptr };
 	std::chrono::milliseconds	_timeout;
 	std::atomic<bool>	_inprogress{ false };
 	std::atomic<int>	_retries{ 0 };

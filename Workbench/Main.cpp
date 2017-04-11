@@ -33,11 +33,13 @@ std::future<void> test() {
 	co_return;*/
 	path p("test.db");
 	room_server srv(p);
+	srv.config().set(L"motctrl", L"192.168.6.53");
+	srv.config().set(L"enable_debug", true);
 	co_await srv.start();
 
 	for(;;) {
-		srv.run();
 		co_await 1s;
+		srv.run();
 		cout << ".";
 	}
 
@@ -46,19 +48,5 @@ std::future<void> test() {
 int main()
 {
 	init_apartment();
-
-	log_manager log;
-	try
-	{
-		log.message(L"WORK", L"message");
-		//throw hresult_canceled();
-		throw std::runtime_error("somthing wrong");
-	} catch(const std::exception &ex)	{
-		log.error(L"WORK", ex);
-	} catch(const winrt::hresult_error& hr)	{
-		log.error(L"WORK", hr);
-	}
-	wstring s = log.to_string();
-
 	test().get();
 }

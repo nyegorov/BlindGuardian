@@ -57,9 +57,10 @@ namespace UnitTests
 			DumbSensor ts(L"temp", 24);
 			DumbSensor ls(L"light", 2000);
 			DumbRemote remote('t', 42);
+			log_manager log;
 			config_manager cm{ "config.db" };
-			udns_resolver udns{ cm };
-			motor_ctrl motc(L"blind", L"localhost", udns, cm);
+			udns_resolver udns{ cm, log };
+			motor_ctrl motc(L"blind", L"localhost", udns, cm, log);
 
 			NScript ns;
 			ns.set(L"myfunc", [](auto& p) {return p[0]; });
@@ -102,16 +103,16 @@ namespace UnitTests
 			config_manager cm(p);
 			cm.set(L"nkey", 42l);
 			cm.set(L"skey", L"value");
-			Assert::AreEqual(42l, cm.get(L"nkey", 0l));
+			Assert::AreEqual(42, cm.get(L"nkey", 0));
 			Assert::AreEqual(L"value"s, cm.get(L"skey", L""));
-			cm.set(L"nkey", -42l);
+			cm.set(L"nkey", -42);
 			cm.set(L"skey", L"another");
-			Assert::AreEqual(-42l, cm.get(L"nkey", 0l));
+			Assert::AreEqual(-42, cm.get(L"nkey", 0));
 			Assert::AreEqual(L"another"s, cm.get(L"skey", L""));
 			cm.save();
 			config_manager cm1(p);
 			cm1.load();
-			Assert::AreEqual(-42l, cm.get(L"nkey", 0l));
+			Assert::AreEqual(-42, cm.get(L"nkey", 0));
 			Assert::AreEqual(L"another"s, cm.get(L"skey", L""));
 			filesystem::remove(p);
 		}
@@ -158,7 +159,8 @@ namespace UnitTests
 			string test("abc\0\1\2ονυ", 9);
 			ofs.write(test.c_str(), test.size());
 			ofs.close();
-			http_server srv(L"666", L"unit test server");
+			log_manager log;
+			http_server srv(L"666", L"unit test server", log);
 			wstring value;
 			srv.add(L"/",	  [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"MAIN"); });
 			srv.add(L"/test", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"OK"); });

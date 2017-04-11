@@ -23,10 +23,11 @@ public:
 	TEST_METHOD(MicroDNS)
 	{
 		config_manager cm{ "config.db" };
-		udns_resolver udns{ cm };
+		log_manager log;
+		udns_resolver udns{ cm, log };
 		thread([&udns]() { udns.start().get(); Sleep(500); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
-		udns_resolver udns1{ cm };
+		udns_resolver udns1{ cm, log };
 		thread([&udns1]() { udns1.start().get(); Sleep(500); }).join();
 		Assert::IsTrue(udns1.get_address(L"motctrl") != nullptr);
 		filesystem::remove("config.db" );
@@ -34,11 +35,12 @@ public:
 
 	TEST_METHOD(RemoteSensors)
 	{
+		log_manager log;
 		config_manager cm{ "config.db" };
-		udns_resolver udns{ cm };
+		udns_resolver udns{ cm, log };
 		thread([&udns]() { udns.start().get(); Sleep(100); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
-		motor_ctrl mot(L"blind", L"motctrl", udns, cm);
+		motor_ctrl mot(L"blind", L"motctrl", udns, cm, log);
 		value_t l, t;
 		thread([&mot]() { mot.get_light()->update(); Sleep(500); }).join();
 		Assert::AreEqual(42,   get<int32_t>(mot.get_temp()->value()));

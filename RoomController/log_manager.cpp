@@ -11,7 +11,7 @@ wstring to_string(const log_entry& entry)
 
 	wchar_t buf[1024];
 	auto level = entry.level == log_level::error ? L"ERR" : L"MSG";
-	swprintf(buf, sizeof(buf) / sizeof(buf[0]), L"% 2d:%02d:%02d (% 8lld) [%s.%s] %s", tm.tm_hour, tm.tm_min, tm.tm_sec, entry.elapsed, entry.module, level, entry.message.c_str());
+	swprintf(buf, sizeof(buf) / sizeof(buf[0]), L"% 2d:%02d:%02d (%.3lf) [%s.%s] %s", tm.tm_hour, tm.tm_min, tm.tm_sec, entry.elapsed / 1000., entry.module, level, entry.message.c_str());
 	return wstring(buf);
 }
 

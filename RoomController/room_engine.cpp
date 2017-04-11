@@ -7,7 +7,6 @@ namespace roomctrl {
 
 room_server::room_server(const path& path) : _rules(path / "rules.json"), _config(path / "config.json")
 {
-	_log.enable_debug(_config.get(L"enable_debug", false));
 	init({ &_temp_in, _motctrl.get_temp(), _motctrl.get_light(), &_motion, &_time }, { &_motctrl });
 }
 
@@ -60,6 +59,7 @@ value_t room_server::eval(const wchar_t *expr)
 
 std::future<void> room_server::start()
 {
+	_log.enable_debug(_config.get(L"enable_debug", false));
 	co_await _udns.start();
 	_server.add(L"/", L"html/room_status.html");
 	_server.add(L"/status", L"html/room_status.html");
