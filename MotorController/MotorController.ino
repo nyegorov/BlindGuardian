@@ -57,7 +57,6 @@ void announce(char *hostname, IPAddress addr)
 }
 
 void on_wifi_event(WiFiEvent_t event) {
-  Serial.println();
   Serial.printf("[WiFi-event] event: %d\n", event);
   switch(event) {
     case WIFI_EVENT_STAMODE_GOT_IP: break;
@@ -73,14 +72,16 @@ void on_wifi_event(WiFiEvent_t event) {
 void setup() {
 	// put your setup code here, to run once:
 	Serial.begin(115200);
+  Serial.println("");
+  Serial.println("Motor controller setup");
 
 	WiFi.hostname(host_name);
-  WiFi.setAutoReconnect(true);
-  WiFi.onEvent(on_wifi_event);
+  //WiFi.setAutoReconnect(true);
+  //WiFi.onEvent(on_wifi_event);
   
 	WiFiManager wifiManager;
-  wifiManager.setTimeout(60);
-  if(!wifiManager.autoConnect("Akutron", "877D4754A1")) {
+  //wifiManager.setTimeout(180);
+  if(!wifiManager.autoConnect("Motctrl_AP")) {
     delay(3000);
     ESP.reset();
     delay(5000); 

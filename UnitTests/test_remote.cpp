@@ -42,7 +42,7 @@ public:
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
 		motor_ctrl mot(L"blind", L"motctrl", udns, cm, log);
 		value_t l, t;
-		mot.get_light()->update();
+		mot.get_temp()->update();
 		auto temp = get<int32_t>(mot.get_temp()->value());
 		auto light = get<int32_t>(mot.get_light()->value());
 		Assert::IsTrue(temp >= 42 && temp < 50);

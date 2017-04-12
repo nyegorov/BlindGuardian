@@ -14,9 +14,10 @@ class motor_ctrl;
 
 class remote_sensor : public sensor
 {
+	bool		_master;
 	motor_ctrl& _remote;
 public:
-	remote_sensor(const wchar_t *name, motor_ctrl& remote) : sensor(name), _remote(remote) { }
+	remote_sensor(const wchar_t *name, motor_ctrl& remote, bool master) : sensor(name), _remote(remote), _master(master) { }
 	void update() override;
 
 };
@@ -51,11 +52,10 @@ protected:
 	udns_resolver&		_udns;
 	wstring				_host;
 	StreamSocket		_socket{ nullptr };
-	std::chrono::milliseconds	_timeout;
 	std::atomic<bool>	_inprogress{ false };
 	std::atomic<int>	_retries{ 0 };
-	remote_sensor		_light{ L"light", *this };
-	remote_sensor		_temp{ L"temp_out", *this };
+	remote_sensor		_temp{ L"temp_out", *this, true };
+	remote_sensor		_light{ L"light", *this, false };
 };
 
 }

@@ -24,15 +24,19 @@ class log_manager
 	bool _enable_debug{ false };
 
 	using lock_t = std::lock_guard<std::mutex>;
+	using path_t = std::experimental::filesystem::path;
 	mutable	std::mutex	_mutex;
+	path_t _path;
 	circular_buffer<log_entry>	_log{ 1000 };
 	std::chrono::time_point<std::chrono::high_resolution_clock>	_start_time;
 	std::chrono::time_point<std::chrono::system_clock>			_start_time_sys;
 public:
 	log_manager();
+	log_manager(path_t path);
 	~log_manager();
 
 	wstring to_string();
+	void dump();
 	void enable_debug(bool enable) { _enable_debug = enable; }
 	void error(const wchar_t module[], const wchar_t message[]);
 	void error(const wchar_t module[], const winrt::hresult_error& hr);

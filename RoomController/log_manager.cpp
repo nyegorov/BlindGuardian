@@ -21,6 +21,12 @@ log_manager::log_manager()
 	_start_time_sys = std::chrono::system_clock::now();
 }
 
+log_manager::log_manager(path_t path) : _path(path)
+{
+	_start_time = std::chrono::high_resolution_clock::now();
+	_start_time_sys = std::chrono::system_clock::now();
+	std::experimental::filesystem::remove(path);
+}
 
 log_manager::~log_manager()
 {
@@ -39,7 +45,18 @@ void log_manager::log(log_level level, const wchar_t module[], const wchar_t mes
 	if(_enable_debug) {
 		OutputDebugStringW(::to_string(_log.back()).c_str());
 		OutputDebugStringW(L"\n");
+		if(!_path.empty() && _log.size() == _log.capacity()) {
+			dump();
+		}
 	}
+}
+
+void log_manager::dump() {
+	try {
+		std::wofstream ofs(_path, std::ios::app);
+		for(auto& e : _log) ofs << ::to_string(e) << std::endl;
+	} catch(const std::exception&) { }
+	_log.clear();
 }
 
 void log_manager::error(const wchar_t module[], const wchar_t message[])

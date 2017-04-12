@@ -65,7 +65,7 @@ namespace UnitTests
 			DumbMotor mot1(L"mot1"), mot2(L"mot2"), mot3(L"mot3");
 			room_server re(p);
 			re.init(
-				{ &ts, motc.get_light(), &tm },
+				{ &ts, motc.get_temp(), motc.get_light(), &tm },
 				{ &mot1, &mot2, &mot3 }
 			);
 

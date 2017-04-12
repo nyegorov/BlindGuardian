@@ -21,7 +21,6 @@ motor_ctrl::motor_ctrl(std::wstring_view name, std::wstring_view remote_host, ud
 {
 	_light.set(error_t::not_implemented);
 	_temp.set(error_t::not_implemented);
-	_timeout = std::chrono::milliseconds(_config.get(L"poll_interval", 500));
 }
 
 motor_ctrl::~motor_ctrl()
@@ -31,16 +30,17 @@ motor_ctrl::~motor_ctrl()
 bool motor_ctrl::wait_timeout(IAsyncInfo action)
 {
 	auto start = std::chrono::high_resolution_clock::now();
+	auto timeout = std::chrono::milliseconds(_config.get(L"socket_timeout", 500));
 	while(true) {
 		auto status = action.Status();
 		if(status == AsyncStatus::Completed)	break;
 		if(status == AsyncStatus::Error)		throw winrt::hresult_error(action.ErrorCode());
-		if(std::chrono::high_resolution_clock::now() - start > 1500ms) {
+		if(std::chrono::high_resolution_clock::now() - start > timeout) {
 			_log.error(module_name, L"tcp connect timeout");
 			action.Cancel();
 			return false;
 		}
-		Sleep(10);
+		std::this_thread::sleep_for(10ms);
 	}
 	return true;
 }
@@ -49,8 +49,12 @@ bool motor_ctrl::connect(HostName host)
 {
 	_log.message(module_name, L"connection attempt");
 	_socket = StreamSocket();
-	_socket.Control().KeepAlive(true);
+	//_socket.Control().KeepAlive(true);
 	if(!wait_timeout(_socket.ConnectAsync(host, cmd_port, SocketProtectionLevel::PlainSocket))) return false;
+	if(!_socket) {
+		_log.error(module_name, L"connection failed.");
+		return false;
+	}
 	_log.message(module_name, L"connection established with host %s", host.DisplayName().c_str());
 	return true;
 }
@@ -115,7 +119,7 @@ void motor_ctrl::do_action(uint8_t action)
 
 void remote_sensor::update()
 {
-	_remote.update_sensors();
+	if(_master)	_remote.update_sensors();
 }
 
 }
