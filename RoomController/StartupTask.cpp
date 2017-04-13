@@ -19,7 +19,7 @@ namespace roomctrl {
 StartupTask::StartupTask() : _server(path(wstring(ApplicationData::Current().LocalFolder().Path())))
 {
 	_server.config().set(L"poll_interval", 1000);
-	_server.config().set(L"socket_timeout", 1500);
+	_server.config().set(L"socket_timeout", 5000);
 	_server.config().set(L"enable_debug", true);
 }
 

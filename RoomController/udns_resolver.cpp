@@ -42,7 +42,6 @@ void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessa
 udns_resolver::udns_resolver(config_manager& config, log_manager& log) : _config(config), _log(log)
 {
 	_names.emplace(L"localhost", HostName(L"localhost"));
-	//_names.emplace(L"motctrl", HostName(L"192.168.6.53"));
 }
 
 udns_resolver::~udns_resolver()
@@ -64,18 +63,21 @@ std::future<void> udns_resolver::start()
 	co_return;
 }
 
-std::future<void> udns_resolver::refresh()
+std::future<void> udns_resolver::post_cmd(uint8_t cmd)
 {
 	try {
 		auto os = co_await _socket.GetOutputStreamAsync(_multicast_group, udns_port_out);
 		DataWriter writer(os);
-		writer.WriteByte('$');
+		writer.WriteByte(cmd);
 		co_await writer.StoreAsync();
 	} catch(winrt::hresult_error& hr) {
 		_log.error(module_name, hr);
 	}
 	co_return;
 }
+
+std::future<void> udns_resolver::refresh()	{ return post_cmd('$'); }
+std::future<void> udns_resolver::reset()	{ return post_cmd('r'); }
 
 HostName udns_resolver::get_address(const std::wstring& name) const
 {

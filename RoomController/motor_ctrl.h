@@ -7,6 +7,7 @@
 #include "config_manager.h"
 
 using std::wstring;
+using namespace std::chrono_literals;
 
 namespace roomctrl {
 
@@ -26,9 +27,10 @@ class motor_ctrl : public actuator
 {
 	using IAsyncInfo = winrt::Windows::Foundation::IAsyncInfo;
 	using StreamSocket = winrt::Windows::Networking::Sockets::StreamSocket;
+	using milliseconds = std::chrono::milliseconds;
 public:
 	friend class remote_sensor;
-	motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns, config_manager& config, log_manager& log);
+	motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns, log_manager& log);
 	~motor_ctrl();
 
 	wstring host_name() const { return _host; }
@@ -39,6 +41,8 @@ public:
 	i_sensor* get_light()	{ return &_light; }
 	i_sensor* get_temp()	{ return &_temp; }
 	bool online()			{ return _retries < 3; }
+	void reset()			{ do_action('r'); _udns.reset(); }
+	void set_timeout(milliseconds timeout) { _timeout = timeout; }
 
 protected:
 	bool wait_timeout(IAsyncInfo action);
@@ -48,9 +52,9 @@ protected:
 	void update_sensors();
 
 	log_manager&		_log;
-	config_manager&		_config;
 	udns_resolver&		_udns;
 	wstring				_host;
+	milliseconds		_timeout{ 1s };
 	StreamSocket		_socket{ nullptr };
 	std::atomic<bool>	_inprogress{ false };
 	std::atomic<int>	_retries{ 0 };

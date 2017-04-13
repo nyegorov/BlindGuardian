@@ -58,7 +58,7 @@ void config_manager::load()
 		wss << ifs.rdbuf();
 		auto json = JsonObject::Parse(wss.str());
 		_data = json.GetNamedObject(L"config");
-	} catch(const std::exception&) {} catch(const winrt::hresult_error&) {}
+	} catch(...) {}
 }
 
 void config_manager::save() const
@@ -70,6 +70,5 @@ void config_manager::save() const
 		JsonObject json;
 		json.SetNamedValue(L"config", _data);
 		ofs << wstring(json.Stringify());
-	} catch(const std::exception&) {
-	}
+	} catch(...) {}
 }

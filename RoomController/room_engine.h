@@ -10,7 +10,7 @@
 
 namespace roomctrl {
 
-using std::experimental::filesystem::path;
+using path_t = std::experimental::filesystem::path;
 
 class room_server
 {
@@ -19,7 +19,7 @@ public:
 	using vec_sensors = std::vector<i_sensor*>;
 	using vec_actuators = std::vector<i_actuator*>;
 
-	room_server(const path& path);
+	room_server(const path_t& path);
 	void init(const vec_sensors &sensors, const vec_actuators &actuators);
 	std::future<void> start();
 	wstring get_log();
@@ -30,6 +30,7 @@ public:
 	config_manager& config() { return _config; }
 
 private:
+	std::atomic<bool> _inprogress{ false };
 	rules_db		_rules;
 	vec_sensors		_sensors;
 	vec_actuators	_actuators;
@@ -38,7 +39,7 @@ private:
 	config_manager	_config;
 	http_server		_server{ L"80", L"Room configuration server", _log };
 	udns_resolver	_udns{ _config, _log };
-	motor_ctrl		_motctrl{ L"blind", L"motctrl", _udns, _config, _log };
+	motor_ctrl		_motctrl{ L"blind", L"motctrl", _udns, _log };
 
 	time_sensor		_time{ L"time" };
 	missing_sensor	_temp_in{ L"temp_in" };

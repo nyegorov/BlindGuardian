@@ -24,10 +24,12 @@ std::future<void> test()
 	room_server srv(".");
 	srv.config().set(L"motctrl", L"192.168.6.53");
 	srv.config().set(L"enable_debug", true);
+	srv.config().set(L"poll_interval",  200);
+	srv.config().set(L"socket_timeout", 15000);
 	co_await srv.start();
 
 	for(;;) {
-		co_await 1s;
+		co_await 200ms;
 		srv.run();
 		cout << ".";
 	}

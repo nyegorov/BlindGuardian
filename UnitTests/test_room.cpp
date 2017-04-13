@@ -61,7 +61,7 @@ namespace UnitTests
 			log_manager log;
 			config_manager cm{ "config.db" };
 			udns_resolver udns{ cm, log };
-			motor_ctrl motc(L"blind", L"localhost", udns, cm, log);
+			motor_ctrl motc(L"blind", L"localhost", udns, log);
 			DumbMotor mot1(L"mot1"), mot2(L"mot2"), mot3(L"mot3");
 			room_server re(p);
 			re.init(

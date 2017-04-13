@@ -16,8 +16,8 @@ const wchar_t cmd_port[] = L"4760";
 
 namespace roomctrl {
 
-motor_ctrl::motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns, config_manager& config, log_manager& log) : 
-	actuator(name), _udns(udns), _host(remote_host), _config(config), _log(log)
+motor_ctrl::motor_ctrl(std::wstring_view name, std::wstring_view remote_host, udns_resolver& udns, log_manager& log) : 
+	actuator(name), _udns(udns), _host(remote_host), _log(log)
 {
 	_light.set(error_t::not_implemented);
 	_temp.set(error_t::not_implemented);
@@ -30,12 +30,11 @@ motor_ctrl::~motor_ctrl()
 bool motor_ctrl::wait_timeout(IAsyncInfo action)
 {
 	auto start = std::chrono::high_resolution_clock::now();
-	auto timeout = std::chrono::milliseconds(_config.get(L"socket_timeout", 500));
 	while(true) {
 		auto status = action.Status();
 		if(status == AsyncStatus::Completed)	break;
 		if(status == AsyncStatus::Error)		throw winrt::hresult_error(action.ErrorCode());
-		if(std::chrono::high_resolution_clock::now() - start > timeout) {
+		if(std::chrono::high_resolution_clock::now() - start > _timeout) {
 			_log.error(module_name, L"tcp connect timeout");
 			action.Cancel();
 			return false;

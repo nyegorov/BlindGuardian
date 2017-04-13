@@ -126,6 +126,7 @@ void loop() {
 			Serial.print("$ - uDNS query, remote IP: "); Serial.println(udns.remoteIP());
 			announce(host_name, WiFi.localIP());
 			break;
+    case 'r': ESP.reset(); break;
 		}
 	}
 
@@ -173,6 +174,7 @@ void loop() {
           break;
         case 'o': open_blind(); break;
         case 'c': close_blind(); break;
+        case 'r': ESP.reset(); break;
         default:  Serial.printf("%c (%d) - unknown command\n", cmd, (int)cmd);
         }
       }

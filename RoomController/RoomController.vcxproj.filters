@@ -122,9 +122,7 @@
     <None Include="html\room_status.html">
       <Filter>Html</Filter>
     </None>
-    <None Include="status.json" />
     <None Include="packages.config" />
-    <None Include="config.json" />
     <None Include="html\server_log.html">
       <Filter>Html</Filter>
     </None>

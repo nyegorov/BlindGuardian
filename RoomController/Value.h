@@ -10,13 +10,13 @@ using std::wstring_view;
 using std::vector;
 
 struct i_sensor;
-enum class error_t { cast, invalid_args, not_implemented, syntax, name_not_found, type_mismatch, runtime, empty };
+enum class error_t { invalid_args, not_implemented, syntax_error, name_not_found, type_mismatch, runtime };
 using value_type = int32_t;
 
 using value_t = std::variant<value_type, i_sensor*, error_t>;
 using params_t = vector<value_t>;
 
-inline bool is_error(value_t& v) { return std::get_if<error_t>(&v); }
+inline bool is_error(const value_t& v) { return std::get_if<error_t>(&v); }
 
 struct i_sensor
 {

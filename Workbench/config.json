@@ -1,1 +1,1 @@
-{"config":{"motctrl":"192.168.6.53","enable_debug":true}}
+{"config":{"motctrl":"192.168.6.53","enable_debug":true,"poll_interval":200,"socket_timeout":15000}}

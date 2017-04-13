@@ -10,6 +10,19 @@
 
 namespace roomctrl	{
 
+wchar_t* get_error_msg(const value_t& v) {
+	auto it = std::get_if<error_t>(&v);
+	if(!it)	return L"ok";
+	switch(*it) {
+	case error_t::invalid_args:		return L"invalid arguments";
+	case error_t::not_implemented:	return L"not implemented";
+	case error_t::syntax_error:			return L"syntax error";
+	case error_t::name_not_found:	return L"name not found";
+	case error_t::type_mismatch:	return L"type mismatch";
+	default:						return L"runtime error";
+	}
+}
+
 // Operators
 
 void OpNull(value_t& op1, value_t& op2, value_t& result) {}
@@ -80,7 +93,7 @@ value_t NScript::eval(wstring script)
 	try	{
 		_parser.Init(script);
 		Parse(Script, result, false);
-		if(_parser.GetToken() != Parser::end)	throw error_t::syntax;
+		if(_parser.GetToken() != Parser::end)	throw error_t::syntax_error;
 	} catch(error_t e) {
 		result = e;
 	} catch(...) {
@@ -150,7 +163,7 @@ void NScript::Parse(Precedence level, value_t& result, bool skip)
 				_context.Pop();
 				_parser.CheckPairedToken(token);
 				break;
-			case Parser::end:		throw error_t::syntax;
+			case Parser::end:		throw error_t::syntax_error;
 			default:				break;
 		}
 	} else if(level == Statement) {
@@ -270,7 +283,7 @@ void Parser::ReadNumber(wchar_t c)
 	while(c = Read())	{	
 		if(isdigit(c))	{
 			char v = c - '0';
-			if(m > (LONG_MAX - v) / base)	throw error_t::syntax;
+			if(m > (LONG_MAX - v) / base)	throw error_t::syntax_error;
 			m = m * base + v;
 		}	else	break;
 	};
@@ -284,10 +297,10 @@ void Parser::ReadTime(wchar_t c)
 {
 	ReadNumber(Read());
 	auto hours = _value;
-	if(Read() != ':')	throw error_t::syntax;
+	if(Read() != ':')	throw error_t::syntax_error;
 	ReadNumber(Read());
 	auto mins = _value;
-	if(Read() != '#')	throw error_t::syntax;
+	if(Read() != '#')	throw error_t::syntax_error;
 	//Back();
 	_value = hours * 60 + mins;
 	_token = Parser::value;
@@ -311,7 +324,7 @@ void Parser::ReadArgList()	{
 			if(!_temp.empty()) _args.push_back(_temp);
 			break;
 		}	else if(!isalnum(c) && c!= '_'){
-			throw error_t::syntax;
+			throw error_t::syntax_error;
 		}	else	_temp += c;
 	}
 }
@@ -319,7 +332,7 @@ void Parser::ReadArgList()	{
 // Parse object name from input stream
 void Parser::ReadName(wchar_t c)
 {
-	if(!isalpha(c) && c != '@' && c != '_')	throw error_t::syntax;
+	if(!isalpha(c) && c != '@' && c != '_')	throw error_t::syntax_error;
 	_name = c;
 	while(isalnum(c = Read()) || c == '_' || c == '.')	_name += c;
 	Back();
@@ -327,9 +340,9 @@ void Parser::ReadName(wchar_t c)
 
 void Parser::CheckPairedToken(Parser::Token token)
 {
-	if(token == lpar && _token != rpar)			throw error_t::syntax;
-	if(token == lsquare && _token != rsquare)	throw error_t::syntax;
-	if(token == lcurly && _token != rcurly)		throw error_t::syntax;
+	if(token == lpar && _token != rpar)			throw error_t::syntax_error;
+	if(token == lsquare && _token != rsquare)	throw error_t::syntax_error;
+	if(token == lcurly && _token != rcurly)		throw error_t::syntax_error;
 	if(token == lpar || token == lsquare || token == lcurly)	Next();
 }
 

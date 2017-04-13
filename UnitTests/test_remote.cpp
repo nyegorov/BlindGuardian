@@ -40,7 +40,7 @@ public:
 		udns_resolver udns{ cm, log };
 		thread([&udns]() { udns.start().get(); Sleep(500); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
-		motor_ctrl mot(L"blind", L"motctrl", udns, cm, log);
+		motor_ctrl mot(L"blind", L"motctrl", udns, log);
 		value_t l, t;
 		mot.get_temp()->update();
 		auto temp = get<int32_t>(mot.get_temp()->value());

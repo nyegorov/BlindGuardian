@@ -5,7 +5,7 @@
 using std::wstring;
 using std::wstring_view;
 
-enum class log_level	{error, message};
+enum class log_level	{error, info, message};
 
 struct log_entry
 {
@@ -42,8 +42,19 @@ public:
 	void error(const wchar_t module[], const winrt::hresult_error& hr);
 	void error(const wchar_t module[], const std::exception& ex);
 	void message(const wchar_t module[], const wchar_t message[]);
+	void info(const wchar_t module[], const wchar_t message[]);
+	template<class ...ARGS> void error(const wchar_t module[], const wchar_t format[], ARGS... args);
 	template<class ...ARGS> void message(const wchar_t module[], const wchar_t format[], ARGS... args);
+	template<class ...ARGS> void info(const wchar_t module[], const wchar_t format[], ARGS... args);
 };
+
+template<class ...ARGS>
+inline void log_manager::error(const wchar_t module[], const wchar_t format[], ARGS ...args)
+{
+	wchar_t buf[1024];
+	swprintf(buf, sizeof(buf) / sizeof(buf[0]), format, args...);
+	log(log_level::error, module, buf);
+}
 
 template<class ...ARGS>
 inline void log_manager::message(const wchar_t module[], const wchar_t format[], ARGS ...args)
@@ -51,4 +62,12 @@ inline void log_manager::message(const wchar_t module[], const wchar_t format[],
 	wchar_t buf[1024];
 	swprintf(buf, sizeof(buf) / sizeof(buf[0]), format, args...);
 	log(log_level::message, module, buf);
+}
+
+template<class ...ARGS>
+inline void log_manager::info(const wchar_t module[], const wchar_t format[], ARGS ...args)
+{
+	wchar_t buf[1024];
+	swprintf(buf, sizeof(buf) / sizeof(buf[0]), format, args...);
+	log(log_level::info, module, buf);
 }

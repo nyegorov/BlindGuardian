@@ -17,6 +17,9 @@
 using std::wstring;
 
 namespace roomctrl	{
+
+wchar_t* get_error_msg(const value_t& v);
+
 // Container for storing named objects and variables
 
 inline bool icomp_pred(wchar_t a, wchar_t b) { return std::tolower(a) < std::tolower(b); }

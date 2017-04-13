@@ -3,9 +3,11 @@
 
 using namespace winrt::Windows::Data::Json;
 
+const wchar_t module_name[] = L"ROOM";
+
 namespace roomctrl {
 
-room_server::room_server(const path& path) : _rules(path / "rules.json"), _config(path / "config.json"), _log(path / "log.txt")
+room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _config(path / "config.json"), _log(path / "log.txt")
 {
 	init({ &_temp_in, _motctrl.get_temp(), _motctrl.get_light(), &_motion, &_time }, { &_motctrl });
 }
@@ -60,6 +62,7 @@ value_t room_server::eval(const wchar_t *expr)
 std::future<void> room_server::start()
 {
 	_log.enable_debug(_config.get(L"enable_debug", false));
+	_motctrl.set_timeout(std::chrono::milliseconds(_config.get(L"socket_timeout", 2000)));
 	co_await _udns.start();
 	_server.add(L"/", L"html/room_status.html");
 	_server.add(L"/status", L"html/room_status.html");
@@ -86,20 +89,35 @@ std::future<void> room_server::start()
 
 void room_server::run()
 {
+	if(_inprogress)	return;
+	_inprogress = true;
+
 	for(auto& sensor : _sensors) sensor->update();
 
 	for(const auto& rule : _rules.get_all())
 	{
+		rule_status status;
+
 		auto result = _parser.eval(rule.condition);
-		auto status = is_error(result) ? rule_status::error :
-			result == value_t{ 0 } ? rule_status::inactive : rule_status::active;
+		if(is_error(result)) {
+			_log.error(module_name, L"error evaluating condition '%s': %s", rule.condition.c_str(), get_error_msg(result));
+			status = rule_status::error;
+		} else {
+			status = result == value_t{ 0 } ? rule_status::inactive : rule_status::active;
+		}
 
 		if(status != rule.status && status == rule_status::active) {
 			result = _parser.eval(rule.action);
-			if(is_error(result))	status = rule_status::error;
+			_log.info(module_name, L"activated rule '%s' (%s)", rule.name.c_str(), rule.action.c_str());
+			if(is_error(result)) {
+				_log.error(module_name, L"error evaluating action '%s': %s", rule.action.c_str(), get_error_msg(result));
+				status = rule_status::error;
+			}
 		}
 		_rules.set_status(rule.id, status);
 	}
+
+	_inprogress = false;
 }
 
 }

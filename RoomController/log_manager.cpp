@@ -10,7 +10,8 @@ wstring to_string(const log_entry& entry)
 	localtime_s(&tm, &time_t);
 
 	wchar_t buf[1024];
-	auto level = entry.level == log_level::error ? L"ERR" : L"MSG";
+	auto level = entry.level == log_level::error ? L"ERR" : 
+		entry.level == log_level::info ? L"INF" : L"MSG";
 	swprintf(buf, sizeof(buf) / sizeof(buf[0]), L"% 2d:%02d:%02d (%.3lf) [%s.%s] %s", tm.tm_hour, tm.tm_min, tm.tm_sec, entry.elapsed / 1000., entry.module, level, entry.message.c_str());
 	return wstring(buf);
 }
@@ -81,6 +82,11 @@ void log_manager::error(const wchar_t module[], const std::exception & ex)
 void log_manager::message(const wchar_t module[], const wchar_t message[])
 {
 	log(log_level::message, module, message);
+}
+
+void log_manager::info(const wchar_t module[], const wchar_t message[])
+{
+	log(log_level::info, module, message);
 }
 
 template <typename T> struct reversion_wrapper { T& iterable; };

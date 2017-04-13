@@ -60,7 +60,7 @@ namespace UnitTests
 			log_manager log;
 			config_manager cm{ "config.db" };
 			udns_resolver udns{ cm, log };
-			motor_ctrl motc(L"blind", L"localhost", udns, cm, log);
+			motor_ctrl motc(L"blind", L"localhost", udns, log);
 
 			NScript ns;
 			ns.set(L"myfunc", [](auto& p) {return p[0]; });
