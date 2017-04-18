@@ -10,6 +10,7 @@ enum class log_level	{error, info, message};
 struct log_entry
 {
 	log_level		level;
+	std::thread::id	thread_id;
 	std::chrono::time_point<std::chrono::system_clock>		timestamp;
 	long long		elapsed;
 	const wchar_t	*module;
@@ -21,7 +22,7 @@ wstring to_string(const log_entry&);
 class log_manager
 {
 	void log(log_level level, const wchar_t module[], const wchar_t message[]);
-	bool _enable_debug{ false };
+	bool _enable_debug{ true };
 
 	using lock_t = std::lock_guard<std::mutex>;
 	using path_t = std::experimental::filesystem::path;

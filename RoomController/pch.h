@@ -37,6 +37,8 @@
 #include <variant>
 #include <vector>
 
+#include <concurrent_queue.h>
+
 using namespace std::literals::string_literals;
 using namespace std::literals::chrono_literals;
 

@@ -5,6 +5,7 @@
 
 #define MAX_SRV_CLIENTS 5
 
+char version[]   = "ESP1.01";
 char host_name[] = "motctrl";
 
 const unsigned int cmdPort = 4760;
@@ -18,6 +19,7 @@ WiFiClient clients[MAX_SRV_CLIENTS];
 
 int32_t	light = 0;
 int8_t	temp_out = 0;
+uint8_t position = 0;
 
 #pragma pack(push, 1)
 union cmd_buf {
@@ -33,14 +35,14 @@ union cmd_buf {
 uint8_t update_sensors() { 
 	temp_out = 42 + random(5);
 	light = 76000 + random(1000);
-	return 0;
+	return position;
 }
 
-void open_blind() {
-	Serial.println("blind opened!");
-}
-void close_blind() {
-	Serial.println("blind closed!");
+void set_pos(uint8_t pos) {
+  position = pos;
+  if(position == 100)       Serial.println("blind opened!");
+  else if(position ==   0)  Serial.println("blind closed!");
+  else                    	Serial.printf("blind set to %d\n", (int)position);
 }
 
 void announce(char *hostname, IPAddress addr)
@@ -110,7 +112,7 @@ void setup() {
 	server.setNoDelay(true);
   
 	announce(host_name, WiFi.localIP());
-  Serial.println("Motor controller started");
+  Serial.printf("Motor controller %s started\n", version);
 }
 
 void loop() {
@@ -162,7 +164,6 @@ void loop() {
       if(clients[i].available()){
         cmd_buf response;
         char cmd = clients[i].read();
-        clients[i].flush();
         switch(cmd) {
         case 's': 
           response.status = update_sensors();
@@ -172,11 +173,14 @@ void loop() {
           //Serial.print(".");
           clients[i].write((uint8_t*)response.data, sizeof(response));
           break;
-        case 'o': open_blind(); break;
-        case 'c': close_blind(); break;
+        case 'o': set_pos(100); clients[i].write(position); break;
+        case 'p': set_pos(clients[i].read()); clients[i].write(position); break;
+        case 'c': set_pos(0); clients[i].write(position); break;
+        case 'v': clients[i].write((uint8_t*)version, 8); break;
         case 'r': ESP.reset(); break;
         default:  Serial.printf("%c (%d) - unknown command\n", cmd, (int)cmd);
         }
+        //clients[i].flush();
       }
     }
   }

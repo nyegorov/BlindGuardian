@@ -33,11 +33,12 @@ class Context
 {
 public:
 	Context(const Context *base);
+	void Clear()	{_locals.front().clear(); }
 	void Push()		{_locals.push_back(vars_t());}
 	void Pop()		{_locals.pop_back();}
 	value_t& Get(const wstring& name, bool local = false);
 	bool Get(const wstring& name, value_t& result) const;
-	void Set(const wstring& name, const value_t& value)		{_locals.front()[name] = value;}
+	void Set(const wstring& name, const value_t& value);
 private:
 	struct vars_t : public std::map<wstring, value_t, lessi> {};
 	static vars_t		_globals;
@@ -94,6 +95,7 @@ public:
 	value_t eval(wstring script);
 	using callfun_t = std::function<value_t(const params_t&)>;
 	using getvar_t  = std::function<value_t(void)>;
+	void clear()							{ _callbacks.clear(); _context.Clear(); }
 	void set(wstring name, value_t value)	{ _context.Set(name, value); }
 	void set(wstring name, callfun_t func)	{ _callbacks.emplace(name, func); }
 	void set(wstring name, getvar_t func)	{ _callbacks.emplace(name, [func](const params_t&) {return func(); }); }

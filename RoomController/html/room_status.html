@@ -49,12 +49,15 @@
         }
 
         function update_status(room) {
+            var hours = Math.trunc(room.sensors.time / 60);
+            var mins = room.sensors.time % 60;
+            time.innerHTML = hours + ':' + (mins < 10 ? '0' : '') + mins.toString();
             temp_in.innerHTML = room.sensors.temp_in;
             temp_out.innerHTML = room.sensors.temp_out;
             light.innerHTML = room.sensors.light;
             inactivity.innerHTML = room.sensors.inactivity;
             mot_ip.innerHTML = room.sensors.motctrl == '' ? '<p class="error">offline</p>' : '<p class="active">online: ' + room.sensors.motctrl + '</p>';
-            //pos.innerHTML = room.position == 0 ? 'closed' : (room.position == 100 ? 'open' : room.position);
+            pos.innerHTML = room.sensors.position == 0 ? 'closed' : (room.sensors.position == 100 ? 'open' : room.sensors.position);
         }
 
         load_status();
@@ -71,6 +74,7 @@
 
     <!-- sensors -->
     <table>
+        <tr><td class="sensor-row">Room time</td>           <td><span id="time">--:--</span></td></tr>
         <tr><td class="sensor-row">Inner temperature</td>   <td><span id="temp_in">--</span>&deg;C</td></tr>
         <tr><td class="sensor-row">Outer temperature</td>   <td><span id="temp_out">--</span>&deg;C</td></tr>
         <tr><td class="sensor-row">Light</td>               <td><span id="light">--</span> lux</td></tr>

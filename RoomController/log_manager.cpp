@@ -3,6 +3,13 @@
 
 using namespace winrt::Windows::Data::Json;
 
+wstring to_string(std::thread::id id)
+{
+	std::wstringstream wss;
+	wss << id;
+	return wss.str();
+}
+
 wstring to_string(const log_entry& entry)
 {
 	auto time_t = std::chrono::system_clock::to_time_t(entry.timestamp);
@@ -12,7 +19,7 @@ wstring to_string(const log_entry& entry)
 	wchar_t buf[1024];
 	auto level = entry.level == log_level::error ? L"ERR" : 
 		entry.level == log_level::info ? L"INF" : L"MSG";
-	swprintf(buf, sizeof(buf) / sizeof(buf[0]), L"% 2d:%02d:%02d (%.3lf) [%s.%s] %s", tm.tm_hour, tm.tm_min, tm.tm_sec, entry.elapsed / 1000., entry.module, level, entry.message.c_str());
+	swprintf(buf, sizeof(buf) / sizeof(buf[0]), L"% 2d:%02d:%02d (%.3lf) [%s.%s %s] %s", tm.tm_hour, tm.tm_min, tm.tm_sec, entry.elapsed / 1000., entry.module, level, to_string(entry.thread_id).c_str(), entry.message.c_str());
 	return wstring(buf);
 }
 
@@ -38,6 +45,7 @@ void log_manager::log(log_level level, const wchar_t module[], const wchar_t mes
 	lock_t lock(_mutex);
 	_log.push_back({
 		level,
+		std::this_thread::get_id(),
 		std::chrono::system_clock::now(),
 		std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - _start_time).count(),
 		module, 
@@ -106,6 +114,7 @@ wstring log_manager::to_string()
 		localtime_s(&tm, &time_t);
 		swprintf(buf, sizeof(buf) / sizeof(buf[0]), L"%d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
 		je.SetNamedValue(L"level", JsonValue::CreateNumberValue((double)e.level));
+		je.SetNamedValue(L"thread", JsonValue::CreateStringValue(::to_string(e.thread_id)));
 		je.SetNamedValue(L"timestamp", JsonValue::CreateStringValue(buf));
 		je.SetNamedValue(L"elapsed", JsonValue::CreateNumberValue(e.elapsed / 1.));
 		je.SetNamedValue(L"module", JsonValue::CreateStringValue(e.module));

@@ -60,15 +60,15 @@ public:
 	void update() {}
 };
 
-class DumbMotor : public actuator
+class DumbMotor : public i_motor
 {
 public:
 	value_t	_value = { 0 };
-	action open{ L"open", [this](auto&) { _value = 100; } };
-	action close{ L"close", [this](auto&) { _value = 0; } };
-	action setpos{ L"set_pos", [this](auto& v) { _value = v.empty() ? 0 : v.front(); } };
-	DumbMotor(const wchar_t *name) : actuator(name) { }
+	void open()  { _value = 100; }
+	void close() { _value = 0; };
+	void setpos(value_t v)	{ _value = v; }
+	DumbMotor() { }
 	value_t value() { return _value; };
-	std::vector<const i_action*> actions() const { return{ &open, &close, &setpos }; }
+	int32_t pos()   { return std::get<int32_t>(_value); };
 };
 

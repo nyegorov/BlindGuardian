@@ -2,7 +2,7 @@
 #include "CppUnitTest.h"
 
 #include "../RoomController/udns_resolver.h"
-#include "../RoomController/motor_ctrl.h"
+#include "../RoomController/esp8266_motor.h"
 #include "../RoomController/debug_stream.h"
 
 using namespace std;
@@ -40,7 +40,7 @@ public:
 		udns_resolver udns{ cm, log };
 		thread([&udns]() { udns.start().get(); Sleep(500); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
-		motor_ctrl mot(L"blind", L"motctrl", udns, log);
+		esp8266_motor mot(L"motctrl", udns, log);
 		value_t l, t;
 		mot.get_temp()->update();
 		auto temp = get<int32_t>(mot.get_temp()->value());

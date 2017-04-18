@@ -61,12 +61,13 @@ namespace UnitTests
 			log_manager log;
 			config_manager cm{ "config.db" };
 			udns_resolver udns{ cm, log };
-			motor_ctrl motc(L"blind", L"localhost", udns, log);
-			DumbMotor mot1(L"mot1"), mot2(L"mot2"), mot3(L"mot3");
+			esp8266_motor mote(L"localhost", udns, log);
+			DumbMotor mot1, mot2, mot3;
+			motor_ctrl mota{ L"mot1", {&mot1} }, motb{ L"mot2", {&mot2} }, motc{ L"mot3", {&mot3} };
 			room_server re(p);
 			re.init(
-				{ &ts, motc.get_temp(), motc.get_light(), &tm },
-				{ &mot1, &mot2, &mot3 }
+				{ &ts, mote.get_temp(), mote.get_light(), &tm },
+				{ &mota, &motb, &motc }
 			);
 
 			// temperature
@@ -97,18 +98,41 @@ namespace UnitTests
 
 			filesystem::remove(p / "rules.json");
 		}
+		TEST_METHOD(Motors)
+		{
+			room_server re;
+			DumbSensor ts(L"temp", 0);
+			DumbMotor mot_a1, mot_a2, mot_b1, mot_b2, mot_b3, mot_c1;
+
+			motor_ctrl mota{ L"mota",{ &mot_a1, &mot_a2 } }, motb{ L"motb",{ &mot_b1, &mot_b2, &mot_b3} }, motc{ L"motc", {&mot_c1} }, motd{ L"motd", {} };
+			re.rules().save({ L"o1", L"temp < 30", L"mota.open()" }, false);
+			re.rules().save({ L"o2", L"temp > 20 & temp < 30", L"motc.open(); motd.open()" }, false);
+			re.rules().save({ L"o3", L"temp > 20", L"motb.open()" }, false);
+			re.rules().save({ L"c1", L"temp < 20", L"motb.close(); motc.close(); motd.close()" }, false);
+			re.rules().save({ L"c2", L"temp > 30", L"mota.close(); motc.close(); motd.close()" }, false);
+			re.init({ &ts }, { &mota, &motb, &motc, &motd });
+			ts.set(0); re.run();
+			Assert::AreEqual(200, mot_a1.pos() + mot_a2.pos());
+			Assert::AreEqual(  0, mot_b1.pos() + mot_b2.pos() + mot_b3.pos());
+			Assert::AreEqual(  0, mot_c1.pos());
+			ts.set(25); re.run();
+			Assert::AreEqual(200, mot_a1.pos() + mot_a2.pos());
+			Assert::AreEqual(300, mot_b1.pos() + mot_b2.pos() + mot_b3.pos());
+			Assert::AreEqual(100, mot_c1.pos());
+			ts.set(40); re.run();
+			Assert::AreEqual(  0, mot_a1.pos() + mot_a2.pos());
+			Assert::AreEqual(300, mot_b1.pos() + mot_b2.pos() + mot_b3.pos());
+			Assert::AreEqual(  0, mot_c1.pos());
+		}
 		TEST_METHOD(Sensitivity)
 		{
-			path p(".");
-			write_rules(p / "rules.json", {
-				{ L"r1", L"temp > 30", L"mot1.open()" },
-				{ L"r2", L"temp > 30 & temp.min < 25", L"mot2.open(); temp.reset()" },
-			});
-
 			DumbSensor ts(L"temp", 0);
-			DumbMotor mot1(L"mot1"), mot2(L"mot2");
-			room_server re(p);
-			re.init( { &ts }, { &mot1, &mot2 } );
+			DumbMotor mot1, mot2;
+			motor_ctrl mota{ L"mot1", {&mot1} }, motb{ L"mot2",{ &mot2 } };
+			room_server re(L".");
+			re.rules().save({ L"r1", L"temp > 30", L"mot1.open()" }, false);
+			re.rules().save({ L"r2", L"temp > 30 & temp.min < 25", L"mot2.open(); temp.reset()" }, false);
+			re.init( { &ts }, { &mota, &motb } );
 
 			// temperature
 			re.run();
@@ -132,7 +156,6 @@ namespace UnitTests
 			ts.set(35); re.run();
 			Assert::AreEqual(100, get<int32_t>(mot1.value()));
 			Assert::AreEqual(100, get<int32_t>(mot2.value()));
-			filesystem::remove(p / "rules.json");
 		}
 		TEST_METHOD(Json)
 		{
@@ -146,16 +169,17 @@ namespace UnitTests
 			})";
 			write_rules(p1 / "rules.json", rules);
 			DumbSensor ts(L"temp", 35);
-			DumbMotor mot1(L"mot1"), mot2(L"mot2");
+			DumbMotor mot1, mot2;
+			motor_ctrl mota{ L"mot1", {&mot1} }, motb{ L"mot2", { &mot2 } };
 			room_server re(p1);
-			re.init( { &ts }, { &mot1, &mot2 } );
+			re.init( { &ts }, { &mota, &motb } );
 			re.run();
 			Assert::AreEqual(100, get<int32_t>(mot1.value()));
 			Assert::AreEqual(50, get<int32_t>(mot2.value()));
 			auto s1 = re.get_rules();
 			write_rules(p1 / "rules.json", s1);
 			room_server re2(p1);
-			re2.init( { &ts }, { &mot1, &mot2 });
+			re2.init( { &ts }, { &mota, &motb });
 			re2.run();
 			auto s2 = re2.get_rules();
 			Assert::AreEqual(s1, s2);

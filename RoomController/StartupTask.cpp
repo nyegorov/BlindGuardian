@@ -28,7 +28,7 @@ void StartupTask::Run(IBackgroundTaskInstance taskInstance)
 	Deferral = taskInstance.GetDeferral();
 	InitGpio();
 
-	TimerElapsedHandler handler([this](ThreadPoolTimer timer) {
+/*	TimerElapsedHandler handler([this](ThreadPoolTimer timer) {
 		//pinValue = (pinValue == GpioPinValue::High) ? GpioPinValue::Low : GpioPinValue::High;
 		//pin.Write(pinValue);
 		_server.run();
@@ -37,8 +37,16 @@ void StartupTask::Run(IBackgroundTaskInstance taskInstance)
 	TimeSpan interval = milliseconds(_server.config().get(L"poll_interval", 1000));
 	Timer = ThreadPoolTimer::CreatePeriodicTimer(handler, interval);
 
-	_server.start();
+	_server.start();*/
 
+	_server.start();
+	std::thread th([this]() { 
+		while(true) {
+			std::this_thread::sleep_for(1s);
+			_server.run();
+		} 
+	});
+	th.detach();
 	OutputDebugString(msg);
 }
 

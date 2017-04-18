@@ -49,9 +49,6 @@
     <ClCompile Include="sensors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="motor_ctrl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="udns_resolver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -59,6 +56,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="log_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="esp8266_motor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="motor_ctrl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -93,9 +96,6 @@
     <ClInclude Include="debug_stream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="motor_ctrl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="udns_resolver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -109,6 +109,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="circular_buffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="esp8266_motor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="motor_ctrl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -270,6 +270,7 @@
     <ClInclude Include="debug_stream.h" />
     <ClInclude Include="http_server.h" />
     <ClInclude Include="log_manager.h" />
+    <ClInclude Include="esp8266_motor.h" />
     <ClInclude Include="motor_ctrl.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="pch.h" />
@@ -285,6 +286,7 @@
     <ClCompile Include="config_manager.cpp" />
     <ClCompile Include="http_server.cpp" />
     <ClCompile Include="log_manager.cpp" />
+    <ClCompile Include="esp8266_motor.cpp" />
     <ClCompile Include="motor_ctrl.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="pch.cpp">

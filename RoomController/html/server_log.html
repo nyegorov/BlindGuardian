@@ -25,6 +25,7 @@
             html += '<td>Time</td>';
             html += '<td>Elapsed</td>';
             html += '<td>Module</td>';
+            html += '<td>Thread</td>';
             html += '<td>Message</td>';
             html += '</tr></thead>';
 
@@ -36,6 +37,7 @@
                 html += '<td>' + log.entries[i].timestamp + '</td>';
                 html += '<td align="right">' + (log.entries[i].elapsed / 1000.).toFixed(3) + '</td>';
                 html += '<td>' + log.entries[i].module + '</td>';
+                html += '<td>' + log.entries[i].thread + '</td>';
                 html += '<td>' + log.entries[i].message + '</td>';
                 html += '</tr>';
             }
@@ -54,6 +56,6 @@
 <body>
     <h1>Server log</h1>
     Log started: <span id="start"></span><br/>
-    <table id="table_log" style="width:100%" cols="5"></table>
+    <table id="table_log" style="width:100%" cols="6"></table>
 </body>
 </HTML>

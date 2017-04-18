@@ -8,6 +8,7 @@
 #include "../RoomController/debug_stream.h"
 #include "../RoomController/udns_resolver.h"
 #include "../RoomController/motor_ctrl.h"
+#include "../RoomController/esp8266_motor.h"
 #include "common.h"
 
 using namespace std;
@@ -57,17 +58,15 @@ namespace UnitTests
 			DumbSensor ts(L"temp", 24);
 			DumbSensor ls(L"light", 2000);
 			DumbRemote remote('t', 42);
-			log_manager log;
-			config_manager cm{ "config.db" };
-			udns_resolver udns{ cm, log };
-			motor_ctrl motc(L"blind", L"localhost", udns, log);
 
 			NScript ns;
+			ns.set(L"temp", &ts);
 			ns.set(L"myfunc", [](auto& p) {return p[0]; });
 			ns.set(L"t", [&]() {return ts.value(); });
 			ns.set(L"l", [&]() {return ls.value(); });
 			Assert::AreEqual(value_t{ error_t::name_not_found }, ns.eval(L"my_func(3)"));
 			Assert::AreEqual(value_t{ error_t::name_not_found }, ns.eval(L"my_var"));
+			Assert::AreEqual(value_t{ error_t::runtime }, ns.eval(L"temp=3"));
 			//rls.update();
 			//Assert::AreEqual(value_t{ error_t::not_implemented }, rls.value());
 		}

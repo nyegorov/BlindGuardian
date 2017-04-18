@@ -74,6 +74,14 @@ bool Context::Get(const wstring& name, value_t& result) const
 	return false;
 }
 
+void Context::Set(const wstring& name, const value_t& value) 
+{ 
+	auto it = _locals.front().find(name);
+	if(it == _locals.front().end())	_locals.front().insert({ name, value });
+	else if(is_sensor(it->second))	throw error_t::runtime;
+	else it->second = value; 
+}
+
 // Operator precedence
 NScript::OpInfo NScript::_operators[Term][10] = {
 	{{Parser::stmt,		&OpNull },	{Parser::end, NULL}},

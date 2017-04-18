@@ -17,6 +17,7 @@ using value_t = std::variant<value_type, i_sensor*, error_t>;
 using params_t = vector<value_t>;
 
 inline bool is_error(const value_t& v) { return std::get_if<error_t>(&v); }
+inline bool is_sensor(const value_t& v) { return std::get_if<i_sensor*>(&v); }
 
 struct i_sensor
 {
@@ -26,6 +27,12 @@ struct i_sensor
 	virtual value_t max() const = 0;
 	virtual void reset() = 0;
 	virtual void update() = 0;
+};
+
+struct i_motor {
+	virtual void open() = 0;
+	virtual void close() = 0;
+	virtual void setpos(value_t pos) = 0;
 };
 
 struct i_action

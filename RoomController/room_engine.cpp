@@ -9,13 +9,14 @@ namespace roomctrl {
 
 room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _config(path / "config.json"), _log(path / "log.txt")
 {
-	init({ &_temp_in, _motctrl.get_temp(), _motctrl.get_light(), &_motion, &_time }, { &_motctrl });
+	init(_sensors, _actuators);
 }
 
 void room_server::init(const vec_sensors &sensors, const vec_actuators &actuators)
 {
 	_sensors = sensors;
 	_actuators = actuators;
+	_parser.clear();
 	for(auto& ps : _sensors) {
 		_parser.set(ps->name(), ps);
 		_parser.set(ps->name() + L".min", [ps](auto&) {return ps->min(); });
@@ -47,8 +48,8 @@ wstring room_server::get_sensors()
 		json.SetNamedValue(s->name(), is_error(s->value()) ? JsonValue::CreateStringValue(L"--") :
 			JsonValue::CreateNumberValue(std::get<value_type>(*s->value())));
 	}
-	auto mot_ip = _udns.get_address(_motctrl.host_name());
-	json.SetNamedValue(_motctrl.host_name(), JsonValue::CreateStringValue(_motctrl.online() && mot_ip ? mot_ip.DisplayName() : L"") );
+	auto mot_ip = _udns.get_address(_motor.host_name());
+	json.SetNamedValue(_motor.host_name(), JsonValue::CreateStringValue(_motor.online() && mot_ip ? mot_ip.DisplayName() : L"") );
 	JsonObject sensors;
 	sensors.SetNamedValue(L"sensors", json);
 	return sensors.ToString();
@@ -62,28 +63,30 @@ value_t room_server::eval(const wchar_t *expr)
 std::future<void> room_server::start()
 {
 	_log.enable_debug(_config.get(L"enable_debug", false));
-	_motctrl.set_timeout(std::chrono::milliseconds(_config.get(L"socket_timeout", 2000)));
+
+	_motor.set_timeout(std::chrono::milliseconds(_config.get(L"socket_timeout", 2000)));
 	co_await _udns.start();
-	_server.add(L"/", L"html/room_status.html");
-	_server.add(L"/status", L"html/room_status.html");
-	_server.add(L"/edit", L"html/edit_rule.html");
-	_server.add(L"/log", L"html/server_log.html");
-	_server.add(L"/styles.css", L"html/styles.css");
-	_server.add(L"/back.jpg", L"html/img/background.jpg");
-	_server.add(L"/favicon.ico", L"html/img/favicon.ico");
-	_server.add(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
-	_server.add(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
-	_server.add(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
-	_server.add(L"/log.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_log()); });
-	_server.add_action(L"set_pos", [this](auto&, auto& value) {
-		if(std::stoul(value) == 100)	_motctrl.open();
-		if(std::stoul(value) == 0)		_motctrl.close();
+	_http.add(L"/", L"html/room_status.html");
+	_http.add(L"/status", L"html/room_status.html");
+	_http.add(L"/edit", L"html/edit_rule.html");
+	_http.add(L"/log", L"html/server_log.html");
+	_http.add(L"/styles.css", L"html/styles.css");
+	_http.add(L"/back.jpg", L"html/img/background.jpg");
+	_http.add(L"/favicon.ico", L"html/img/favicon.ico");
+	_http.add(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
+	_http.add(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
+	_http.add(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
+	_http.add(L"/log.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_log()); });
+	_http.add_action(L"set_pos", [this](auto&, auto& value) {
+		if(std::stoul(value) == 100)	_tasks.push([this]() {_motors.open(); });
+		if(std::stoul(value) == 0)		_tasks.push([this]() {_motors.close(); });
 	});
-	_server.add_action(L"save_rule", [this](auto& req, auto& value) {
-		_rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s] });
+	_http.add_action(L"save_rule", [this](auto& req, auto& value) {
+		auto id = _rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s] });
+		_rules.set_status(id, rule_status::inactive);
 	});
-	_server.add_action(L"delete_rule", [this](auto&, auto& value) { _rules.remove(std::stoul(value)); });
-	co_await _server.start();
+	_http.add_action(L"delete_rule", [this](auto&, auto& value) { _rules.remove(std::stoul(value)); });
+	co_await _http.start();
 	co_return;
 }
 
@@ -91,6 +94,12 @@ void room_server::run()
 {
 	if(_inprogress)	return;
 	_inprogress = true;
+
+	while(!_tasks.empty()) {
+		auto& f = std::function<void()>{ []() {} };
+		_tasks.try_pop(f);
+		f();
+	}
 
 	for(auto& sensor : _sensors) sensor->update();
 
