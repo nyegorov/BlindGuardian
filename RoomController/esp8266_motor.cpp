@@ -43,12 +43,12 @@ struct status_out {
 };
 #pragma pack(pop)
 
-using cmd_version = cmd_base<'v', 0, empty, 8, char[8]>;
-using cmd_reset = cmd_base<'r', 0, empty, 0, empty>;
-using cmd_status = cmd_base<'s', 0, empty, 6, status_out>;
-using cmd_open = cmd_base<'o', 0, empty, 1, uint8_t>;
-using cmd_close = cmd_base<'c', 0, empty, 1, uint8_t>;
-using cmd_setpos = cmd_base<'p', 1, uint8_t, 1, uint8_t>;
+using cmd_version	= cmd_base<'v', 0, empty, 8, char[8]>;
+using cmd_reset		= cmd_base<'r', 0, empty, 0, empty>;
+using cmd_status	= cmd_base<'s', 0, empty, 6, status_out>;
+using cmd_open		= cmd_base<'o', 0, empty, 6, status_out>;
+using cmd_close		= cmd_base<'c', 0, empty, 6, status_out>;
+using cmd_setpos	= cmd_base<'p', 1, uint8_t, 6, status_out>;
 
 
 esp8266_motor::esp8266_motor(std::wstring_view remote_host, udns_resolver& udns, log_manager& log) :
@@ -65,19 +65,22 @@ esp8266_motor::~esp8266_motor()
 void esp8266_motor::start()
 {
 	cmd_version ver;
-	if(send_cmd(_udns.get_address(_host), ver)) {
-		_log.info(module_name, L"%7hs connected.", (char*)ver.in);
+	if(send_cmd(_udns.get_address(_host), ver, _timeout_sensors)) {
+		wchar_t tmp[20];
+		swprintf(tmp, _countof(tmp), L"%hs", ver.in);
+		_version = tmp;
+		_log.info(module_name, L"%7s connected.", _version.c_str());
 	}
 }
 
-bool esp8266_motor::wait_timeout(IAsyncInfo action)
+bool esp8266_motor::wait_timeout(IAsyncInfo action, milliseconds timeout)
 {
 	auto start = std::chrono::high_resolution_clock::now();
 	while(true) {
 		auto status = action.Status();
 		if(status == AsyncStatus::Completed)	break;
 		if(status == AsyncStatus::Error)		throw winrt::hresult_error(action.ErrorCode());
-		if(std::chrono::high_resolution_clock::now() - start > _timeout) {
+		if(std::chrono::high_resolution_clock::now() - start > timeout) {
 			_log.error(module_name, L"tcp connect timeout");
 			action.Cancel();
 			return false;
@@ -87,12 +90,12 @@ bool esp8266_motor::wait_timeout(IAsyncInfo action)
 	return true;
 }
 
-bool esp8266_motor::connect(HostName host)
+bool esp8266_motor::connect(HostName host, milliseconds timeout)
 {
 	_log.message(module_name, L"connection attempt");
 	_socket = StreamSocket();
 	//_socket.Control().KeepAlive(true);
-	if(!wait_timeout(_socket.ConnectAsync(host, cmd_port, SocketProtectionLevel::PlainSocket))) return false;
+	if(!wait_timeout(_socket.ConnectAsync(host, cmd_port, SocketProtectionLevel::PlainSocket), timeout)) return false;
 	if(!_socket) {
 		_log.error(module_name, L"connection failed.");
 		return false;
@@ -101,27 +104,32 @@ bool esp8266_motor::connect(HostName host)
 	return true;
 }
 
-bool esp8266_motor::send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf)
+bool esp8266_motor::send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf, milliseconds timeout)
 {
 	try {
-		if(!host)						return false;
-		if(!_socket && !connect(host))	return false;
+		watch w;
+		if(!host)											return false;
+		if(!_socket && !connect(host, timeout))				return false;
 
 		DataWriter writer(_socket.OutputStream());
 		writer.WriteByte(cmd);
 		if(!inbuf.empty())	writer.WriteBytes(inbuf);
-		if(!wait_timeout(writer.StoreAsync()))	return false;
+		if(!wait_timeout(writer.StoreAsync(), timeout))		return false;
 		writer.DetachStream();
 
 		if(!outbuf.empty()) {
 			DataReader reader(_socket.InputStream());
-			if(!wait_timeout(reader.LoadAsync(outbuf.size())))	return false;
+			if(!wait_timeout(reader.LoadAsync(outbuf.size()), timeout))	return false;
 			reader.ByteOrder(ByteOrder::LittleEndian);
 			reader.ReadBytes(outbuf);
 			reader.DetachStream();
 		}
+		if(cmd == 's' || cmd == 'o' || cmd == 'c' || cmd == 'p') {
+			status_out *ps = reinterpret_cast<status_out*>(outbuf.data());
+			_log.message(module_name, L"> '%c', pos=%d, temp=%d, light=%d (%lld ms)", cmd, (int)ps->status, (int)ps->temp, ps->light, w.elapsed_ms().count());
+		} else
+			_log.message(module_name, L"> '%c'", cmd);
 
-		_log.message(module_name, L"sent command '%c'", cmd);
 		return true;
 	} catch(winrt::hresult_error& hr) {
 		_log.error(module_name, hr);
@@ -129,31 +137,44 @@ bool esp8266_motor::send_cmd(HostName host, uint8_t cmd, winrt::array_view<const
 	return false;
 }
 
-template<class CMD> bool esp8266_motor::send_cmd(HostName host, CMD& cmd)
+template<class CMD> bool esp8266_motor::send_cmd(HostName host, CMD& cmd, milliseconds timeout)
 {
-	return send_cmd(host, cmd.command, cmd.out_buf, cmd.in_buf);
+	return send_cmd(host, cmd.command, cmd.out_buf, cmd.in_buf, timeout);
 }
 
-void esp8266_motor::open()  { cmd_open cmd;  if(send_cmd(_udns.get_address(_host), cmd)) _position.set(cmd.in); }
-void esp8266_motor::close() { cmd_close cmd; if(send_cmd(_udns.get_address(_host), cmd)) _position.set(cmd.in); }
+template<class CMD> void esp8266_motor::do_action(typename CMD::out_type param = {})
+{
+//	std::async(std::launch::async, [=](){
+		CMD action(param);
+		auto host = _udns.get_address(_host);
+		for(unsigned i = 0; i < 5; i++) {
+			if(send_cmd(host, action, _timeout_actions)) {
+				_position.set(action.in.status);
+				_retries = 0;
+				break;
+			}
+			_retries++;
+			_socket = nullptr;
+		}
+//	});
+}
+
+void esp8266_motor::open()	{ do_action<cmd_open>({}); }
+void esp8266_motor::close() { do_action<cmd_close>({}); }
 void esp8266_motor::setpos(value_t pos) 
 { 
-	if(is_error(pos))	return;
-	cmd_setpos cmd{ (uint8_t)as<value_type>(*pos) }; 
-	if(send_cmd(_udns.get_address(_host), cmd))	_position.set(cmd.in); 
+	if(!is_error(pos))	do_action<cmd_setpos>((uint8_t)as<value_type>(*pos));
 }
-void esp8266_motor::reset() { send_cmd(_udns.get_address(_host), cmd_reset()); _udns.reset(); }
+void esp8266_motor::reset() { _udns.reset(); }
 
 void esp8266_motor::update_sensors()
 {
-	watch w;
 	cmd_status cmd;
-	bool ok = send_cmd(_udns.get_address(_host), cmd);
+	bool ok = send_cmd(_udns.get_address(_host), cmd, _timeout_sensors);
 	if(ok) {
 		_light.set(cmd.in.light);
 		_temp.set(cmd.in.temp);
 		_position.set(cmd.in.status);
-		_log.message(module_name, L"status: pos=%d, temp=%d, light=%d (%lld ms)", cmd.in.status, cmd.in.temp, cmd.in.light, w.elapsed_ms().count());
 		_retries = 0;
 	} else {
 		_retries++;

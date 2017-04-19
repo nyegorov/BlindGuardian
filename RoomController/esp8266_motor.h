@@ -21,6 +21,7 @@ public:
 	~esp8266_motor();
 
 	wstring host_name() const { return _host; }
+	wstring version()   const { return _version; }
 	void start();
 	void open();
 	void close();
@@ -31,13 +32,14 @@ public:
 	i_sensor* get_temp()	{ return &_temp; }
 	i_sensor* get_pos()		{ return &_position; }
 	bool online()			{ return _retries < 3; }
-	void set_timeout(milliseconds timeout) { _timeout = timeout; }
+	void set_timeout(milliseconds sensors, milliseconds actions) { _timeout_sensors = sensors; _timeout_actions = actions; }
 
 protected:
-	bool wait_timeout(IAsyncInfo action);
-	bool connect(HostName host);
-	bool send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf);
-	template<class CMD> bool send_cmd(HostName host, CMD& cmd);
+	bool wait_timeout(IAsyncInfo action, milliseconds timeout);
+	bool connect(HostName host, milliseconds timeout);
+	bool send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf, milliseconds timeout);
+	template<class CMD> bool send_cmd(HostName host, CMD& cmd, milliseconds timeout);
+	template<class CMD> void do_action(typename CMD::out_type param);
 	void update_sensors();
 
 	class remote_sensor : public sensor
@@ -52,7 +54,9 @@ protected:
 	log_manager&		_log;
 	udns_resolver&		_udns;
 	wstring				_host;
-	milliseconds		_timeout{ 1s };
+	wstring				_version = L"Unknown";
+	milliseconds		_timeout_sensors{ 1s };
+	milliseconds		_timeout_actions{ 1s };
 	StreamSocket		_socket{ nullptr };
 	std::atomic<int>	_retries{ 0 };
 	remote_sensor		_temp{ L"temp_out", *this, true };

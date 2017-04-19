@@ -56,7 +56,7 @@
             temp_out.innerHTML = room.sensors.temp_out;
             light.innerHTML = room.sensors.light;
             inactivity.innerHTML = room.sensors.inactivity;
-            mot_ip.innerHTML = room.sensors.motctrl == '' ? '<p class="error">offline</p>' : '<p class="active">online: ' + room.sensors.motctrl + '</p>';
+            mot_ip.innerHTML = room.sensors.motctrl == '' ? '<span class="error">offline</span>' : '<span class="active">' + room.sensors.motctrl + '</span>';
             pos.innerHTML = room.sensors.position == 0 ? 'closed' : (room.sensors.position == 100 ? 'open' : room.sensors.position);
         }
 

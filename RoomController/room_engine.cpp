@@ -49,7 +49,7 @@ wstring room_server::get_sensors()
 			JsonValue::CreateNumberValue(std::get<value_type>(*s->value())));
 	}
 	auto mot_ip = _udns.get_address(_motor.host_name());
-	json.SetNamedValue(_motor.host_name(), JsonValue::CreateStringValue(_motor.online() && mot_ip ? mot_ip.DisplayName() : L"") );
+	json.SetNamedValue(_motor.host_name(), JsonValue::CreateStringValue(_motor.online() && mot_ip ? _motor.version() + L", " + mot_ip.DisplayName().c_str() : L"") );
 	JsonObject sensors;
 	sensors.SetNamedValue(L"sensors", json);
 	return sensors.ToString();
@@ -64,7 +64,10 @@ std::future<void> room_server::start()
 {
 	_log.enable_debug(_config.get(L"enable_debug", false));
 
-	_motor.set_timeout(std::chrono::milliseconds(_config.get(L"socket_timeout", 2000)));
+	_motor.set_timeout(
+		std::chrono::milliseconds(_config.get(L"socket_timeout", 2000)),
+		std::chrono::milliseconds(_config.get(L"socket_timeout_action", 60000))
+	);
 	co_await _udns.start();
 	_http.add(L"/", L"html/room_status.html");
 	_http.add(L"/status", L"html/room_status.html");

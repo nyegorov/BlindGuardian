@@ -5,7 +5,7 @@
 
 #define MAX_SRV_CLIENTS 5
 
-char version[]   = "ESP1.01";
+char version[]   = "ESP1.03";
 char host_name[] = "motctrl";
 
 const unsigned int cmdPort = 4760;
@@ -36,6 +36,16 @@ uint8_t update_sensors() {
 	temp_out = 42 + random(5);
 	light = 76000 + random(1000);
 	return position;
+}
+
+void write_status(WiFiClient& client) {
+  cmd_buf response;
+  response.status = position;
+  response.light = light;
+  response.temp = temp_out;
+  Serial.printf("s - pos: %d, temp: %d, light: %d, mem: %u\n", response.status, (int)temp_out, light, (unsigned)ESP.getFreeHeap());
+  //Serial.print(".");
+  client.write((uint8_t*)response.data, sizeof(response));
 }
 
 void set_pos(uint8_t pos) {
@@ -162,25 +172,16 @@ void loop() {
   for(i = 0; i < MAX_SRV_CLIENTS; i++){
     if (clients[i] && clients[i].connected()){
       if(clients[i].available()){
-        cmd_buf response;
         char cmd = clients[i].read();
         switch(cmd) {
-        case 's': 
-          response.status = update_sensors();
-          response.light = light;
-          response.temp = temp_out;
-          Serial.printf("s - status: %02x, temp: %d, light: %d, mem: %u\n", response.status, (int)temp_out, light, (unsigned)ESP.getFreeHeap());
-          //Serial.print(".");
-          clients[i].write((uint8_t*)response.data, sizeof(response));
-          break;
-        case 'o': set_pos(100); clients[i].write(position); break;
-        case 'p': set_pos(clients[i].read()); clients[i].write(position); break;
-        case 'c': set_pos(0); clients[i].write(position); break;
+        case 's': update_sensors();           write_status(clients[i]); break;
+        case 'o': set_pos(100);               write_status(clients[i]); break;
+        case 'p': set_pos(clients[i].read()); write_status(clients[i]); break;
+        case 'c': set_pos(0);                 write_status(clients[i]); break;
         case 'v': clients[i].write((uint8_t*)version, 8); break;
         case 'r': ESP.reset(); break;
         default:  Serial.printf("%c (%d) - unknown command\n", cmd, (int)cmd);
         }
-        //clients[i].flush();
       }
     }
   }
