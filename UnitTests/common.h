@@ -2,6 +2,7 @@
 
 #include "../RoomController/value.h"
 #include "../RoomController/sensors.h"
+#include "../RoomController/debug_stream.h"
 
 using namespace roomctrl;
 using namespace winrt::Windows::Storage::Streams;
@@ -49,7 +50,17 @@ public:
 			writer.WriteByte((int8_t)_temp);
 			writer.WriteUInt32(_light);
 			co_await writer.StoreAsync();
+			writer.DetachStream();
 		}
+		else if(cmd == 'v') {
+			DataWriter writer(args.Socket().OutputStream());
+			writer.WriteString(L"DUMB1.1");
+			co_await writer.StoreAsync();
+			writer.DetachStream();
+		}
+		wdebug << L"received command: '" << (char)cmd << '\'' << std::endl;
+		reader.DetachStream();
+		co_await on_connect(listener, args);
 	}
 };
 
@@ -64,6 +75,7 @@ class DumbMotor : public i_motor
 {
 public:
 	value_t	_value = { 0 };
+	void start() { }
 	void open()  { _value = 100; }
 	void close() { _value = 0; };
 	void setpos(value_t v)	{ _value = v; }

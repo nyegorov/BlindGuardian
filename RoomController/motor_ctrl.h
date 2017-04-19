@@ -21,9 +21,10 @@ public:
 	motor_ctrl(std::wstring_view name, const vec_motors& motors);
 	~motor_ctrl();
 
+	void start() { for(auto m : _motors) m->start(); };
 	action open{  L"open",    [this](auto&)		{ do_action(std::mem_fn(&i_motor::open)); } };
 	action close{ L"close",   [this](auto&)		{ do_action(std::mem_fn(&i_motor::close)); } };
-	action setpos{ L"set_pos", [this](auto& v)	{ do_action([&v](i_motor* pm) { pm->setpos(v.empty() ? value_t{ 0 } : v.front()); }); } };
+	action setpos{ L"set_pos",[this](auto& v)	{ do_action([&v](i_motor* pm) { pm->setpos(v.empty() ? value_t{0} : v.front()); }); } };
 	std::vector<const i_action*> actions() const { return{ &open, &close, &setpos }; }
 private:
 	template<class T> void do_action(T t);

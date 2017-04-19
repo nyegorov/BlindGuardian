@@ -11,24 +11,6 @@ using namespace std::chrono_literals;
 
 namespace roomctrl {
 
-#pragma pack(push, 1)
-union cmd_status {
-	struct {
-		uint8_t status;
-		uint8_t temp;
-		uint32_t light;
-	};
-	uint8_t data[6];
-};
-
-union cmd_pos {
-	struct {
-		uint8_t position;
-	};
-	uint8_t data[1];
-};
-#pragma pack(pop)
-
 class esp8266_motor : public i_motor
 {
 	using IAsyncInfo = winrt::Windows::Foundation::IAsyncInfo;
@@ -39,17 +21,11 @@ public:
 	~esp8266_motor();
 
 	wstring host_name() const { return _host; }
-	void open()				{ cmd_pos cmd; send_cmd(_udns.get_address(_host), 'o', {}, cmd.data); _position.set(cmd.position); }
-	void close()			{ cmd_pos cmd; send_cmd(_udns.get_address(_host), 'c', {}, cmd.data); _position.set(cmd.position); }
-	void setpos(value_t pos) {
-		auto it = std::get_if<value_type>(&pos);
-		if(it) {
-			cmd_pos cmd{ (uint8_t)*it };
-			send_cmd(_udns.get_address(_host), 'p', cmd.data, cmd.data);
-			_position.set(cmd.position);
-		}
-	}
-	void reset()			{ send_cmd(_udns.get_address(_host), 'r', {}, {}); _udns.reset(); }
+	void start();
+	void open();
+	void close();
+	void setpos(value_t pos);
+	void reset();
 
 	i_sensor* get_light()	{ return &_light; }
 	i_sensor* get_temp()	{ return &_temp; }
@@ -61,6 +37,7 @@ protected:
 	bool wait_timeout(IAsyncInfo action);
 	bool connect(HostName host);
 	bool send_cmd(HostName host, uint8_t cmd, winrt::array_view<const uint8_t> inbuf, winrt::array_view<uint8_t> outbuf);
+	template<class CMD> bool send_cmd(HostName host, CMD& cmd);
 	void update_sensors();
 
 	class remote_sensor : public sensor

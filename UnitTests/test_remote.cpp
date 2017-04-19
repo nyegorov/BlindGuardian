@@ -25,10 +25,10 @@ public:
 		config_manager cm{ "config.db" };
 		log_manager log;
 		udns_resolver udns{ cm, log };
-		thread([&udns]() { udns.start().get(); Sleep(500); }).join();
+		thread([&udns]() { udns.start().get(); Sleep(1000); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
 		udns_resolver udns1{ cm, log };
-		thread([&udns1]() { udns1.start().get(); Sleep(500); }).join();
+		thread([&udns1]() { udns1.start().get(); Sleep(1000); }).join();
 		Assert::IsTrue(udns1.get_address(L"motctrl") != nullptr);
 		filesystem::remove("config.db" );
 	}

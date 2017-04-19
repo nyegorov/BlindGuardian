@@ -87,6 +87,7 @@ std::future<void> room_server::start()
 	});
 	_http.add_action(L"delete_rule", [this](auto&, auto& value) { _rules.remove(std::stoul(value)); });
 	co_await _http.start();
+	_motors.start();
 	co_return;
 }
 

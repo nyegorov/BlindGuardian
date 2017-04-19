@@ -16,6 +16,8 @@ using value_type = int32_t;
 using value_t = std::variant<value_type, i_sensor*, error_t>;
 using params_t = vector<value_t>;
 
+template<class T> bool is(const value_t& v) { return std::get_if<T>(&v); }
+template<class T> T as(const value_t& v) { return std::get<T>(v); }
 inline bool is_error(const value_t& v) { return std::get_if<error_t>(&v); }
 inline bool is_sensor(const value_t& v) { return std::get_if<i_sensor*>(&v); }
 
@@ -30,6 +32,7 @@ struct i_sensor
 };
 
 struct i_motor {
+	virtual void start() = 0;
 	virtual void open() = 0;
 	virtual void close() = 0;
 	virtual void setpos(value_t pos) = 0;

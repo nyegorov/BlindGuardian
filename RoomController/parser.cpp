@@ -129,7 +129,7 @@ void NScript::ParseVar(value_t& result, bool skip)
 	if(_parser.GetToken() == Parser::setvar) {
 		_parser.Next();
 		Parse(Statement, result, skip);
-		if(!skip)	_context.Set(name, result);
+		if(!skip)	_context.Set(name, *result);
 	}	else if(_parser.GetToken() == Parser::lpar) {
 		params_t params;
 		do {
