@@ -29,17 +29,19 @@ void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessa
 	std::wstringstream ws;
 	ws << ip_addr[0] << '.' << ip_addr[1] << '.' << ip_addr[2] << '.' << ip_addr[3];
 	wstring ip = ws.str();
-	_log.message(module_name, L"# - announce: %s -> %s", name.c_str(), ip.c_str());
+	logger.message(module_name, L"# - announce: %s -> %s", name.c_str(), ip.c_str());
 
 	// persistence
-	_config.set(name.c_str(), ip.c_str());
-	_config.save();
+	if(_config) {
+		_config->set(name.c_str(), ip.c_str());
+		_config->save();
+	}
 
 	lock_t lock(_mutex);
 	_names.emplace(name, ip);
 }
 
-udns_resolver::udns_resolver(config_manager& config, log_manager& log) : _config(config), _log(log)
+udns_resolver::udns_resolver(config_manager* config) : _config(config)
 {
 	_names.emplace(L"localhost", HostName(L"localhost"));
 }
@@ -58,7 +60,7 @@ std::future<void> udns_resolver::start()
 		_socket.JoinMulticastGroup(_multicast_group);
 		co_await refresh();
 	} catch(winrt::hresult_error& hr) {
-		_log.error(module_name, hr);
+		logger.error(module_name, hr);
 	}
 	co_return;
 }
@@ -71,7 +73,7 @@ std::future<void> udns_resolver::post_cmd(uint8_t cmd)
 		writer.WriteByte(cmd);
 		co_await writer.StoreAsync();
 	} catch(winrt::hresult_error& hr) {
-		_log.error(module_name, hr);
+		logger.error(module_name, hr);
 	}
 	co_return;
 }
@@ -84,6 +86,9 @@ HostName udns_resolver::get_address(const std::wstring& name) const
 	lock_t lock(_mutex);
 	auto it = _names.find(name);
 	if(it != _names.end()) return it->second;
-	auto ip = _config.get(name.c_str(), L"");
-	return ip.empty() ? HostName{ nullptr } : HostName{ ip };
+	if(_config) {
+		auto ip = _config->get(name.c_str(), L"");
+		if(!ip.empty()) return HostName{ ip };
+	}
+	return HostName{ nullptr };
 }

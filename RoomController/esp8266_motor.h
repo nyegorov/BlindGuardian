@@ -17,15 +17,15 @@ class esp8266_motor : public i_motor
 	using StreamSocket = winrt::Windows::Networking::Sockets::StreamSocket;
 	using milliseconds = std::chrono::milliseconds;
 public:
-	esp8266_motor(std::wstring_view remote_host, udns_resolver& udns, log_manager& log);
+	esp8266_motor(std::wstring_view remote_host, udns_resolver& udns);
 	~esp8266_motor();
 
 	wstring host_name() const { return _host; }
 	wstring version()   const { return _version; }
-	void start();
-	void open();
-	void close();
-	void setpos(value_t pos);
+	void start() override;
+	void open() override;
+	void close() override;
+	void setpos(value_t pos) override;
 	void reset();
 
 	i_sensor* get_light()	{ return &_light; }
@@ -51,7 +51,6 @@ protected:
 		void update() override;
 	};
 
-	log_manager&		_log;
 	udns_resolver&		_udns;
 	wstring				_host;
 	wstring				_version = L"Unknown";

@@ -1,14 +1,36 @@
 #include "pch.h"
 #include "room_engine.h"
 
+using namespace winrt;
 using namespace winrt::Windows::Data::Json;
 
 const wchar_t module_name[] = L"ROOM";
 
 namespace roomctrl {
 
-room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _config(path / "config.json"), _log(path / "log.txt")
+room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _config(path / "config.json")
 {
+	_http.on(L"/", L"html/room_status.html");
+	_http.on(L"/status", L"html/room_status.html");
+	_http.on(L"/edit", L"html/edit_rule.html");
+	_http.on(L"/log", L"html/server_log.html");
+	_http.on(L"/styles.css", L"html/styles.css");
+	_http.on(L"/back.jpg", L"html/img/background.jpg");
+	_http.on(L"/favicon.ico", L"html/img/favicon.ico");
+	_http.on(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
+	_http.on(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
+	_http.on(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
+	_http.on(L"/log.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
+	_http.on_action(L"set_pos", [this](auto&, auto& value) {
+		if(std::stoul(value) == 100)	_tasks.push([this]() {_motors.open(); });
+		if(std::stoul(value) == 0)		_tasks.push([this]() {_motors.close(); });
+	});
+	_http.on_action(L"save_rule", [this](auto& req, auto& value) {
+		auto id = _rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s] });
+		_rules.set_status(id, rule_status::inactive);
+	});
+	_http.on_action(L"delete_rule", [this](auto&, auto& value) { _rules.remove(std::stoul(value)); });
+
 	init(_sensors, _actuators);
 }
 
@@ -29,11 +51,6 @@ void room_server::init(const vec_sensors &sensors, const vec_actuators &actuator
 			_parser.set(obj + L"." + paction->name(), [paction](auto& p) {return paction->activate(p), value_t{ 1 }; });
 		}
 	}
-}
-
-wstring room_server::get_log()
-{
-	return _log.to_string();
 }
 
 wstring room_server::get_rules()
@@ -62,34 +79,13 @@ value_t room_server::eval(const wchar_t *expr)
 
 std::future<void> room_server::start()
 {
-	_log.enable_debug(_config.get(L"enable_debug", false));
-
+	co_await _udns.start();
+	co_await _http.start();
+	co_await 500ms;
 	_motor.set_timeout(
 		std::chrono::milliseconds(_config.get(L"socket_timeout", 2000)),
 		std::chrono::milliseconds(_config.get(L"socket_timeout_action", 60000))
 	);
-	co_await _udns.start();
-	_http.add(L"/", L"html/room_status.html");
-	_http.add(L"/status", L"html/room_status.html");
-	_http.add(L"/edit", L"html/edit_rule.html");
-	_http.add(L"/log", L"html/server_log.html");
-	_http.add(L"/styles.css", L"html/styles.css");
-	_http.add(L"/back.jpg", L"html/img/background.jpg");
-	_http.add(L"/favicon.ico", L"html/img/favicon.ico");
-	_http.add(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
-	_http.add(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
-	_http.add(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
-	_http.add(L"/log.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_log()); });
-	_http.add_action(L"set_pos", [this](auto&, auto& value) {
-		if(std::stoul(value) == 100)	_tasks.push([this]() {_motors.open(); });
-		if(std::stoul(value) == 0)		_tasks.push([this]() {_motors.close(); });
-	});
-	_http.add_action(L"save_rule", [this](auto& req, auto& value) {
-		auto id = _rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s] });
-		_rules.set_status(id, rule_status::inactive);
-	});
-	_http.add_action(L"delete_rule", [this](auto&, auto& value) { _rules.remove(std::stoul(value)); });
-	co_await _http.start();
 	_motors.start();
 	co_return;
 }
@@ -113,7 +109,7 @@ void room_server::run()
 
 		auto result = _parser.eval(rule.condition);
 		if(is_error(result)) {
-			_log.error(module_name, L"error evaluating condition '%s': %s", rule.condition.c_str(), get_error_msg(result));
+			logger.error(module_name, L"error evaluating condition '%s': %s", rule.condition.c_str(), get_error_msg(result));
 			status = rule_status::error;
 		} else {
 			status = result == value_t{ 0 } ? rule_status::inactive : rule_status::active;
@@ -121,9 +117,9 @@ void room_server::run()
 
 		if(status != rule.status && status == rule_status::active) {
 			result = _parser.eval(rule.action);
-			_log.info(module_name, L"activated rule '%s' (%s)", rule.name.c_str(), rule.action.c_str());
+			logger.info(module_name, L"activated rule '%s' (%s)", rule.name.c_str(), rule.action.c_str());
 			if(is_error(result)) {
-				_log.error(module_name, L"error evaluating action '%s': %s", rule.action.c_str(), get_error_msg(result));
+				logger.error(module_name, L"error evaluating action '%s': %s", rule.action.c_str(), get_error_msg(result));
 				status = rule_status::error;
 			}
 		}

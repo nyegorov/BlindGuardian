@@ -15,13 +15,12 @@ class udns_resolver
 	std::future<void> post_cmd(uint8_t cmd);
 	using lock_t = std::lock_guard<std::mutex>;
 	mutable std::mutex			_mutex;
-	log_manager&				_log;
-	config_manager&				_config;
+	config_manager*				_config{ nullptr };
 	DatagramSocket				_socket;
 	std::map<wstring, HostName>	_names;
 	HostName					_multicast_group{ L"224.0.0.100" };
 public:
-	udns_resolver(config_manager& config, log_manager& log);
+	udns_resolver(config_manager* config = nullptr);
 	~udns_resolver();
 	std::future<void> start();
 	std::future<void> refresh();

@@ -3,6 +3,8 @@
 using std::wstring;
 using std::experimental::filesystem::path;
 
+namespace roomctrl {
+
 enum class rule_status { error, active, inactive };
 
 struct rule {
@@ -42,3 +44,4 @@ public:
 	void remove(unsigned id);
 };
 
+}

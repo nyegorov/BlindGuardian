@@ -58,10 +58,8 @@ namespace UnitTests
 			DumbRemote remote(42, 0);
 			DumbSensor ts(L"temp", 24);
 			time_sensor tm(L"time");
-			log_manager log;
-			config_manager cm{ "config.db" };
-			udns_resolver udns{ cm, log };
-			esp8266_motor mote(L"localhost", udns, log);
+			udns_resolver udns;
+			esp8266_motor mote(L"localhost", udns );
 			DumbMotor mot1, mot2, mot3;
 			motor_ctrl mota{ L"mot1", {&mot1} }, motb{ L"mot2", {&mot2} }, motc{ L"mot3", {&mot3} };
 			room_server re(p);

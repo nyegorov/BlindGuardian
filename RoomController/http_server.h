@@ -63,11 +63,11 @@ public:
 	using process_fun_t = std::function<std::tuple<content_type, content_t>(http_request&, http_response&)>;
 	using action_fun_t = std::function<void(http_request&, const wstring& value)>;
 
-	http_server(const wchar_t* port_name, const wchar_t *server_name, log_manager& log);
+	http_server(const wchar_t* port_name, const wchar_t *server_name);
 	std::future<void> start();
-	void add(const wchar_t* url, process_fun_t callback) { _callbacks.emplace( url, callback); }
-	void add(const wchar_t* url, path file_name);
-	void add_action(const wchar_t* action, action_fun_t callback) { _actions.emplace( action, callback ); }
+	void on(const wchar_t* url, process_fun_t callback) { _callbacks.emplace( url, callback); }
+	void on(const wchar_t* url, path file_name);
+	void on_action(const wchar_t* action, action_fun_t callback) { _actions.emplace( action, callback ); }
 private:
 	size_t read_request(const IInputStream& stream, wstring& content);
 	void parse_request(wstring_view content, http_request& request);
@@ -77,7 +77,6 @@ private:
 	
 	wstring				_port;
 	wstring				_server_name;
-	log_manager&		_log;
 	StreamSocketListener _listener;
 	std::unordered_map<wstring, content_type>	_content_types;
 	std::unordered_map<wstring, process_fun_t>	_callbacks;

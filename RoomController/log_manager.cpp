@@ -107,7 +107,7 @@ wstring log_manager::to_string()
 	lock_t lock(_mutex);
 	JsonArray jentries;
 	wchar_t buf[256];
-	for(auto& e : reverse(_log)) {
+	for(const auto& e : reverse(_log)) {
 		JsonObject je;
 		auto time_t = std::chrono::system_clock::to_time_t(e.timestamp);
 		tm tm;

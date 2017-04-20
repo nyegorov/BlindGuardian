@@ -2,6 +2,8 @@
 #include <WiFiUdp.h>
 #include <WiFiServer.h>
 #include <ESP8266mDNS.h>
+#include <VEML7700.h>
+#include "tmp75.h"
 
 #define MAX_SRV_CLIENTS 5
 
@@ -14,6 +16,8 @@ const unsigned int udnsPortOut = 4762;
 WiFiUDP udns;
 IPAddress multicast_group(224, 0, 0, 100);
 
+VEML7700 light_sensor;
+Tmp75    temp_sensor(0x4F);
 WiFiServer server(cmdPort);
 WiFiClient clients[MAX_SRV_CLIENTS];
 
@@ -43,7 +47,7 @@ void write_status(WiFiClient& client) {
   response.status = position;
   response.light = light;
   response.temp = temp_out;
-  Serial.printf("s - pos: %d, temp: %d, light: %d, mem: %u\n", response.status, (int)temp_out, light, (unsigned)ESP.getFreeHeap());
+  Serial.printf("s -> pos: %d, temp: %d, light: %d, mem: %u\n", response.status, (int)temp_out, light, (unsigned)ESP.getFreeHeap());
   //Serial.print(".");
   client.write((uint8_t*)response.data, sizeof(response));
 }
@@ -57,7 +61,7 @@ void set_pos(uint8_t pos) {
 
 void announce(char *hostname, IPAddress addr)
 {
-  Serial.printf("# - announce: %s -> ", hostname); Serial.println(addr);
+  Serial.printf("# -> %s: ", hostname); Serial.println(addr);
 	WiFiUDP udp;
 	udp.beginPacketMulticast(multicast_group, udnsPortOut, addr);
 	udp.write('#');                                   // 1 byte header (#)
@@ -87,6 +91,9 @@ void setup() {
   Serial.println("");
   Serial.println("Motor controller setup");
 
+  light_sensor.begin();
+  temp_sensor.begin();
+  
 	WiFi.hostname(host_name);
   //WiFi.setAutoReconnect(true);
   //WiFi.onEvent(on_wifi_event);
@@ -135,7 +142,7 @@ void loop() {
     udns.flush();
 		switch(cmd) {
 		case '$':
-			Serial.print("$ - uDNS query, remote IP: "); Serial.println(udns.remoteIP());
+			Serial.print("$ <- uDNS query, remote IP: "); Serial.println(udns.remoteIP());
 			announce(host_name, WiFi.localIP());
 			break;
     case 'r': ESP.reset(); break;
@@ -178,9 +185,9 @@ void loop() {
         case 'o': set_pos(100);               write_status(clients[i]); break;
         case 'p': set_pos(clients[i].read()); write_status(clients[i]); break;
         case 'c': set_pos(0);                 write_status(clients[i]); break;
-        case 'v': clients[i].write((uint8_t*)version, 8); break;
+        case 'v': Serial.printf("v -> %s\n", version); clients[i].write((uint8_t*)version, 8); break;
         case 'r': ESP.reset(); break;
-        default:  Serial.printf("%c (%d) - unknown command\n", cmd, (int)cmd);
+        default:  Serial.printf("%c <- unknown command (%d)\n", cmd, (int)cmd);
         }
       }
     }

@@ -51,8 +51,7 @@ using cmd_close		= cmd_base<'c', 0, empty, 6, status_out>;
 using cmd_setpos	= cmd_base<'p', 1, uint8_t, 6, status_out>;
 
 
-esp8266_motor::esp8266_motor(std::wstring_view remote_host, udns_resolver& udns, log_manager& log) :
-	_udns(udns), _host(remote_host), _log(log)
+esp8266_motor::esp8266_motor(std::wstring_view remote_host, udns_resolver& udns) : _udns(udns), _host(remote_host)
 {
 	_light.set(error_t::not_implemented);
 	_temp.set(error_t::not_implemented);
@@ -69,7 +68,7 @@ void esp8266_motor::start()
 		wchar_t tmp[20];
 		swprintf(tmp, _countof(tmp), L"%hs", ver.in);
 		_version = tmp;
-		_log.info(module_name, L"%7s connected.", _version.c_str());
+		logger.info(module_name, L"%7s connected.", _version.c_str());
 	}
 }
 
@@ -81,7 +80,7 @@ bool esp8266_motor::wait_timeout(IAsyncInfo action, milliseconds timeout)
 		if(status == AsyncStatus::Completed)	break;
 		if(status == AsyncStatus::Error)		throw winrt::hresult_error(action.ErrorCode());
 		if(std::chrono::high_resolution_clock::now() - start > timeout) {
-			_log.error(module_name, L"tcp connect timeout");
+			logger.error(module_name, L"tcp connect timeout");
 			action.Cancel();
 			return false;
 		}
@@ -92,15 +91,15 @@ bool esp8266_motor::wait_timeout(IAsyncInfo action, milliseconds timeout)
 
 bool esp8266_motor::connect(HostName host, milliseconds timeout)
 {
-	_log.message(module_name, L"connection attempt");
+	logger.message(module_name, L"connection attempt");
 	_socket = StreamSocket();
 	//_socket.Control().KeepAlive(true);
 	if(!wait_timeout(_socket.ConnectAsync(host, cmd_port, SocketProtectionLevel::PlainSocket), timeout)) return false;
 	if(!_socket) {
-		_log.error(module_name, L"connection failed.");
+		logger.error(module_name, L"connection failed.");
 		return false;
 	}
-	_log.message(module_name, L"connection established with host %s", host.DisplayName().c_str());
+	logger.message(module_name, L"connection established with host %s", host.DisplayName().c_str());
 	return true;
 }
 
@@ -126,13 +125,16 @@ bool esp8266_motor::send_cmd(HostName host, uint8_t cmd, winrt::array_view<const
 		}
 		if(cmd == 's' || cmd == 'o' || cmd == 'c' || cmd == 'p') {
 			status_out *ps = reinterpret_cast<status_out*>(outbuf.data());
-			_log.message(module_name, L"> '%c', pos=%d, temp=%d, light=%d (%lld ms)", cmd, (int)ps->status, (int)ps->temp, ps->light, w.elapsed_ms().count());
+			logger.message(module_name, L"%c: pos=%d, t=%d, light=%d (%lld ms)", cmd, (int)ps->status, (int)ps->temp, ps->light, w.elapsed_ms().count());
+		} else if(cmd == 'v') {
+			char *pv = reinterpret_cast<char*>(outbuf.data());
+			logger.message(module_name, L"%c: version=%hs (%lld ms)", cmd, pv, w.elapsed_ms().count());
 		} else
-			_log.message(module_name, L"> '%c'", cmd);
+			logger.message(module_name, L"%c.", cmd);
 
 		return true;
 	} catch(winrt::hresult_error& hr) {
-		_log.error(module_name, hr);
+		logger.error(module_name, hr);
 	}
 	return false;
 }

@@ -24,7 +24,6 @@ public:
 	room_server(const path_t& path = L".");
 	void init(const vec_sensors &sensors, const vec_actuators &actuators);
 	std::future<void> start();
-	wstring get_log();
 	wstring get_rules();
 	wstring get_sensors();
 	void run();
@@ -37,12 +36,11 @@ private:
 	rules_db		_rules;
 	cqueue			_tasks;
 	NScript			_parser;
-	log_manager		_log;
 	config_manager	_config;
-	http_server		_http{ L"80", L"Room configuration server", _log };
-	udns_resolver	_udns{ _config, _log };
+	http_server		_http{ L"80", L"Room configuration server"};
+	udns_resolver	_udns{ &_config };
 
-	esp8266_motor	_motor{ L"motctrl", _udns, _log };
+	esp8266_motor	_motor{ L"motctrl", _udns };
 	time_sensor		_time{ L"time" };
 	missing_sensor	_temp_in{ L"temp_in" };
 	missing_sensor	_motion{ L"inactivity" };

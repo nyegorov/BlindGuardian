@@ -45,8 +45,8 @@ public:
 class missing_sensor : public sensor
 {
 public:
-	missing_sensor(wstring_view name) : sensor(name)	{ }
-	void update() override { set(error_t::not_implemented); }
+	missing_sensor(wstring_view name) : sensor(name)	{ set(error_t::not_implemented); }
+	void update() override { }
 };
 
 class time_sensor : public sensor

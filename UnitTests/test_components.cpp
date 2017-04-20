@@ -22,12 +22,14 @@ using namespace roomctrl;
 
 wdebugstream wdebug;
 debugstream debug;
+log_manager logger;
 
 namespace UnitTests
 {		
 	TEST_MODULE_INITIALIZE(InitTest)
 	{
 		winrt::init_apartment(winrt::apartment_type::single_threaded);
+		logger.enable_debug(true);
 	}
 	TEST_CLASS(Components)
 	{
@@ -53,10 +55,11 @@ namespace UnitTests
 			Assert::AreEqual(40, get<int32_t>(ns.eval(L"x=#5:40#; x-300")));
 			Assert::AreEqual(114, get<int32_t>(ns.eval(L"myVar+mysens+myfunc1(mysens)")));
 		}
-		TEST_METHOD(Errors)
+		TEST_METHOD(ParserErrors)
 		{
 			DumbSensor ts(L"temp", 24);
 			DumbSensor ls(L"light", 2000);
+			missing_sensor ms(L"err");
 			DumbRemote remote('t', 42);
 
 			NScript ns;
@@ -64,11 +67,13 @@ namespace UnitTests
 			ns.set(L"myfunc", [](auto& p) {return p[0]; });
 			ns.set(L"t", [&]() {return ts.value(); });
 			ns.set(L"l", [&]() {return ls.value(); });
+			ns.set(L"e", [&]() {return ms.value(); });
 			Assert::AreEqual(value_t{ error_t::name_not_found }, ns.eval(L"my_func(3)"));
 			Assert::AreEqual(value_t{ error_t::name_not_found }, ns.eval(L"my_var"));
 			Assert::AreEqual(value_t{ error_t::runtime }, ns.eval(L"temp=3"));
-			//rls.update();
-			//Assert::AreEqual(value_t{ error_t::not_implemented }, rls.value());
+			Assert::AreEqual(value_t{ error_t::not_implemented }, ns.eval(L"e"));
+			Assert::AreEqual(value_t{ error_t::not_implemented }, ns.eval(L"e+l"));
+			Assert::AreEqual(value_t{ error_t::not_implemented }, ns.eval(L"t+e"));
 		}
 		TEST_METHOD(RulesExecution)
 		{
@@ -102,8 +107,11 @@ namespace UnitTests
 			config_manager cm(p);
 			cm.set(L"nkey", 42l);
 			cm.set(L"skey", L"value");
+			cm.set(L"bkey", true);
 			Assert::AreEqual(42, cm.get(L"nkey", 0));
 			Assert::AreEqual(L"value"s, cm.get(L"skey", L""));
+			Assert::IsTrue(cm.get(L"bkey", false));
+			Assert::IsFalse(cm.get(L"bkey2", false));
 			cm.set(L"nkey", -42);
 			cm.set(L"skey", L"another");
 			Assert::AreEqual(-42, cm.get(L"nkey", 0));
@@ -158,28 +166,27 @@ namespace UnitTests
 			string test("abc\0\1\2ονυ", 9);
 			ofs.write(test.c_str(), test.size());
 			ofs.close();
-			log_manager log;
-			http_server srv(L"666", L"unit test server", log);
+			http_server srv(L"666", L"unit test server" );
 			wstring value;
-			srv.add(L"/",	  [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"MAIN"); });
-			srv.add(L"/test", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"OK"); });
-			srv.add(L"/some", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"YEP"); });
-			srv.add(L"/file", p);
-			srv.add_action(L"doit", [&value](auto&&, auto&& v) { value = v; });
+			srv.on(L"/",	 [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"MAIN"); });
+			srv.on(L"/test", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"OK"); });
+			srv.on(L"/some", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"YEP"); });
+			srv.on(L"/file", p);
+			srv.on_action(L"doit", [&value](auto&&, auto&& v) { value = v; });
 			srv.start().get();
 
 			wstring content;
-			thread([&content]() { content = HttpClient().GetStringAsync({ L"http://localhost:666" }).get(); }).join();
+			content = async([]() { return HttpClient().GetStringAsync({ L"http://localhost:666" }).get(); }).get();
 			Assert::AreEqual(L"MAIN"s, content);
-			thread([&content]() { content = HttpClient().GetStringAsync({ L"http://localhost:666/test" }).get(); }).join();
+			content = async([]() { return HttpClient().GetStringAsync({ L"http://localhost:666/test" }).get(); }).get();
 			Assert::AreEqual(L"OK"s, content);
-			thread([&content]() { content = HttpClient().GetStringAsync({ L"http://localhost:666/some?doit=YES" }).get(); }).join();
+			content = async([]() { return HttpClient().GetStringAsync({ L"http://localhost:666/some?doit=YES" }).get(); }).get();
 			Assert::AreEqual(L"YEP"s, content);
 			Assert::AreEqual(L"YES"s, value);
 
 			IBuffer buf;
 			array<uint8_t, 9> res;
-			thread([&buf]() { buf = HttpClient().GetBufferAsync({ L"http://localhost:666/file" }).get(); }).join();
+			buf = async([]() { return HttpClient().GetBufferAsync({ L"http://localhost:666/file" }).get(); }).get();
 			DataReader::FromBuffer(buf).ReadBytes(res);
 			Assert::AreEqual(0, memcmp(res.data(), test.data(), res.size()));
 			filesystem::remove(p);

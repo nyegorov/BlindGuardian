@@ -16,39 +16,61 @@ using namespace winrt::Windows::Storage::Streams;
 
 namespace UnitTests
 {
+
+udns_resolver udns;
+
 TEST_CLASS(MotorController)
 {
 public:
+	TEST_CLASS_INITIALIZE(Init)
+	{
+		async([]() {
+			udns.start();
+			for(int i = 0; i < 100; i++) {
+				if(udns.get_address(L"motctrl") != nullptr)	return;
+				this_thread::sleep_for(10ms);
+			}
+			udns.get_address(L"motctrl");
+		}).get();
+	}
 
 	TEST_METHOD(MicroDNS)
 	{
-		config_manager cm{ "config.db" };
-		log_manager log;
-		udns_resolver udns{ cm, log };
-		thread([&udns]() { udns.start().get(); Sleep(1000); }).join();
-		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
-		udns_resolver udns1{ cm, log };
-		thread([&udns1]() { udns1.start().get(); Sleep(1000); }).join();
+		udns_resolver udns1;
+		async([&udns1]() { udns1.start().get(); Sleep(500); }).get();
 		Assert::IsTrue(udns1.get_address(L"motctrl") != nullptr);
-		filesystem::remove("config.db" );
 	}
 
 	TEST_METHOD(RemoteSensors)
 	{
-		log_manager log;
-		config_manager cm{ "config.db" };
-		udns_resolver udns{ cm, log };
-		thread([&udns]() { udns.start().get(); Sleep(500); }).join();
 		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
-		esp8266_motor mot(L"motctrl", udns, log);
+		esp8266_motor mot(L"motctrl", udns );
 		value_t l, t;
 		mot.get_temp()->update();
+		mot.get_light()->update();
 		auto temp = get<int32_t>(mot.get_temp()->value());
 		auto light = get<int32_t>(mot.get_light()->value());
 		Assert::IsTrue(temp >= 42 && temp < 50);
 		Assert::IsTrue(light >= 76000 && temp < 77000);
-		filesystem::remove("config.db");
+	}
+
+	TEST_METHOD(Esp8266Motor)
+	{
+		Assert::IsTrue(udns.get_address(L"motctrl") != nullptr);
+		esp8266_motor mot(L"motctrl", udns );
+		mot.set_timeout(1s, 5s);
+		mot.start();
+		Assert::AreEqual(L"ESP"s, mot.version().substr(0, 3));
+		Assert::AreEqual(L"motctrl"s, mot.host_name().substr(0, 7));
+		mot.open();
+		Assert::AreEqual(100, as<int32_t>(mot.get_pos()->value()));
+		mot.close();
+		Assert::AreEqual(  0, as<int32_t>(mot.get_pos()->value()));
+		mot.setpos(42);
+		Assert::AreEqual( 42, as<int32_t>(mot.get_pos()->value()));
+		Assert::IsTrue(mot.online());
 	}
 
 };
+
 }

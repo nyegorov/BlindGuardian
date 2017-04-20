@@ -62,8 +62,8 @@ http_response http_error(http_status status, http_server::content_t& content)
 	return http_response{ status, content_type::html };
 }
 
-http_server::http_server(const wchar_t* port_name, const wchar_t* server_name, log_manager& log) : 
-	_port(port_name), _server_name(server_name), _log(log)
+http_server::http_server(const wchar_t* port_name, const wchar_t* server_name) : 
+	_port(port_name), _server_name(server_name)
 {
 	_content_types.emplace(L".htm"s,	content_type::html);
 	_content_types.emplace(L".html"s,	content_type::html);
@@ -166,11 +166,11 @@ void http_server::write_content(DataWriter& writer, const content_t& content)
 	std::visit(v, content);
 }
 
-void http_server::add(const wchar_t* url, path file_name)
+void http_server::on(const wchar_t* url, path file_name)
 {
 	auto pct = _content_types.find(file_name.extension());
 	if (pct == _content_types.end())	throw std::invalid_argument("Unknow file type");
-	add(url, [type = pct->second, file_name](const http_request& request, http_response& response) {
+	on(url, [type = pct->second, file_name](const http_request& request, http_response& response) {
 		size_t size = (size_t)std::experimental::filesystem::file_size(file_name);
 		std::ifstream ifs(file_name, std::ios::binary);
 		content_t content( std::in_place_type<binary_t>, size);
@@ -192,7 +192,7 @@ std::future<void> http_server::on_connection(StreamSocket socket)
 			if (!read_request(socket.InputStream(), content))	co_return;
 			parse_request(content, req);
 
-			_log.message(module_name, L"%s %s", req.type.c_str(), req.path.c_str());
+			logger.message(module_name, L"%s %s", req.type.c_str(), req.path.c_str());
 
 			for(auto p : req.params) {
 				auto pc = _actions.find(p.first);
@@ -222,11 +222,11 @@ std::future<void> http_server::on_connection(StreamSocket socket)
 		co_await writer.StoreAsync();
 		co_return;
 	} catch(winrt::hresult_error& hr) {
-		_log.error(module_name, hr);
+		logger.error(module_name, hr);
 	} catch(std::exception& ex) {
-		_log.error(module_name, ex);
+		logger.error(module_name, ex);
 	}	catch (...) {
-		_log.error(module_name, L"unknown error");
+		logger.error(module_name, L"unknown error");
 	}
 }
 

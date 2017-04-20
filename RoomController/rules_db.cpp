@@ -3,6 +3,8 @@
 
 using namespace winrt::Windows::Data::Json;
 
+namespace roomctrl {
+
 JsonObject to_json(const rule & rule)
 {
 	JsonObject json;
@@ -59,9 +61,7 @@ void rules_db::load()
 				jo.GetNamedString(L"action")
 			);
 		}
-	} 
-	catch(const std::exception&) {}
-	catch(const winrt::hresult_error&) {}
+	} catch(const std::exception&) {} catch(const winrt::hresult_error&) {}
 }
 
 void rules_db::store() const
@@ -130,3 +130,4 @@ void rules_db::remove(unsigned id)
 	store();
 }
 
+}

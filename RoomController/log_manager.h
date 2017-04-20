@@ -72,3 +72,6 @@ inline void log_manager::info(const wchar_t module[], const wchar_t format[], AR
 	swprintf(buf, sizeof(buf) / sizeof(buf[0]), format, args...);
 	log(log_level::info, module, buf);
 }
+
+extern log_manager logger;
+

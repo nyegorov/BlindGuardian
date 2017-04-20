@@ -15,6 +15,7 @@ using namespace roomctrl;
 
 wdebugstream wdebug;
 debugstream debug;
+log_manager logger;
 
 using namespace winrt::Windows::Networking::Sockets;
 
