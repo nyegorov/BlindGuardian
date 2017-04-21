@@ -6,6 +6,9 @@
 #include "udns_resolver.h"
 #include "config_manager.h"
 
+#define MAX_RETRIES_BEFORE_RESET	20
+#define MAX_RETRIES_BEFORE_OFFLINE	3
+
 using std::wstring;
 using namespace std::chrono_literals;
 
@@ -31,7 +34,7 @@ public:
 	i_sensor* get_light()	{ return &_light; }
 	i_sensor* get_temp()	{ return &_temp; }
 	i_sensor* get_pos()		{ return &_position; }
-	bool online()			{ return _retries < 3; }
+	bool online()			{ return _retries < MAX_RETRIES_BEFORE_OFFLINE; }
 	void set_timeout(milliseconds sensors, milliseconds actions) { _timeout_sensors = sensors; _timeout_actions = actions; }
 
 protected:
@@ -41,6 +44,7 @@ protected:
 	template<class CMD> bool send_cmd(HostName host, CMD& cmd, milliseconds timeout);
 	template<class CMD> void do_action(typename CMD::out_type param);
 	void update_sensors();
+	void query_version();
 
 	class remote_sensor : public sensor
 	{

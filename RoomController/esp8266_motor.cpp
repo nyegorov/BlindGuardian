@@ -63,13 +63,6 @@ esp8266_motor::~esp8266_motor()
 
 void esp8266_motor::start()
 {
-	cmd_version ver;
-	if(send_cmd(_udns.get_address(_host), ver, _timeout_sensors)) {
-		wchar_t tmp[20];
-		swprintf(tmp, _countof(tmp), L"%hs", ver.in);
-		_version = tmp;
-		logger.info(module_name, L"%7s connected.", _version.c_str());
-	}
 }
 
 bool esp8266_motor::wait_timeout(IAsyncInfo action, milliseconds timeout)
@@ -99,7 +92,8 @@ bool esp8266_motor::connect(HostName host, milliseconds timeout)
 		logger.error(module_name, L"connection failed.");
 		return false;
 	}
-	logger.message(module_name, L"connection established with host %s", host.DisplayName().c_str());
+	if(_version == L"Unknown")	query_version();
+	logger.message(module_name, L"connected to %s (%s)", host.DisplayName().c_str(), _version.c_str());
 	return true;
 }
 
@@ -181,6 +175,20 @@ void esp8266_motor::update_sensors()
 	} else {
 		_retries++;
 		_socket = nullptr;
+		if(_retries > MAX_RETRIES_BEFORE_RESET) {
+			reset();
+			_retries = 5;
+			logger.info(module_name, L"too much retries, reset controller");
+		}
+	}
+}
+
+void esp8266_motor::query_version() {
+	cmd_version ver;
+	if(send_cmd(_udns.get_address(_host), ver, _timeout_sensors)) {
+		wchar_t tmp[20];
+		swprintf(tmp, _countof(tmp), L"%hs", ver.in);
+		_version = tmp;
 	}
 }
 

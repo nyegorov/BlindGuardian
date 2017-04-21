@@ -17,7 +17,7 @@ WiFiUDP udns;
 IPAddress multicast_group(224, 0, 0, 100);
 
 VEML7700 light_sensor;
-Tmp75    temp_sensor(0x4F);
+Tmp75    temp_sensor(0x4F, Tmp75::res12bit);
 WiFiServer server(cmdPort);
 WiFiClient clients[MAX_SRV_CLIENTS];
 
