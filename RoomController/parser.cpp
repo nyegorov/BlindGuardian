@@ -88,19 +88,19 @@ NScript::OpInfo NScript::_operators[Term][10] = {
 	{{Parser::comma,	&OpNull},	{Parser::end, NULL}},
 	{{Parser::ifop,		&OpNull },	{Parser::end, NULL}},
 	{{Parser::land,		&OpAnd },	{Parser::lor, &OpOr},		{Parser::end, NULL}},
-	{{Parser::equ,		&OpEqu },	{Parser::nequ,	&OpNeq },	{Parser::end, NULL } },
+	{{Parser::equ,		&OpEqu },	{Parser::assign, &OpEqu },	{Parser::nequ,&OpNeq },	{Parser::end, NULL } },
 	{{Parser::gt,		&OpGT },	{Parser::ge,	&OpGE },	{Parser::lt, &OpLT },	{Parser::le, &OpLE},	{ Parser::end, NULL } },
 	{{Parser::plus,		&OpAdd},	{Parser::minus,	&OpSub},	{Parser::end, NULL}},
 	{{Parser::multiply,	&OpMul},	{Parser::divide,&OpDiv},	{Parser::end, NULL}},
 	{{Parser::minus,	&OpNeg},	{Parser::lnot, &OpNot},		{Parser::end, NULL}},
 };
 
-value_t NScript::eval(wstring script)
+value_t NScript::eval(wstring script, bool noassign)
 {
 	value_t result;
 	try	{
 		_parser.Init(script);
-		Parse(Script, result, false);
+		Parse(Script, result, false, noassign);
 		if(_parser.GetToken() != Parser::end)	throw error_t::syntax_error;
 	} catch(error_t e) {
 		result = e;
@@ -111,31 +111,31 @@ value_t NScript::eval(wstring script)
 }
 
 // Parse "if <cond> <true-part> [else <part>]" statement
-void NScript::ParseIf(value_t& result, bool skip) {
+void NScript::ParseIf(value_t& result, bool skip, bool noassign) {
 	bool cond = skip || result != value_t{0};
-	Parse(Statement, result, !cond || skip);
+	Parse(Statement, result, !cond || skip, noassign);
 	if(_parser.GetToken() == Parser::ifelse) {
 		_parser.Next();
-		Parse(Statement, result, cond || skip);
+		Parse(Statement, result, cond || skip, noassign);
 	}
 }
 
 // Parse "var[:=]" statement
-void NScript::ParseVar(value_t& result, bool skip)
+void NScript::ParseVar(value_t& result, bool skip, bool noassign)
 {
 	wstring name = _parser.GetName();
 	auto pcb = _callbacks.find(name);
 	_parser.Next();
-	if(_parser.GetToken() == Parser::setvar) {
+	if(_parser.GetToken() == Parser::setvar || (_parser.GetToken() == Parser::assign && !noassign)) {
 		_parser.Next();
-		Parse(Statement, result, skip);
+		Parse(Statement, result, skip, noassign);
 		if(!skip)	_context.Set(name, *result);
 	}	else if(_parser.GetToken() == Parser::lpar) {
 		params_t params;
 		do {
 			_parser.Next();
 			if(_parser.GetToken() == Parser::rpar)	break;
-			Parse(Statement, result, skip);
+			Parse(Statement, result, skip, noassign);
 			params.push_back(result);
 		} while(_parser.GetToken() == Parser::comma);
 		_parser.CheckPairedToken(Parser::lpar);
@@ -148,7 +148,7 @@ void NScript::ParseVar(value_t& result, bool skip)
 	}
 }
 
-void NScript::Parse(Precedence level, value_t& result, bool skip)
+void NScript::Parse(Precedence level, value_t& result, bool skip, bool noassign)
 {
 	// main parse loop
 	Parser::Token token = _parser.GetToken();
@@ -156,18 +156,18 @@ void NScript::Parse(Precedence level, value_t& result, bool skip)
 		// primary value_tessions
 		switch(token)	{
 			case Parser::value:		if(!skip)	result = _parser.GetValue();_parser.Next();break;
-			case Parser::name:		ParseVar(result, skip);	break;
-			case Parser::iffunc:	_parser.Next(); Parse(Statement, result, skip); ParseIf(result, skip); break;
+			case Parser::name:		ParseVar(result, skip, noassign);	break;
+			case Parser::iffunc:	_parser.Next(); Parse(Statement, result, skip, true); ParseIf(result, skip, noassign); break;
 			case Parser::lpar:
 				_parser.Next();
 				result = value_t{};
-				Parse(Statement, result, skip);
+				Parse(Statement, result, skip, true);
 				_parser.CheckPairedToken(token);
 				break;
 			case Parser::lcurly:
 				_parser.Next();
 				_context.Push();
-				Parse(Script, result, skip);
+				Parse(Script, result, skip, noassign);
 				_context.Pop();
 				_parser.CheckPairedToken(token);
 				break;
@@ -176,21 +176,22 @@ void NScript::Parse(Precedence level, value_t& result, bool skip)
 		}
 	} else if(level == Statement) {
 		// comma operator, non-associative
-		Parse((Precedence)((int)level + 1), result, skip);
+		Parse((Precedence)((int)level + 1), result, skip, noassign);
 	}	else	{
 		// all other
 		bool noop = true, is_unary = (level == Unary || level == Unary);
 
 		// parse left-hand operand (for binary operators)
-		if(!is_unary)	Parse((Precedence)((int)level+1), result, skip);
+		if(!is_unary)	Parse((Precedence)((int)level+1), result, skip, noassign);
 again:
 		if(_parser.GetToken() == Parser::end)	return;
 		for(OpInfo *pinfo = _operators[level];pinfo->op;pinfo++)	{
 			token = pinfo->token;
 			if(token == _parser.GetToken())	{
 				if(token != Parser::lpar)	_parser.Next();
+				if(token == Parser::assign && !noassign)	continue;
 				if(token == Parser::ifop) {		// ternary "a?b:c" operator
-					ParseIf(result, skip);
+					ParseIf(result, skip, noassign);
 					goto again;
 				}
 
@@ -198,9 +199,9 @@ again:
 				result = value_t{};
 
 				// parse right-hand operand
-				if(is_unary)	Parse(level, right, skip);											// right-associative operators
+				if(is_unary)	Parse(level, right, skip, noassign);											// right-associative operators
 				else if(token != Parser::unaryplus && token != Parser::unaryminus && !(level == Script && _parser.GetToken() == Parser::rcurly))
-					Parse((Precedence)((int)level+1), level == Script ? result : right, skip);		// left-associative operators
+					Parse((Precedence)((int)level+1), level == Script ? result : right, skip, noassign);		// left-associative operators
 
 				// perform operator's action
 				if(is_error(*left))			result = *left;
@@ -213,7 +214,7 @@ again:
 			}
 		}
 		// for unary operators, return right-hand value_tession if no operators were found
-		if(is_unary && noop)	Parse((Precedence)((int)level+1), result, skip);
+		if(is_unary && noop)	Parse((Precedence)((int)level+1), result, skip, noassign);
 	}
 }
 
@@ -251,7 +252,7 @@ Parser::Token Parser::Next()
 		case ';':	_token = stmt; while(Peek() == c)	Read(); break;
 		case '<':	_token = Peek() == '=' ? Read(), le : lt; break;
 		case '>':	_token = Peek() == '=' ? Read(), ge : gt; break;
-		case '=':	_token = Peek() == '=' ? Read(), equ : setvar; break;
+		case '=':	_token = Peek() == '=' ? Read(), equ : assign; break;
 		case '!':	_token = Peek() == '=' ? Read(), nequ : lnot; break;
 		case '&':	_token = Peek() == '&' ? Read(), land : land; break;
 		case '|':	_token = Peek() == '|' ? Read(), lor : lor ; break;

@@ -92,7 +92,7 @@ class NScript
 public:
 	NScript(const Context *pcontext = NULL) : _context(pcontext)	{}
 	~NScript(void)						{};
-	value_t eval(wstring script);
+	value_t eval(wstring script, bool noassign = false);
 	using callfun_t = std::function<value_t(const params_t&)>;
 	using getvar_t  = std::function<value_t(void)>;
 	void clear()							{ _callbacks.clear(); _context.Clear(); }
@@ -102,9 +102,9 @@ public:
 
 protected:
 	enum Precedence	{Script, Statement, Conditional, Logic, Equality, Relation, Addition,Multiplication,Unary,Primary,Term};
-	void Parse(Precedence level, value_t& result, bool skip);
-	void ParseVar(value_t& result, bool skip);
-	void ParseIf(value_t& result, bool skip);
+	void Parse(Precedence level, value_t& result, bool skip, bool noassign);
+	void ParseVar(value_t& result, bool skip, bool noassign);
+	void ParseIf(value_t& result, bool skip, bool noassign);
 
 	Parser				_parser;
 	Context				_context;

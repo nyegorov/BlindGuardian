@@ -22,7 +22,6 @@ template<> inline std::wstring ToString<value_t>(const value_t& v) {
 
 class DumbRemote
 {
-	uint8_t					_cmd_byte;
 	value_type				_temp;
 	value_type				_light;
 	StreamSocketListener	_listener;
@@ -54,7 +53,7 @@ public:
 		}
 		else if(cmd == 'v') {
 			DataWriter writer(args.Socket().OutputStream());
-			writer.WriteString(L"DUMB1.1");
+			writer.WriteString(wstring(L"DUMB1.1", 8));
 			co_await writer.StoreAsync();
 			writer.DetachStream();
 		}

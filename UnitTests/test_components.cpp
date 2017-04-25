@@ -43,6 +43,7 @@ namespace UnitTests
 			ns.set(L"myfunc2", [](auto& p) {return p[0] + p[1]; });
 			ns.set(L"myvar", 42);
 			ns.set(L"mysens", &ts);
+			ns.set(L"x", 3);
 			Assert::AreEqual(4, get<int32_t>(ns.eval(L"2*2")));
 			Assert::AreEqual(1, get<int32_t>(ns.eval(L"2*(5-3)==4")));
 			Assert::AreEqual(1, get<int32_t>(ns.eval(L"(1>2 || 1>=2 || 1<=2 || 1<2) && !(3==4) && (3!=4) ? 1 : 0")));
@@ -51,9 +52,17 @@ namespace UnitTests
 			Assert::AreEqual(1, get<int32_t>(ns.eval(L"x=1; y=2; x=x+y; y=y-x; x=x*y; x=x/y; x=x-1; x+y")));
 			Assert::AreEqual(10, get<int32_t>(ns.eval(L"myfunc0()")));
 			Assert::AreEqual(24, get<int32_t>(ns.eval(L"mysens")));
-			Assert::AreEqual(48, get<int32_t>(ns.eval(L"x=3; MyFunc2(x, myVar)+x")));
 			Assert::AreEqual(40, get<int32_t>(ns.eval(L"x=#5:40#; x-300")));
+			Assert::AreEqual(48, get<int32_t>(ns.eval(L"x=3; MyFunc2(x, myVar)+x")));
 			Assert::AreEqual(114, get<int32_t>(ns.eval(L"myVar+mysens+myfunc1(mysens)")));
+			Assert::AreEqual(0, get<int32_t>(ns.eval(L"x=4", true)));
+			Assert::AreEqual(3, get<int32_t>(ns.eval(L"x")));
+			Assert::AreEqual(0, get<int32_t>(ns.eval(L"if(x=4) 1 else 0")));
+			Assert::AreEqual(3, get<int32_t>(ns.eval(L"x")));
+			Assert::AreEqual(0, get<int32_t>(ns.eval(L"(x = 4) ? 1 : 0")));
+			Assert::AreEqual(3, get<int32_t>(ns.eval(L"x")));
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"x = 4 ? 1 : 0")));
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"x")));
 		}
 		TEST_METHOD(ParserErrors)
 		{
