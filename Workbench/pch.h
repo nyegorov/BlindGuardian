@@ -6,9 +6,12 @@
 
 #include "winrt\base.h"
 #include "winrt\Windows.Devices.Enumeration.h"
+#include "winrt\Windows.Devices.Gpio.h"
+#include "winrt\Windows.Devices.I2c.h"
 #include "winrt\Windows.Networking.Sockets.h"
 #include "winrt\Windows.Networking.Connectivity.h"
 #include "winrt\Windows.Storage.Streams.h"
+#include "winrt\Windows.System.Threading.h"
 #include "winrt\Windows.Data.Json.h"
 
 #include <algorithm>

@@ -62,4 +62,51 @@ public:
 	};
 };
 
+class hcsr501_sensor : public sensor
+{
+public:
+	hcsr501_sensor(wstring_view name, int32_t motion_pin);
+	void update() override;
+private:
+	//winrt::Windows::System::Threading::ThreadPoolTimer	_timer{ nullptr };
+	winrt::Windows::Devices::Gpio::GpioPin	_motion_pin{ nullptr };
+	std::atomic<std::chrono::system_clock::time_point> _last_activity_time{ std::chrono::system_clock::now() };
+};
+
+class tmp75_sensor : public sensor
+{
+public:
+	enum resolution : uint8_t { res9bit, res10bit, res11bit, res12bit };
+
+	tmp75_sensor(wstring_view name, resolution res) : sensor(name), _res(res) {}
+	std::future<void> start();
+	void update() override;
+private:
+	winrt::Windows::Devices::I2c::I2cDevice _tmp75{ nullptr };
+	resolution _res;
+};
+
+class beeper : public actuator
+{
+public:
+	beeper(std::wstring_view name, int32_t beeper_pin);
+	action beep{ L"beep",    [this](auto&) { make_beep(std::chrono::milliseconds(200)); } };
+	std::vector<const i_action*> actions() const { return{ &beep }; }
+	template<class R, class P> void make_beep(std::chrono::duration<R, P> duration);
+private:
+	winrt::Windows::Devices::Gpio::GpioPin	_beeper_pin{ nullptr };
+};
+
+class led : public actuator
+{
+public:
+	led(std::wstring_view name, int32_t led_pin);
+	action on{  L"on",  [this](auto&) { set(true);	} };
+	action off{ L"off", [this](auto&) { set(false);	} };
+	std::vector<const i_action*> actions() const { return{ &on, &off }; }
+private:
+	void set(bool state);
+	winrt::Windows::Devices::Gpio::GpioPin	_led_pin{ nullptr };
+};
+
 }

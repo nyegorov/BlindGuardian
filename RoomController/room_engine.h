@@ -40,14 +40,16 @@ private:
 	http_server		_http{ L"80", L"Room configuration server"};
 	udns_resolver	_udns{ &_config };
 
-	esp8266_motor	_motor{ L"motctrl", _udns };
+	esp8266_motor	_esp8266{ L"motctrl", _udns };
 	time_sensor		_time{ L"time" };
-	missing_sensor	_temp_in{ L"temp_in" };
-	missing_sensor	_motion{ L"inactivity" };
-	motor_ctrl		_motors{ L"blind" , {&_motor} };
+	tmp75_sensor	_tmp75{ L"temp_in", tmp75_sensor::res12bit };
+	hcsr501_sensor	_hcsr501{ L"inactivity", 18 };
+	motor_ctrl		_motors{ L"blind" , {&_esp8266} };
+	beeper			_beeper{ L"beeper", 24 };
+	led				_led{ L"beeper", 23 };
 
-	vec_sensors		_sensors{ &_temp_in, _motor.get_temp(), _motor.get_light(), _motor.get_pos(), &_motion, &_time };
-	vec_actuators	_actuators{ &_motors };
+	vec_sensors		_sensors{ &_tmp75, _esp8266.get_temp(), _esp8266.get_light(), _esp8266.get_pos(), &_hcsr501, &_time };
+	vec_actuators	_actuators{ &_motors, &_beeper, &_led };
 };
 
 }

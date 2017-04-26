@@ -55,7 +55,9 @@
             temp_in.innerHTML = room.sensors.temp_in;
             temp_out.innerHTML = room.sensors.temp_out;
             light.innerHTML = room.sensors.light;
-            inactivity.innerHTML = room.sensors.inactivity;
+            inactivity.innerHTML = room.sensors.inactivity == 0 ? 'activity detected' :
+                                   room.sensors.inactivity == 1 ? '1 minute of inactivity' :
+                                                                  room.sensors.inactivity + ' minutes of inactivity';
             mot_ip.innerHTML = room.sensors.motctrl == '' ? '<span class="error">offline</span>' : '<span class="active">' + room.sensors.motctrl + '</span>';
             pos.innerHTML = room.sensors.position == 0 ? 'closed' : (room.sensors.position == 100 ? 'open' : room.sensors.position);
         }
@@ -78,7 +80,7 @@
         <tr><td class="sensor-row">Inner temperature</td>   <td><span id="temp_in">--</span>&deg;C</td></tr>
         <tr><td class="sensor-row">Outer temperature</td>   <td><span id="temp_out">--</span>&deg;C</td></tr>
         <tr><td class="sensor-row">Light</td>               <td><span id="light">--</span> lux</td></tr>
-        <tr><td class="sensor-row">Motion detector</td>     <td><span id="inactivity">--</span> minutes of inactivity</td></tr>
+        <tr><td class="sensor-row">Motion detector</td>     <td><span id="inactivity">--</span></td></tr>
         <tr><td class="sensor-row">Position</td>            <td><span id="pos"></span></td></tr>
         <tr><td class="sensor-row">Motor controller</td>    <td><span id="mot_ip"></span></td></tr>
     </table>

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.0
+VisualStudioVersion = 15.0.26403.7
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RoomController", "RoomController\RoomController.vcxproj", "{F3038CCB-C88B-42DE-9BEC-D116DCC19C87}"
 EndProject
@@ -16,6 +16,24 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Workbench", "Workbench\Work
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MotorController", "MotorController\MotorController.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Schematics", "Schematics", "{C4B63646-460B-408E-9099-55BFD1B329FF}"
+	ProjectSection(SolutionItems) = preProject
+		Schematics\NodeMcu.fzz = Schematics\NodeMcu.fzz
+		Schematics\NodeMcu_bb.pdf = Schematics\NodeMcu_bb.pdf
+		Schematics\NodeMcu_schem.pdf = Schematics\NodeMcu_schem.pdf
+		Schematics\Raspberry.fzz = Schematics\Raspberry.fzz
+		Schematics\Raspberry_bb.pdf = Schematics\Raspberry_bb.pdf
+		Schematics\Raspberry_schem.pdf = Schematics\Raspberry_schem.pdf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Datasheets", "Datasheets", "{623D78D9-099C-4543-AAA5-2D113C05D634}"
+	ProjectSection(SolutionItems) = preProject
+		Datasheets\31227sc.pdf = Datasheets\31227sc.pdf
+		Datasheets\designingveml7700.pdf = Datasheets\designingveml7700.pdf
+		Datasheets\tmp75.pdf = Datasheets\tmp75.pdf
+		Datasheets\vishay_01272016_VEML7700-844532.pdf = Datasheets\vishay_01272016_VEML7700-844532.pdf
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

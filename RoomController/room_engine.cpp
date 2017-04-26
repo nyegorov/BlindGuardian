@@ -65,8 +65,8 @@ wstring room_server::get_sensors()
 		json.SetNamedValue(s->name(), is_error(s->value()) ? JsonValue::CreateStringValue(L"--") :
 			JsonValue::CreateNumberValue(std::get<value_type>(*s->value())));
 	}
-	auto mot_ip = _udns.get_address(_motor.host_name());
-	json.SetNamedValue(_motor.host_name(), JsonValue::CreateStringValue(_motor.online() && mot_ip ? _motor.version() + L", " + mot_ip.DisplayName().c_str() : L"") );
+	auto mot_ip = _udns.get_address(_esp8266.host_name());
+	json.SetNamedValue(_esp8266.host_name(), JsonValue::CreateStringValue(_esp8266.online() && mot_ip ? _esp8266.version() + L", " + mot_ip.DisplayName().c_str() : L"") );
 	JsonObject sensors;
 	sensors.SetNamedValue(L"sensors", json);
 	return sensors.ToString();
@@ -79,10 +79,11 @@ value_t room_server::eval(const wchar_t *expr)
 
 std::future<void> room_server::start()
 {
+	co_await _tmp75.start();
 	co_await _udns.start();
 	co_await _http.start();
 	co_await 500ms;
-	_motor.set_timeout(
+	_esp8266.set_timeout(
 		std::chrono::milliseconds(_config.get(L"socket_timeout", 2000)),
 		std::chrono::milliseconds(_config.get(L"socket_timeout_action", 60000))
 	);
@@ -94,6 +95,8 @@ void room_server::run()
 {
 	if(_inprogress)	return;
 	_inprogress = true;
+
+	_led.on();
 
 	while(!_tasks.empty()) {
 		auto& f = std::function<void()>{ []() {} };
@@ -107,7 +110,7 @@ void room_server::run()
 	{
 		rule_status status;
 
-		auto result = _parser.eval(rule.condition);
+		auto result = _parser.eval(rule.condition, true);
 		if(is_error(result)) {
 			logger.error(module_name, L"error evaluating condition '%s': %s", rule.condition.c_str(), get_error_msg(result));
 			status = rule_status::error;
@@ -116,8 +119,9 @@ void room_server::run()
 		}
 
 		if(status != rule.status && status == rule_status::active) {
-			result = _parser.eval(rule.action);
 			logger.info(module_name, L"activated rule '%s' (%s)", rule.name.c_str(), rule.action.c_str());
+			_beeper.beep();
+			result = _parser.eval(rule.action);
 			if(is_error(result)) {
 				logger.error(module_name, L"error evaluating action '%s': %s", rule.action.c_str(), get_error_msg(result));
 				status = rule_status::error;
@@ -125,7 +129,7 @@ void room_server::run()
 		}
 		_rules.set_status(rule.id, status);
 	}
-
+	_led.off();
 	_inprogress = false;
 }
 
