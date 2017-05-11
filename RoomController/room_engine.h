@@ -42,14 +42,21 @@ private:
 
 	esp8266_motor	_esp8266{ L"motctrl", _udns };
 	time_sensor		_time{ L"time" };
-	tmp75_sensor	_tmp75{ L"temp_in", tmp75_sensor::res12bit };
+	tmp75_sensor	_tmp75{ L"temp_in", tmp75_sensor::res12bit, 0x48 };
 	hcsr501_sensor	_hcsr501{ L"inactivity", 18 };
-	motor_ctrl		_motors{ L"blind" , {&_esp8266} };
-	beeper			_beeper{ L"beeper", 24 };
-	led				_led{ L"beeper", 23 };
+	motor_ctrl		_motor{ L"blind" , {&_esp8266} };
+	beeper			_beeper{ L"beeper", 22 };
+	led				_led{ L"led", 4 };
 
-	vec_sensors		_sensors{ &_tmp75, _esp8266.get_temp(), _esp8266.get_light(), _esp8266.get_pos(), &_hcsr501, &_time };
-	vec_actuators	_actuators{ &_motors, &_beeper, &_led };
+	missing_sensor	_temp_out{ L"temp_out" };
+	missing_sensor	_light{ L"light" };
+	missing_sensor	_pos{ L"pos" };
+
+	vec_sensors		_sensors{ &_tmp75, 
+		/*_esp8266.get_temp(), _esp8266.get_light(), _esp8266.get_pos(), */
+		&_temp_out, &_light, &_pos,
+		&_hcsr501, &_time };
+	vec_actuators	_actuators{ &_motor, &_beeper, &_led };
 };
 
 }

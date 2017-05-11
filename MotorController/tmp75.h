@@ -4,7 +4,7 @@
 class Tmp75
 {
 public:
-	enum resolution { res9bit, res10bit, res11bit, res12bit };
+	enum resolution : int8_t { res9bit, res10bit, res11bit, res12bit };
 
 	Tmp75(int i2c_address, resolution res) : _tmp75_address(i2c_address), _res(res)	{}
 	void begin()	
@@ -17,11 +17,12 @@ public:
 		Wire.write(_res << 5);                       // Set the temperature resolution 
 		Wire.endTransmission();                      // Stop transmitting
 		Wire.beginTransmission(_tmp75_address);      // Address the TMP75 sensor
-		Wire.write(rdOnly);                          // Address the Temperature register 
+		Wire.write(tempReg);                         // Address the Temperature register 
 		Wire.endTransmission();                      // Stop transmitting 	
 	}
 	float get_temp()
 	{
+    const float multiplier [4] = { 0.5, 0.25, 0.125, 0.0625 };
 		// Now take a Temerature Reading
 		Wire.requestFrom(_tmp75_address, 2);         // Address the TMP75 and set number of bytes to receive
 		byte MostSigByte = Wire.read();              // Read the first byte this is the MSB
@@ -35,11 +36,8 @@ public:
 		return temp;     
 	}
 private:
-	const float multiplier [4] = { 0.5, 0.25, 0.125, 0.0625 };
+  const byte tempReg   = 0x00;        // Address of Temperature Register
 	const byte configReg = 0x01;        // Address of Configuration Register
-	const byte bitConv = B01100000;     // Set to 12 bit conversion
-	const byte rdWr = 0x01;             // Set to read write
-	const byte rdOnly = 0x00;           // Set to Read
 	int _tmp75_address;
 	resolution _res = res12bit;
 };

@@ -2,10 +2,13 @@
 #include <WiFiUdp.h>
 #include <WiFiServer.h>
 #include <ESP8266mDNS.h>
+#include <Ticker.h>
 #include <VEML7700.h>
 #include "tmp75.h"
 
 #define MAX_SRV_CLIENTS 5
+#define LED_RED   3
+#define LED_GREEN 4
 
 char version[]   = "ESP1.03";
 char host_name[] = "motctrl";
@@ -18,9 +21,11 @@ IPAddress multicast_group(224, 0, 0, 100);
 
 VEML7700 light_sensor;
 Tmp75    temp_sensor(0x4F, Tmp75::res12bit);
+Ticker  red_blinker;
 WiFiServer server(cmdPort);
 WiFiClient clients[MAX_SRV_CLIENTS];
 
+bool red_light = false;
 int32_t	light = 0;
 int8_t	temp_out = 0;
 uint8_t position = 0;
@@ -75,7 +80,6 @@ void announce(char *hostname, IPAddress addr)
 void on_wifi_event(WiFiEvent_t event) {
   Serial.printf("[WiFi-event] event: %d\n", event);
   switch(event) {
-    case WIFI_EVENT_STAMODE_GOT_IP: break;
     case WIFI_EVENT_STAMODE_DISCONNECTED:
       Serial.println("WiFi lost connection");
       WiFi.disconnect(true);
@@ -93,6 +97,9 @@ void setup() {
 
   light_sensor.begin();
   temp_sensor.begin();
+  pinMode(LED_RED, OUTPUT); 
+  pinMode(LED_GREEN, OUTPUT); 
+  red_blinker.attach(0.5, []() { digitalWrite(LED_RED, red_light ? HIGH : LOW); red_light = !red_light; });
   
 	WiFi.hostname(host_name);
   //WiFi.setAutoReconnect(true);
@@ -120,11 +127,10 @@ void setup() {
   Serial.print("Multicast group:\t");
   Serial.println(multicast_group);           // IP address for the name discovery*/
 
-	//if(!MDNS.begin(host_name)) 		Serial.println("Error setting up MDNS responder!");
+  red_blinker.detach();
+  digitalWrite(LED_RED, HIGH);
 
-	//Udp.begin(localPortIn);
 	udns.beginMulticast(WiFi.localIP(), multicast_group, udnsPortIn);
-  
 	server.begin();
 	server.setNoDelay(true);
   
@@ -145,7 +151,11 @@ void loop() {
 			Serial.print("$ <- uDNS query, remote IP: "); Serial.println(udns.remoteIP());
 			announce(host_name, WiFi.localIP());
 			break;
-    case 'r': ESP.reset(); break;
+    case 'r': 
+      WiFi.disconnect(true);
+      delay(1000);
+      ESP.reset(); 
+      break;
 		}
 	}
 
@@ -192,7 +202,5 @@ void loop() {
       }
     }
   }
-  //long  fh = ESP.getFreeHeap();
-  //Serial.printf(": %d\n", (int)fh);
 }
 

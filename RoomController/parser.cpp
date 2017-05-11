@@ -226,8 +226,8 @@ wchar_t Parser::_decpt;
 Parser::Parser() {
 	_decpt = std::use_facet<std::numpunct<char> >(std::locale()).decimal_point();
 	if(_keywords.empty()) {
-		_keywords[L"if"] = Parser::iffunc;
-		_keywords[L"else"] = Parser::ifelse;
+		_keywords[L"if"s] = Parser::iffunc;
+		_keywords[L"else"s] = Parser::ifelse;
 		_decpt = std::use_facet<std::numpunct<char> >(std::locale()).decimal_point();
 		srand((unsigned)time(NULL));
 	}

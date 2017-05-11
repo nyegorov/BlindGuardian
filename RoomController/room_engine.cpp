@@ -22,8 +22,8 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 	_http.on(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
 	_http.on(L"/log.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
 	_http.on_action(L"set_pos", [this](auto&, auto& value) {
-		if(std::stoul(value) == 100)	_tasks.push([this]() {_motors.open(); });
-		if(std::stoul(value) == 0)		_tasks.push([this]() {_motors.close(); });
+		if(std::stoul(value) == 100)	_tasks.push([this]() {_motor.open(); });
+		if(std::stoul(value) == 0)		_tasks.push([this]() {_motor.close(); });
 	});
 	_http.on_action(L"save_rule", [this](auto& req, auto& value) {
 		auto id = _rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s] });
@@ -87,7 +87,8 @@ std::future<void> room_server::start()
 		std::chrono::milliseconds(_config.get(L"socket_timeout", 2000)),
 		std::chrono::milliseconds(_config.get(L"socket_timeout_action", 60000))
 	);
-	_motors.start();
+	_motor.start();
+	_beeper.beep();
 	co_return;
 }
 
@@ -96,10 +97,10 @@ void room_server::run()
 	if(_inprogress)	return;
 	_inprogress = true;
 
-	_led.on();
+	_led.invert();
 
 	while(!_tasks.empty()) {
-		auto& f = std::function<void()>{ []() {} };
+		std::function<void()> f;
 		_tasks.try_pop(f);
 		f();
 	}
@@ -129,7 +130,7 @@ void room_server::run()
 		}
 		_rules.set_status(rule.id, status);
 	}
-	_led.off();
+
 	_inprogress = false;
 }
 

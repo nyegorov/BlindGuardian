@@ -42,11 +42,6 @@ hcsr501_sensor::hcsr501_sensor(wstring_view name, int32_t motion_pin) : sensor(n
 		_motion_pin.ValueChanged([this](auto&& pin, auto&& args) {
 			if(args.Edge() == GpioPinEdge::FallingEdge)	_last_activity_time = system_clock::now();
 		});
-/*		TimerElapsedHandler handler([this](ThreadPoolTimer timer) {
-			auto pin = _motion_pin.Read();
-			if(pin == GpioPinValue::High)	_last_activity_time = system_clock::now();
-		});
-		_timer = ThreadPoolTimer::CreatePeriodicTimer(handler, 100ms);*/
 	}
 }
 
@@ -63,16 +58,11 @@ void hcsr501_sensor::update()
 std::future<void> tmp75_sensor::start()
 {
 	try	{
-		auto i2c_selector = I2cDevice::GetDeviceSelector();
-		auto devices = co_await DeviceInformation::FindAllAsync(i2c_selector);
-		auto tmp75_settings = I2cConnectionSettings(0x4f);
-		auto device = co_await I2cDevice::FromIdAsync(devices.GetAt(0).Id(), tmp75_settings);
+		auto controller = co_await I2cController::GetDefaultAsync();
+		auto device = controller.GetDevice(I2cConnectionSettings(_address));
 
-		uint8_t set_res[2] = { 0x01, _res };
-		device.Write(set_res);
-
-		uint8_t get_temp[1] = { 0 };
-		device.Write(get_temp);
+		device.Write({ 0x01, byte(_res << 5) });
+		device.Write({ 0 });
 
 		_tmp75 = device;
 	} catch(const winrt::hresult_error&)	{
@@ -83,12 +73,10 @@ std::future<void> tmp75_sensor::start()
 void tmp75_sensor::update()
 {
 	if(_tmp75) {
-		const float multiplier[4] = { 0.5, 0.25, 0.125, 0.0625 };
-		uint8_t data[2];
+		byte data[2];
 		_tmp75.Read(data);
-		int temp_sum = (((data[1] << 8) | data[0]) >> 4);
-		float temp = temp_sum * multiplier[_res];
-		set(value_type(temp + 0.5));
+		value_type temp_sum = (((data[0] << 8) | data[1]) >> 4);
+		set(temp_sum >> _res);
 	} else {
 		set(error_t::not_implemented);
 	}
@@ -98,10 +86,11 @@ void tmp75_sensor::update()
 
 beeper::beeper(std::wstring_view name, int32_t beeper_pin) : actuator(name)
 {
-	_beeper_pin = init_pin(beeper_pin, GpioPinDriveMode::Output);
+	_beeper_pin = init_pin(beeper_pin, GpioPinDriveMode::Output, GpioPinValue::Low);
 }
 
-template<class R, class P> void beeper::make_beep(std::chrono::duration<R, P> duration) {
+template<class R, class P> void beeper::make_beep(std::chrono::duration<R, P> duration) 
+{
 	if(_beeper_pin) {
 		_beeper_pin.Write(GpioPinValue::High);
 		std::this_thread::sleep_for(duration);
@@ -113,12 +102,17 @@ template<class R, class P> void beeper::make_beep(std::chrono::duration<R, P> du
 
 led::led(std::wstring_view name, int32_t led_pin) : actuator(name)
 {
-	_led_pin = init_pin(led_pin, GpioPinDriveMode::Output);
+	_led_pin = init_pin(led_pin, GpioPinDriveMode::Output, GpioPinValue::High);
 }
 
 void led::set(bool state)
 {
 	if(_led_pin)	_led_pin.Write(state ? GpioPinValue::High : GpioPinValue::Low);
+}
+
+bool led::get()
+{
+	return _led_pin && _led_pin.Read() == GpioPinValue::High;
 }
 
 
