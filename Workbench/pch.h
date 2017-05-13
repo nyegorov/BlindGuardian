@@ -24,6 +24,7 @@
 #include <functional>
 #include <future>
 #include <iostream>
+#include <memory>
 #include <numeric>
 #include <string>
 #include <string_view>

@@ -18,14 +18,8 @@ namespace roomctrl {
 		StartupTask();
 		void Run(IBackgroundTaskInstance taskInstance);
 	private:
-		void InitGpio();
-
-		room_server		_server;
-		IBackgroundTaskDeferral Deferral;
-		ThreadPoolTimer Timer{ nullptr };
-		GpioPinValue pinValue;
-		const int LED_PIN = 5;
-		GpioPin pin{ nullptr };
+		std::unique_ptr<room_server>	_server;
+		IBackgroundTaskDeferral			_deferral;
 	};
 
 	ACTIVATABLE_OBJECT(StartupTask, RuntimeClass_roomctrl_StartupTask);

@@ -10,12 +10,16 @@ using namespace std::chrono;
 
 namespace roomctrl {
 
-GpioPin init_pin(int32_t pin, GpioPinDriveMode mode, GpioPinValue init = GpioPinValue::Low) {
+const wchar_t module_name[] = L"SENS";
+
+GpioPin init_pin(int32_t pin, GpioPinDriveMode mode, GpioPinValue init = GpioPinValue::Low, GpioSharingMode share = GpioSharingMode::Exclusive) {
 	auto gpio = GpioController::GetDefault();
 	if(gpio) {
-		auto gpio_pin = gpio.OpenPin(pin);
-		gpio_pin.SetDriveMode(mode);
-		if(mode == GpioPinDriveMode::Output)	gpio_pin.Write(init);
+		auto gpio_pin = gpio.OpenPin(pin, share);
+		if(share == GpioSharingMode::Exclusive) {
+			gpio_pin.Write(init);
+			gpio_pin.SetDriveMode(mode);
+		}
 		return gpio_pin;
 	}
 	return nullptr;
@@ -36,11 +40,14 @@ void sensor::reset() {
 
 hcsr501_sensor::hcsr501_sensor(wstring_view name, int32_t motion_pin) : sensor(name)
 {
-	_motion_pin = init_pin(motion_pin, GpioPinDriveMode::Input);
+	_motion_pin = init_pin(motion_pin, GpioPinDriveMode::Input, GpioPinValue::Low, GpioSharingMode::SharedReadOnly);
 
 	if(_motion_pin) {
 		_motion_pin.ValueChanged([this](auto&& pin, auto&& args) {
-			if(args.Edge() == GpioPinEdge::FallingEdge)	_last_activity_time = system_clock::now();
+			if(args.Edge() == GpioPinEdge::FallingEdge) {
+				_last_activity_time = system_clock::now();
+				logger.info(module_name, L"activity detected");
+			}
 		});
 	}
 }
@@ -75,8 +82,8 @@ void tmp75_sensor::update()
 	if(_tmp75) {
 		byte data[2];
 		_tmp75.Read(data);
-		value_type temp_sum = (((data[0] << 8) | data[1]) >> 4);
-		set(temp_sum >> _res);
+		auto temp = (((data[0] << 8) | data[1]) >> 4) >> _res;
+		set(temp);
 	} else {
 		set(error_t::not_implemented);
 	}
@@ -86,7 +93,7 @@ void tmp75_sensor::update()
 
 beeper::beeper(std::wstring_view name, int32_t beeper_pin) : actuator(name)
 {
-	_beeper_pin = init_pin(beeper_pin, GpioPinDriveMode::Output, GpioPinValue::Low);
+	_beeper_pin = init_pin(beeper_pin, GpioPinDriveMode::Output);
 }
 
 template<class R, class P> void beeper::make_beep(std::chrono::duration<R, P> duration) 
@@ -102,7 +109,7 @@ template<class R, class P> void beeper::make_beep(std::chrono::duration<R, P> du
 
 led::led(std::wstring_view name, int32_t led_pin) : actuator(name)
 {
-	_led_pin = init_pin(led_pin, GpioPinDriveMode::Output, GpioPinValue::High);
+	_led_pin = init_pin(led_pin, GpioPinDriveMode::Output);
 }
 
 void led::set(bool state)

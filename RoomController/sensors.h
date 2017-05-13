@@ -7,10 +7,11 @@ namespace roomctrl
 
 class action : public i_action
 {
+	using action_t = std::function<void(const params_t&)>;
 	wstring		_name;
-	std::function<void(const params_t&)> _action;
+	action_t	_action;
 public:
-	action(std::wstring_view name, std::function<void(const params_t&)> func) : _name(name), _action(func) {}
+	action(wstring_view name, action_t func) : _name(name), _action(func) {}
 	wstring name() const override { return _name; }
 	void activate(const params_t& params) const override { _action(params); }
 	void operator() (const params_t& params) const { activate(params); }
@@ -42,14 +43,14 @@ public:
 	wstring name() const override { return _name; }
 };
 
-class missing_sensor : public sensor
+class missing_sensor final : public sensor
 {
 public:
 	missing_sensor(wstring_view name) : sensor(name)	{ set(error_t::not_implemented); }
 	void update() override { }
 };
 
-class time_sensor : public sensor
+class time_sensor final : public sensor
 {
 public:
 	time_sensor(wstring_view name) : sensor(name) { update(); }
@@ -62,7 +63,7 @@ public:
 	};
 };
 
-class hcsr501_sensor : public sensor
+class hcsr501_sensor final : public sensor
 {
 public:
 	hcsr501_sensor(wstring_view name, int32_t motion_pin);
@@ -72,7 +73,7 @@ private:
 	std::atomic<std::chrono::system_clock::time_point> _last_activity_time{ std::chrono::system_clock::now() };
 };
 
-class tmp75_sensor : public sensor
+class tmp75_sensor final : public sensor
 {
 public:
 	enum resolution : uint8_t { res9bit = 1, res10bit, res11bit, res12bit };
@@ -86,25 +87,25 @@ private:
 	resolution	_res;
 };
 
-class beeper : public actuator
+class beeper final : public actuator
 {
 public:
 	beeper(std::wstring_view name, int32_t beeper_pin);
-	action beep{ L"beep",    [this](auto&) { make_beep(std::chrono::milliseconds(400)); } };
-	std::vector<const i_action*> actions() const { return{ &beep }; }
+	action beep{ L"beep",    [this](auto&) { make_beep(std::chrono::milliseconds(300)); } };
+	std::vector<const i_action*> actions() const override { return{ &beep }; }
 	template<class R, class P> void make_beep(std::chrono::duration<R, P> duration);
 private:
 	winrt::Windows::Devices::Gpio::GpioPin	_beeper_pin{ nullptr };
 };
 
-class led : public actuator
+class led final : public actuator
 {
 public:
 	led(std::wstring_view name, int32_t led_pin);
 	action on{  L"on",  [this](auto&) { set(true);	} };
 	action off{ L"off", [this](auto&) { set(false);	} };
 	action invert { L"invert", [this](auto&) { set(!get());	} };
-	std::vector<const i_action*> actions() const { return{ &on, &off }; }
+	std::vector<const i_action*> actions() const override { return{ &on, &off }; }
 private:
 	void set(bool state);
 	bool get();
