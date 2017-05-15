@@ -11,6 +11,7 @@
 #include "rules_db.h"
 
 #define TX_PIN		27
+#define RX_PIN		17
 #define LED_PIN		4
 #define	BEEPER_PIN	22
 #define MOTION_PIN	18

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "room_engine.h"
+#include "debug_stream.h"
 
 using namespace winrt;
 using namespace winrt::Windows::Data::Json;
@@ -10,6 +11,12 @@ namespace roomctrl {
 
 room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _config(path / "config.json")
 {
+	/*debug << "waiting for command..." << std::endl;
+	while(true) {
+		auto cmd = _dm35le.read_cmd(RX_PIN);
+		if(cmd) debug << "got value: " << std::hex << cmd << std::dec << std::endl;
+	}*/
+	
 	_http.on(L"/", L"html/room_status.html");
 	_http.on(L"/status", L"html/room_status.html");
 	_http.on(L"/edit", L"html/edit_rule.html");

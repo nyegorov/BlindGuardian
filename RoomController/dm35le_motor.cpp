@@ -1,5 +1,7 @@
 #include "pch.h"
+#include <bitset>
 #include "dm35le_motor.h"
+#include "debug_stream.h"
 
 using namespace winrt::Windows::Devices::Gpio;
 using namespace winrt::Windows::System::Threading;
@@ -7,14 +9,34 @@ using namespace std::chrono;
 
 namespace roomctrl {
 
-void delay(std::chrono::microseconds microSeconds)
+void delay(microseconds microSeconds)
 {
 	auto start = std::chrono::high_resolution_clock().now();
-	std::chrono::microseconds time_us;
+	microseconds time_us;
 	do {
-		auto end = std::chrono::high_resolution_clock().now();
-		time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+		auto end = high_resolution_clock().now();
+		time_us = duration_cast<microseconds>(end - start);
 	} while(time_us < microSeconds);
+}
+
+void wait_sync(GpioPin& pin)
+{
+restart:
+	while(pin.Read() == GpioPinValue::High);
+
+	auto start = high_resolution_clock().now();
+	do {
+		if(pin.Read() != GpioPinValue::Low)	goto restart;
+	} while(high_resolution_clock().now() - start < 8ms);
+
+	while(pin.Read() == GpioPinValue::Low);
+
+	start = high_resolution_clock().now();
+	do {
+		if(pin.Read() != GpioPinValue::High)	goto restart;
+	} while(high_resolution_clock().now() - start < 4ms);
+
+	while(pin.Read() == GpioPinValue::High);
 }
 
 dm35le_motor::dm35le_motor(int32_t tx_pin)
@@ -58,11 +80,41 @@ void dm35le_motor::send_cmd(byte channel, command code, uint32_t repeat)
 				}
 			}
 			_tx_pin.Write(GpioPinValue::Low);
-			//Sleep(9);
 		}
 	}, WorkItemPriority::High, WorkItemOptions::None);
 	std::this_thread::sleep_for(repeat * 60ms);
 	task.get();
+}
+
+unsigned long long dm35le_motor::read_cmd(int32_t rx_pin)
+{
+	auto gpio = GpioController::GetDefault();
+	auto pin = gpio.OpenPin(rx_pin);
+	auto reader = GpioChangeReader(pin);
+
+	pin.SetDriveMode(GpioPinDriveMode::Input);
+	reader.Polarity(GpioChangePolarity::Both);
+
+	wait_sync(pin);
+
+	reader.Start();
+	reader.WaitForItemsAsync(80).get();
+	reader.Stop();
+
+	std::bitset<80> bits;
+
+	for(int i = 0; i < 40; ++i)
+	{
+		auto first = reader.GetNextItem();
+		auto second = reader.GetNextItem();
+		if(first.Edge != GpioPinEdge::RisingEdge || second.Edge != GpioPinEdge::FallingEdge)	return 0;
+		auto pulse = second.RelativeTime - first.RelativeTime;
+		//debug << "bit " << i << ": " << duration_cast<microseconds>(second.RelativeTime - first.RelativeTime).count() << std::endl;
+		if(pulse < 300us || pulse > 800us) return 0;
+		if(pulse > 540us) bits[40 - i - 1] = true;
+	}
+
+	return bits.to_ullong();
 }
 
 }
