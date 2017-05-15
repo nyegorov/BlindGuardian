@@ -66,8 +66,6 @@ public:
 		Assert::AreEqual(100, as<int32_t>(mot.get_pos()->value()));
 		mot.close();
 		Assert::AreEqual(  0, as<int32_t>(mot.get_pos()->value()));
-		mot.setpos(42);
-		Assert::AreEqual( 42, as<int32_t>(mot.get_pos()->value()));
 		Assert::IsTrue(mot.online());
 	}
 

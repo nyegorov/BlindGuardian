@@ -157,10 +157,6 @@ template<class CMD> void esp8266_motor::do_action(typename CMD::out_type param =
 
 void esp8266_motor::open()	{ do_action<cmd_open>({}); }
 void esp8266_motor::close() { do_action<cmd_close>({}); }
-void esp8266_motor::setpos(value_t pos) 
-{ 
-	if(!is_error(pos))	do_action<cmd_setpos>((uint8_t)as<value_type>(*pos));
-}
 void esp8266_motor::reset() { _udns.reset(); }
 
 void esp8266_motor::update_sensors()

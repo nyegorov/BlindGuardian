@@ -35,7 +35,6 @@ struct i_motor {
 	virtual void start() = 0;
 	virtual void open() = 0;
 	virtual void close() = 0;
-	virtual void setpos(value_t pos) = 0;
 };
 
 struct i_action

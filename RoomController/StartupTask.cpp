@@ -5,10 +5,8 @@
 
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::ApplicationModel;
-
-using namespace roomctrl;
-using namespace std::chrono;
-using namespace std::chrono_literals;
+using namespace winrt::Windows::Devices::Gpio;
+using namespace winrt::Windows::System::Threading;
 
 wdebugstream wdebug;
 debugstream debug;

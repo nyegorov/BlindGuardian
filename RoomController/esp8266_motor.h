@@ -14,7 +14,7 @@ using namespace std::chrono_literals;
 
 namespace roomctrl {
 
-class esp8266_motor : public i_motor
+class esp8266_motor final : public i_motor
 {
 	using IAsyncInfo = winrt::Windows::Foundation::IAsyncInfo;
 	using StreamSocket = winrt::Windows::Networking::Sockets::StreamSocket;
@@ -28,7 +28,6 @@ public:
 	void start() override;
 	void open() override;
 	void close() override;
-	void setpos(value_t pos) override;
 	void reset();
 
 	i_sensor* get_light()	{ return &_light; }
