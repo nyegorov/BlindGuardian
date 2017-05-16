@@ -48,7 +48,7 @@ private:
 	http_server		_http{ L"80", L"Room configuration server"};
 	udns_resolver	_udns{ &_config };
 
-	dm35le_motor	_dm35le{ TX_PIN };
+	dm35le_motor	_dm35le{ RX_PIN, TX_PIN, _config };
 	esp8266_motor	_esp8266{ L"motctrl", _udns };
 	time_sensor		_time{ L"time" };
 	tmp75_sensor	_tmp75{ L"temp_in", tmp75_sensor::res12bit, TMP_ADDRESS };
@@ -59,11 +59,10 @@ private:
 
 	missing_sensor	_temp_out{ L"temp_out" };
 	missing_sensor	_light{ L"light" };
-	missing_sensor	_pos{ L"pos" };
 
 	vec_sensors		_sensors{ &_tmp75, 
 		/*_esp8266.get_temp(), _esp8266.get_light(), _esp8266.get_pos(), */
-		&_temp_out, &_light, &_pos,
+		&_temp_out, &_light, _dm35le.get_pos(),
 		&_hcsr501, &_time };
 	vec_actuators	_actuators{ &_motor, &_beeper, &_led };
 };

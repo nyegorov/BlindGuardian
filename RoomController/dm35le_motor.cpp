@@ -1,5 +1,4 @@
 #include "pch.h"
-#include <bitset>
 #include "dm35le_motor.h"
 #include "debug_stream.h"
 
@@ -7,39 +6,42 @@ using namespace winrt::Windows::Devices::Gpio;
 using namespace winrt::Windows::System::Threading;
 using namespace std::chrono;
 
+const wchar_t module_name[] = L"DM35";
+
 namespace roomctrl {
 
 void delay(microseconds microSeconds)
 {
 	auto start = std::chrono::high_resolution_clock().now();
-	microseconds time_us;
-	do {
-		auto end = high_resolution_clock().now();
-		time_us = duration_cast<microseconds>(end - start);
-	} while(time_us < microSeconds);
+	while(high_resolution_clock().now() - start < microSeconds);
 }
 
 void wait_sync(GpioPin& pin)
 {
 restart:
+	// wait until signal goes LOW
 	while(pin.Read() == GpioPinValue::High);
 
+	// it should stay LOW for 8.4ms...
 	auto start = high_resolution_clock().now();
 	do {
 		if(pin.Read() != GpioPinValue::Low)	goto restart;
 	} while(high_resolution_clock().now() - start < 8ms);
 
+	// ...then it should go HIGH...
 	while(pin.Read() == GpioPinValue::Low);
 
+	// ...and remain HIGH for 4.4ms
 	start = high_resolution_clock().now();
 	do {
 		if(pin.Read() != GpioPinValue::High)	goto restart;
 	} while(high_resolution_clock().now() - start < 4ms);
 
+	// after signal goes LOW, the command packet begins
 	while(pin.Read() == GpioPinValue::High);
 }
 
-dm35le_motor::dm35le_motor(int32_t tx_pin)
+dm35le_motor::dm35le_motor(int32_t rx_pin, int32_t tx_pin, config_manager& config) : _config(config)
 {
 	auto gpio = GpioController::GetDefault();
 	if(gpio) {
@@ -47,7 +49,12 @@ dm35le_motor::dm35le_motor(int32_t tx_pin)
 		gpio_pin.Write(GpioPinValue::Low);
 		gpio_pin.SetDriveMode(GpioPinDriveMode::Output);
 		_tx_pin = gpio_pin;
+		gpio_pin = gpio.OpenPin(rx_pin);
+		gpio_pin.SetDriveMode(GpioPinDriveMode::Input);
+		_rx_pin = gpio_pin;
 	}
+	_position.set(100);
+	_remote_id = _config.get(L"remote_id", 0x2e31c6c0);
 }
 
 
@@ -55,47 +62,45 @@ dm35le_motor::~dm35le_motor()
 {
 }
 
-void dm35le_motor::send_cmd(byte channel, command code, uint32_t repeat)
+void dm35le_motor::send_cmd(command code, uint32_t repeat)
 {
-	auto task = ThreadPool::RunAsync([=](auto&& handler) {
-		const auto period = 362us;
-		byte data[5] = { 0x2e, 0x31, 0xc6, byte(0xc0 | channel), byte((code << 4) | code) };
-		if(!_tx_pin)	return;
+	const auto period = 362us;
+	if(!_tx_pin)	return;
 
-		for(unsigned i = 0; i < repeat; i++) {
+	_tx_pin.Write(GpioPinValue::Low);
+	auto default_priority = GetThreadPriority(GetCurrentThread());
+	auto cmd = (unsigned long long)_remote_id << 8 | (code << 4) | code;
+	std::bitset<40> data{ cmd };
+
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+	for(unsigned n = 0; n < repeat; n++) {
+		_tx_pin.Write(GpioPinValue::Low);
+		Sleep(9);
+		_tx_pin.Write(GpioPinValue::High);
+		Sleep(5);
+		_tx_pin.Write(GpioPinValue::Low);
+		delay(1000us);
+		for(unsigned i = 0; i < data.size(); i++)	{
 			_tx_pin.Write(GpioPinValue::Low);
-			Sleep(9);
+			delay(period);
 			_tx_pin.Write(GpioPinValue::High);
-			Sleep(5);
-			_tx_pin.Write(GpioPinValue::Low);
-			delay(1000us);
-			for(auto& d : data) {
-				for(int b = 7; b >= 0; b--) {
-					_tx_pin.Write(GpioPinValue::Low);
-					delay(period);
-					_tx_pin.Write(GpioPinValue::High);
-					delay(period);
-					_tx_pin.Write((d >> b) & 1 ? GpioPinValue::High : GpioPinValue::Low);
-					delay(period);
-				}
-			}
-			_tx_pin.Write(GpioPinValue::Low);
+			delay(period);
+			_tx_pin.Write(data[40 - i - 1] ? GpioPinValue::High : GpioPinValue::Low);
+			delay(period);
 		}
-	}, WorkItemPriority::High, WorkItemOptions::None);
-	std::this_thread::sleep_for(repeat * 60ms);
-	task.get();
+		_tx_pin.Write(GpioPinValue::Low);
+	}
+	SetThreadPriority(GetCurrentThread(), default_priority);
+
+	logger.info(module_name, L"send command %05llx (%s)", cmd, code == cmdUp ? L"Up" : code == cmdDown ? L"Down" : L"Stop");
 }
 
-unsigned long long dm35le_motor::read_cmd(int32_t rx_pin)
+unsigned long long dm35le_motor::read_cmd()
 {
-	auto gpio = GpioController::GetDefault();
-	auto pin = gpio.OpenPin(rx_pin);
-	auto reader = GpioChangeReader(pin);
-
-	pin.SetDriveMode(GpioPinDriveMode::Input);
+	auto reader = GpioChangeReader(_rx_pin);
 	reader.Polarity(GpioChangePolarity::Both);
 
-	wait_sync(pin);
+	wait_sync(_rx_pin);
 
 	reader.Start();
 	reader.WaitForItemsAsync(80).get();
@@ -105,16 +110,33 @@ unsigned long long dm35le_motor::read_cmd(int32_t rx_pin)
 
 	for(int i = 0; i < 40; ++i)
 	{
-		auto first = reader.GetNextItem();
-		auto second = reader.GetNextItem();
-		if(first.Edge != GpioPinEdge::RisingEdge || second.Edge != GpioPinEdge::FallingEdge)	return 0;
-		auto pulse = second.RelativeTime - first.RelativeTime;
-		//debug << "bit " << i << ": " << duration_cast<microseconds>(second.RelativeTime - first.RelativeTime).count() << std::endl;
+		auto rise = reader.GetNextItem();
+		auto fall = reader.GetNextItem();
+		if(rise.Edge != GpioPinEdge::RisingEdge || fall.Edge != GpioPinEdge::FallingEdge)	return 0;
+		auto pulse = fall.RelativeTime - rise.RelativeTime;
 		if(pulse < 300us || pulse > 800us) return 0;
 		if(pulse > 540us) bits[40 - i - 1] = true;
 	}
 
+	logger.message(module_name, L"received command %05llx", bits.to_ullong());
 	return bits.to_ullong();
+}
+
+bool dm35le_motor::pair_remote()
+{
+	auto start = high_resolution_clock().now();
+	std::vector<unsigned long long>	received_commands;
+	while(received_commands.size() < 11) {
+		if(high_resolution_clock().now() - start > 15s)	return false;
+		auto cmd = read_cmd() & 0xFFFFFFFF00;
+		if(cmd)	received_commands.push_back(cmd);
+	}
+	std::sort(begin(received_commands), end(received_commands));
+	auto cmd = received_commands[5];
+	logger.info(module_name, L"remote id = %05llx", cmd);
+	_config.set(L"remote_id", _remote_id = int(cmd >> 8));
+	_config.save();
+	return true;
 }
 
 }

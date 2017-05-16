@@ -40,6 +40,7 @@ public:
 	value_t max() const override { return _max; }
 	void set(value_t val);
 	void reset() override;
+	void update() override {};
 	wstring name() const override { return _name; }
 };
 

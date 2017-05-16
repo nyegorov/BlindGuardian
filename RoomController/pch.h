@@ -20,6 +20,7 @@
 #include "winrt\Windows.System.Threading.h"
 
 #include <algorithm>
+#include <bitset>
 #include <chrono>
 #include <codecvt>
 #include <ctime>
