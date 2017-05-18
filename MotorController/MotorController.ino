@@ -8,7 +8,7 @@
 #define LED_RED   0
 #define LED_BLUE  16
 
-char version[]   = "ESP1.03";
+const char version[]   = "ESP2.00";
 
 const unsigned int udpPort = 4760;
 IPAddress multicast_group(224, 0, 0, 100);
@@ -47,6 +47,7 @@ void on_wifi_event(WiFiEvent_t event) {
     case WIFI_EVENT_STAMODE_DISCONNECTED:
       Serial.println("WiFi lost connection");
       WiFi.disconnect(true);
+      digitalWrite(LED_RED, LOW);
       delay(1000);
       ESP.reset();
       break;
@@ -101,7 +102,9 @@ void setup() {
   
 	announce(host_name, WiFi.localIP());*/
   Serial.printf("Motor controller %s started\n", version);
+  red_blinker.detach();
   digitalWrite(LED_ESP, HIGH);
+  digitalWrite(LED_RED, HIGH);
 }
 
 void loop() {

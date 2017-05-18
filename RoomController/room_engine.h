@@ -11,8 +11,8 @@
 #include "http_server.h"
 #include "rules_db.h"
 
-#define TX_PIN		17
-#define RX_PIN		27
+#define TX_PIN		27
+#define RX_PIN		17
 #define LED_PIN		4
 #define	BEEPER_PIN	22
 #define MOTION_PIN	18
@@ -43,6 +43,8 @@ public:
 	rules_db& rules()			{ return _rules; }
 
 private:
+	void pair_remote();
+
 	std::atomic<bool> _inprogress{ false };
 	rules_db		_rules;
 	cqueue			_tasks;

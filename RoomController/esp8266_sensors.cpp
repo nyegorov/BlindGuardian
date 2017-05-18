@@ -3,12 +3,13 @@
 
 const wchar_t module_name[] = L"EXTS";
 
+using namespace winrt::Windows::Networking::Sockets;
+
 namespace roomctrl {
 
 esp8266_sensors::esp8266_sensors(std::wstring_view udp_port, std::wstring_view multicast_group, sensor& temp, sensor& light) : 
 	_udp_port(udp_port), _multicast_group(wstring(multicast_group)), _temp(temp), _light(light)
 {
-
 }
 
 esp8266_sensors::~esp8266_sensors()
@@ -45,6 +46,8 @@ void esp8266_sensors::on_message(const DatagramSocket &, const DatagramSocketMes
 	_temp.set(temp);
 	_light.set(light);
 	logger.message(module_name, L"> temp = %d°C, light = %d lux", (int)temp, (int)light);
+	_remote_ip = args.RemoteAddress();
+	_last_status_time = steady_clock::now();
 }
 
 }

@@ -21,18 +21,16 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 	_http.on(L"/status", L"html/room_status.html");
 	_http.on(L"/edit", L"html/edit_rule.html");
 	_http.on(L"/log", L"html/server_log.html");
+	_http.on(L"/pair", L"html/pair_remote.html");
 	_http.on(L"/styles.css", L"html/styles.css");
 	_http.on(L"/back.jpg", L"html/img/background.jpg");
 	_http.on(L"/favicon.ico", L"html/img/favicon.ico");
 	_http.on(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
 	_http.on(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
 	_http.on(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
+	//_http.on(L"/pair.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_pair_info()); });
 	_http.on(L"/log.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
-	_http.on_action(L"pair_remote", [this](auto&, auto& value) { 
-		_beeper.beep(); 
-		if(_dm35le.pair_remote())	_beeper.beep(); 
-		else						_beeper.beep(100ms), std::this_thread::sleep_for(200ms), _beeper.beep(100ms), std::this_thread::sleep_for(200ms), _beeper.beep(100ms);
-	});
+	_http.on_action(L"pair_remote", [this](auto&, auto& value) { pair_remote(); });
 	_http.on_action(L"set_pos", [this](auto&, auto& value) {
 		if(std::stoul(value) == 100)	_tasks.push([this]() {_motor.open(); });
 		if(std::stoul(value) == 0)		_tasks.push([this]() {_motor.close(); });
@@ -82,10 +80,27 @@ wstring room_server::get_sensors()
 	}
 	//auto mot_ip = _udns.get_address(_esp8266.host_name());
 	json.SetNamedValue(L"remote_id", JsonValue::CreateNumberValue(_dm35le.get_remote_id()));
-	//json.SetNamedValue(_esp8266.host_name(), JsonValue::CreateStringValue(_esp8266.online() && mot_ip ? _esp8266.version() + L", " + mot_ip.DisplayName().c_str() : L"") );
+	json.SetNamedValue(L"motctrl",   JsonValue::CreateStringValue(_ext.online() ? _ext.remote_ip().DisplayName().c_str() : L"") );
 	JsonObject sensors;
 	sensors.SetNamedValue(L"sensors", json);
 	return sensors.ToString();
+}
+
+struct pair_info {
+	bool done;
+	int remote_id;
+	int commands;
+	wstring to_string() {
+
+	}
+};
+
+void room_server::pair_remote()
+{
+	pair_info info;
+	_beeper.beep();
+	if(_dm35le.pair_remote())	_beeper.beep();
+	else						_beeper.beep(100ms), std::this_thread::sleep_for(200ms), _beeper.beep(100ms), std::this_thread::sleep_for(200ms), _beeper.beep(100ms);
 }
 
 value_t room_server::eval(const wchar_t *expr)

@@ -36,7 +36,7 @@ protected:
 	std::atomic<value_t> _max;
 	wstring _name;
 public:
-	sensor(wstring_view name, value_t value = value_type{ 0 }) : _name(name), _value{ value } { reset(); }
+	sensor(wstring_view name, value_t value = error_t::not_implemented) : _name(name), _value{ value } { reset(); }
 	value_t value() const override { return _value; }
 	value_t min() const override { return _min;	}
 	value_t max() const override { return _max; }
