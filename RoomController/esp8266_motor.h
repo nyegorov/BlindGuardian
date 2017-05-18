@@ -27,6 +27,7 @@ public:
 	wstring version()   const { return _version; }
 	void start() override;
 	void open() override;
+	void stop() override {};
 	void close() override;
 	void reset();
 

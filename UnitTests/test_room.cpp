@@ -51,8 +51,8 @@ namespace UnitTests
 			path p(".");
 			write_rules(p / "rules.json", {
 				{ L"r1", L"temp > 30", L"mot1.open()" },
-				{ L"r2", L"temp > 30", L"mot2.set_pos(50)" },
-				{ L"r3", L"time - lasttime >= 5 && time - lasttime < 6", L"mot1.set_pos(42)" },
+				{ L"r2", L"temp > 30", L"mot2.open()" },
+				{ L"r3", L"time - lasttime >= 5 && time - lasttime < 6", L"mot1.open()" },
 				{ L"r4", L"light > 1000", L"mot3.open()" },
 			});
 			DumbRemote remote(42, 0);
@@ -75,12 +75,12 @@ namespace UnitTests
 			ts.set(35);
 			re.run();
 			Assert::AreEqual(100, get<int32_t>(mot1.value()));
-			Assert::AreEqual(50, get<int32_t>(mot2.value()));
+			Assert::AreEqual(100, get<int32_t>(mot2.value()));
 
 			// time sensor
 			re.eval(L"lasttime = time - 5");
 			re.run();
-			Assert::AreEqual(42, get<int32_t>(mot1.value()));
+			Assert::AreEqual(100, get<int32_t>(mot1.value()));
 			mot1.close();
 			re.run();
 			Assert::AreEqual(0, get<int32_t>(mot1.value()));
@@ -162,7 +162,7 @@ namespace UnitTests
 			{
 				"rules": [
 					{ "id": 1, "name": "r1", "condition" : "temp > 30", "action" : "mot1.open() " },
-					{ "id": 2, "name": "r2", "condition" : "temp > 30", "action" : "mot2.set_pos(50) "}
+					{ "id": 2, "name": "r2", "condition" : "temp > 30", "action" : "mot2.open() "}
 				]
 			})";
 			write_rules(p1 / "rules.json", rules);
@@ -173,7 +173,7 @@ namespace UnitTests
 			re.init( { &ts }, { &mota, &motb } );
 			re.run();
 			Assert::AreEqual(100, get<int32_t>(mot1.value()));
-			Assert::AreEqual(50, get<int32_t>(mot2.value()));
+			Assert::AreEqual(100, get<int32_t>(mot2.value()));
 			auto s1 = re.get_rules();
 			write_rules(p1 / "rules.json", s1);
 			room_server re2(p1);

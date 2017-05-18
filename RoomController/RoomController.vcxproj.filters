@@ -67,6 +67,9 @@
     <ClCompile Include="dm35le_motor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="esp8266_sensors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="http_server.h">
@@ -121,6 +124,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="dm35le_motor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="esp8266_sensors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

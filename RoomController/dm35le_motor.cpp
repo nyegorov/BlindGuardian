@@ -16,20 +16,23 @@ void delay(microseconds microSeconds)
 	while(high_resolution_clock().now() - start < microSeconds);
 }
 
-void wait_sync(GpioPin& pin)
+bool wait_sync(GpioPin& pin, milliseconds timeout)
 {
+	auto start = high_resolution_clock::now();
 restart:
 	// wait until signal goes LOW
-	while(pin.Read() == GpioPinValue::High);
+	while(pin.Read() == GpioPinValue::High)
+		if(high_resolution_clock::now() - start > timeout)	return false;
 
 	// it should stay LOW for 8.4ms...
-	auto start = high_resolution_clock().now();
 	do {
 		if(pin.Read() != GpioPinValue::Low)	goto restart;
 	} while(high_resolution_clock().now() - start < 8ms);
 
 	// ...then it should go HIGH...
-	while(pin.Read() == GpioPinValue::Low);
+	while(pin.Read() == GpioPinValue::Low)
+		if(high_resolution_clock::now() - start > timeout)	return false;
+
 
 	// ...and remain HIGH for 4.4ms
 	start = high_resolution_clock().now();
@@ -38,10 +41,13 @@ restart:
 	} while(high_resolution_clock().now() - start < 4ms);
 
 	// after signal goes LOW, the command packet begins
-	while(pin.Read() == GpioPinValue::High);
+	while(pin.Read() == GpioPinValue::High)
+		if(high_resolution_clock::now() - start > timeout)	return false;
+
+	return true;
 }
 
-dm35le_motor::dm35le_motor(int32_t rx_pin, int32_t tx_pin, config_manager& config) : _config(config)
+dm35le_motor::dm35le_motor(int32_t rx_pin, int32_t tx_pin, sensor& position, config_manager& config) : _config(config), _position(position)
 {
 	auto gpio = GpioController::GetDefault();
 	if(gpio) {
@@ -95,15 +101,18 @@ void dm35le_motor::send_cmd(command code, uint32_t repeat)
 	logger.info(module_name, L"send command %05llx (%s)", cmd, code == cmdUp ? L"Up" : code == cmdDown ? L"Down" : L"Stop");
 }
 
-unsigned long long dm35le_motor::read_cmd()
+unsigned long long dm35le_motor::read_cmd(milliseconds timeout)
 {
 	auto reader = GpioChangeReader(_rx_pin);
 	reader.Polarity(GpioChangePolarity::Both);
 
-	wait_sync(_rx_pin);
+	if(!wait_sync(_rx_pin, timeout))	return 0;
 
 	reader.Start();
-	reader.WaitForItemsAsync(80).get();
+	auto task = reader.WaitForItemsAsync(80);
+	auto start = high_resolution_clock::now();
+	while(task.Status() != winrt::Windows::Foundation::AsyncStatus::Completed)
+		if(high_resolution_clock::now() - start > timeout) return 0;
 	reader.Stop();
 
 	std::bitset<80> bits;
@@ -128,7 +137,7 @@ bool dm35le_motor::pair_remote()
 	std::vector<unsigned long long>	received_commands;
 	while(received_commands.size() < 11) {
 		if(high_resolution_clock().now() - start > 15s)	return false;
-		auto cmd = read_cmd() & 0xFFFFFFFF00;
+		auto cmd = read_cmd(5s) & 0xFFFFFFFF00;
 		if(cmd)	received_commands.push_back(cmd);
 	}
 	std::sort(begin(received_commands), end(received_commands));

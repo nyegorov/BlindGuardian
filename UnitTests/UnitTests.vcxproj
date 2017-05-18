@@ -102,7 +102,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <AdditionalLibraryDirectories>../RoomController/$(IntDir);$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>dm35le_motor.obj;esp8266_motor.obj;log_manager.obj;config_manager.obj;udns_resolver.obj;motor_ctrl.obj;http_server.obj;rules_db.obj;room_engine.obj;sensors.obj;parser.obj;pch.obj;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dm35le_motor.obj;esp8266_sensors.obj;esp8266_motor.obj;log_manager.obj;config_manager.obj;udns_resolver.obj;motor_ctrl.obj;http_server.obj;rules_db.obj;room_engine.obj;sensors.obj;parser.obj;pch.obj;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -142,7 +142,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <AdditionalLibraryDirectories>../RoomController/$(IntDir);$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>dm35le_motor.obj;esp8266_motor.obj;log_manager.obj;config_manager.obj;udns_resolver.obj;motor_ctrl.obj;http_server.obj;rules_db.obj;room_engine.obj;sensors.obj;parser.obj;pch.obj;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dm35le_motor.obj;esp8266_sensors.obj;esp8266_motor.obj;log_manager.obj;config_manager.obj;udns_resolver.obj;motor_ctrl.obj;http_server.obj;rules_db.obj;room_engine.obj;sensors.obj;parser.obj;pch.obj;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

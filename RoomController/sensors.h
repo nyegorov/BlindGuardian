@@ -2,6 +2,8 @@
 
 #include "value.h"
 
+using namespace std::chrono_literals;
+
 namespace roomctrl
 {
 
@@ -92,10 +94,11 @@ class beeper final : public actuator
 {
 public:
 	beeper(std::wstring_view name, int32_t beeper_pin);
-	action beep{ L"beep",    [this](auto&) { make_beep(std::chrono::milliseconds(300)); } };
-	std::vector<const i_action*> actions() const override { return{ &beep }; }
-	template<class R, class P> void make_beep(std::chrono::duration<R, P> duration);
+	std::vector<const i_action*> actions() const override { return{ &_beep }; }
+	void beep(std::chrono::milliseconds duration);
+	void beep() { beep(300ms); }
 private:
+	action _beep{ L"beep",    [this](auto& params) { auto t = params.empty() ? 300ms : get_arg<std::chrono::milliseconds>(params, 0); beep(t); } };
 	winrt::Windows::Devices::Gpio::GpioPin	_beeper_pin{ nullptr };
 };
 

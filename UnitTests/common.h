@@ -77,6 +77,7 @@ public:
 	void start() { }
 	void open()  { _value = 100; }
 	void close() { _value = 0; };
+	void stop()  { };
 	void setpos(value_t v)	{ _value = v; }
 	DumbMotor() { }
 	value_t value() { return _value; };

@@ -96,7 +96,7 @@ beeper::beeper(std::wstring_view name, int32_t beeper_pin) : actuator(name)
 	_beeper_pin = init_pin(beeper_pin, GpioPinDriveMode::Output);
 }
 
-template<class R, class P> void beeper::make_beep(std::chrono::duration<R, P> duration) 
+void beeper::beep(std::chrono::milliseconds duration)
 {
 	if(_beeper_pin) {
 		_beeper_pin.Write(GpioPinValue::High);

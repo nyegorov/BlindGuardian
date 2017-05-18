@@ -28,7 +28,11 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 	_http.on(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
 	_http.on(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
 	_http.on(L"/log.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
-	_http.on_action(L"pair_remote", [this](auto&, auto& value) { _beeper.beep(); _dm35le.pair_remote(); _beeper.beep(); });
+	_http.on_action(L"pair_remote", [this](auto&, auto& value) { 
+		_beeper.beep(); 
+		if(_dm35le.pair_remote())	_beeper.beep(); 
+		else						_beeper.beep(100ms), std::this_thread::sleep_for(200ms), _beeper.beep(100ms), std::this_thread::sleep_for(200ms), _beeper.beep(100ms);
+	});
 	_http.on_action(L"set_pos", [this](auto&, auto& value) {
 		if(std::stoul(value) == 100)	_tasks.push([this]() {_motor.open(); });
 		if(std::stoul(value) == 0)		_tasks.push([this]() {_motor.close(); });
@@ -44,9 +48,11 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 
 void room_server::init(const vec_sensors &sensors, const vec_actuators &actuators)
 {
+	using std::chrono::milliseconds;
 	_sensors = sensors;
 	_actuators = actuators;
 	_parser.clear();
+	_parser.set(L"wait", [](auto& params) { auto ms = get_arg<milliseconds>(params, 0); std::this_thread::sleep_for(ms); return value_t{ 1 }; });
 	for(auto& ps : _sensors) {
 		_parser.set(ps->name(), ps);
 		_parser.set(ps->name() + L".min", [ps](auto&) {return ps->min(); });
@@ -56,7 +62,8 @@ void room_server::init(const vec_sensors &sensors, const vec_actuators &actuator
 	for(auto& pa : _actuators) {
 		auto obj = pa->name();
 		for(auto& paction : pa->actions()) {
-			_parser.set(obj + L"." + paction->name(), [paction](auto& p) {return paction->activate(p), value_t{ 1 }; });
+			auto name = obj.empty() ? paction->name() : obj + L"." + paction->name();
+			_parser.set(name, [paction](auto& p) {return paction->activate(p), value_t{ 1 }; });
 		}
 	}
 }
@@ -73,8 +80,9 @@ wstring room_server::get_sensors()
 		json.SetNamedValue(s->name(), is_error(s->value()) ? JsonValue::CreateStringValue(L"--") :
 			JsonValue::CreateNumberValue(std::get<value_type>(*s->value())));
 	}
-	auto mot_ip = _udns.get_address(_esp8266.host_name());
-	json.SetNamedValue(_esp8266.host_name(), JsonValue::CreateStringValue(_esp8266.online() && mot_ip ? _esp8266.version() + L", " + mot_ip.DisplayName().c_str() : L"") );
+	//auto mot_ip = _udns.get_address(_esp8266.host_name());
+	json.SetNamedValue(L"remote_id", JsonValue::CreateNumberValue(_dm35le.get_remote_id()));
+	//json.SetNamedValue(_esp8266.host_name(), JsonValue::CreateStringValue(_esp8266.online() && mot_ip ? _esp8266.version() + L", " + mot_ip.DisplayName().c_str() : L"") );
 	JsonObject sensors;
 	sensors.SetNamedValue(L"sensors", json);
 	return sensors.ToString();
@@ -88,13 +96,9 @@ value_t room_server::eval(const wchar_t *expr)
 std::future<void> room_server::start()
 {
 	co_await _tmp75.start();
-	co_await _udns.start();
+	co_await _ext.start();
 	co_await _http.start();
 	co_await 500ms;
-	_esp8266.set_timeout(
-		std::chrono::milliseconds(_config.get(L"socket_timeout", 2000)),
-		std::chrono::milliseconds(_config.get(L"socket_timeout_action", 60000))
-	);
 	_motor.start();
 	_beeper.beep();
 	co_return;

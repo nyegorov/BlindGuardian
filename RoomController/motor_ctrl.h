@@ -22,9 +22,10 @@ public:
 	~motor_ctrl();
 
 	void start() { for(auto m : _motors) m->start(); };
-	action open{  L"open",    [this](auto&)		{ do_action(std::mem_fn(&i_motor::open)); } };
-	action close{ L"close",   [this](auto&)		{ do_action(std::mem_fn(&i_motor::close)); } };
-	std::vector<const i_action*> actions() const override { return{ &open, &close }; }
+	action open{  L"open",    [this](auto&)	{ do_action(std::mem_fn(&i_motor::open)); } };
+	action stop{  L"stop",    [this](auto&) { do_action(std::mem_fn(&i_motor::stop)); } };
+	action close{ L"close",   [this](auto&)	{ do_action(std::mem_fn(&i_motor::close)); } };
+	std::vector<const i_action*> actions() const override { return{ &open, &close, &stop }; }
 private:
 	template<class T> void do_action(T t);
 	vec_motors	_motors;

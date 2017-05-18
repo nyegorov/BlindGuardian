@@ -20,6 +20,10 @@ template<class T> bool is(const value_t& v) { return std::get_if<T>(&v); }
 template<class T> T as(const value_t& v) { return std::get<T>(v); }
 inline bool is_error(const value_t& v) { return std::get_if<error_t>(&v); }
 inline bool is_sensor(const value_t& v) { return std::get_if<i_sensor*>(&v); }
+template<class T = value_type> T get_arg(const params_t& params, unsigned idx) {  
+	if(idx >= params.size())	throw error_t::invalid_args;
+	return T(as<value_type>(*params[idx]));
+}
 
 struct i_sensor
 {
@@ -34,6 +38,7 @@ struct i_sensor
 struct i_motor {
 	virtual void start() = 0;
 	virtual void open() = 0;
+	virtual void stop() = 0;
 	virtual void close() = 0;
 };
 

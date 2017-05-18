@@ -273,6 +273,7 @@
     <ClInclude Include="config_manager.h" />
     <ClInclude Include="debug_stream.h" />
     <ClInclude Include="dm35le_motor.h" />
+    <ClInclude Include="esp8266_sensors.h" />
     <ClInclude Include="http_server.h" />
     <ClInclude Include="log_manager.h" />
     <ClInclude Include="esp8266_motor.h" />
@@ -290,6 +291,7 @@
     <ClCompile Include="ActivationFactory.cpp" />
     <ClCompile Include="config_manager.cpp" />
     <ClCompile Include="dm35le_motor.cpp" />
+    <ClCompile Include="esp8266_sensors.cpp" />
     <ClCompile Include="http_server.cpp" />
     <ClCompile Include="log_manager.cpp" />
     <ClCompile Include="esp8266_motor.cpp" />

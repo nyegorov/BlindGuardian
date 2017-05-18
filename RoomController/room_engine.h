@@ -3,6 +3,7 @@
 #include "log_manager.h"
 #include "udns_resolver.h"
 #include "esp8266_motor.h"
+#include "esp8266_sensors.h"
 #include "dm35le_motor.h"
 #include "motor_ctrl.h"
 #include "sensors.h"
@@ -10,12 +11,14 @@
 #include "http_server.h"
 #include "rules_db.h"
 
-#define TX_PIN		27
-#define RX_PIN		17
+#define TX_PIN		17
+#define RX_PIN		27
 #define LED_PIN		4
 #define	BEEPER_PIN	22
 #define MOTION_PIN	18
 #define TMP_ADDRESS	0x48
+#define ESP_PORT	L"4760"
+#define ESP_GROUP	L"224.0.0.100"
 
 namespace roomctrl {
 
@@ -46,24 +49,21 @@ private:
 	NScript			_parser;
 	config_manager	_config;
 	http_server		_http{ L"80", L"Room configuration server"};
-	udns_resolver	_udns{ &_config };
 
-	dm35le_motor	_dm35le{ RX_PIN, TX_PIN, _config };
-	esp8266_motor	_esp8266{ L"motctrl", _udns };
+	sensor			_temp_out{ L"temp_out" };
+	sensor			_light{ L"light" };
+	sensor			_position{ L"position" };
 	time_sensor		_time{ L"time" };
 	tmp75_sensor	_tmp75{ L"temp_in", tmp75_sensor::res12bit, TMP_ADDRESS };
 	hcsr501_sensor	_hcsr501{ L"inactivity", MOTION_PIN };
+	esp8266_sensors	_ext{ ESP_PORT, ESP_GROUP, _temp_out, _light };
+
+	dm35le_motor	_dm35le{ RX_PIN, TX_PIN, _position, _config };
 	motor_ctrl		_motor{ L"blind" , {&_dm35le} };
-	beeper			_beeper{ L"beeper", BEEPER_PIN };
+	beeper			_beeper{ L"", BEEPER_PIN };
 	led				_led{ L"led", LED_PIN };
 
-	missing_sensor	_temp_out{ L"temp_out" };
-	missing_sensor	_light{ L"light" };
-
-	vec_sensors		_sensors{ &_tmp75, 
-		/*_esp8266.get_temp(), _esp8266.get_light(), _esp8266.get_pos(), */
-		&_temp_out, &_light, _dm35le.get_pos(),
-		&_hcsr501, &_time };
+	vec_sensors		_sensors{ &_tmp75, &_temp_out, &_light, &_position, &_hcsr501, &_time };
 	vec_actuators	_actuators{ &_motor, &_beeper, &_led };
 };
 
