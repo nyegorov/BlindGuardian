@@ -31,6 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Datasheets", "Datasheets", 
 	ProjectSection(SolutionItems) = preProject
 		Datasheets\31227sc.pdf = Datasheets\31227sc.pdf
 		Datasheets\designingveml7700.pdf = Datasheets\designingveml7700.pdf
+		Datasheets\MCP9808.pdf = Datasheets\MCP9808.pdf
 		Datasheets\NodeMcu.png = Datasheets\NodeMcu.png
 		Datasheets\tmp75.pdf = Datasheets\tmp75.pdf
 		Datasheets\vishay_01272016_VEML7700-844532.pdf = Datasheets\vishay_01272016_VEML7700-844532.pdf

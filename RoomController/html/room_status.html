@@ -82,9 +82,9 @@
         <tr><td class="sensor-row">Outer temperature</td>   <td><span id="temp_out">--</span>&deg;C</td></tr>
         <tr><td class="sensor-row">Light</td>               <td><span id="light">--</span> lux</td></tr>
         <tr><td class="sensor-row">Motion detector</td>     <td><span id="inactivity">--</span></td></tr>
-        <tr><td class="sensor-row">Position</td>            <td><span id="pos"></span></td></tr>
-        <tr><td class="sensor-row">Remote ID</td>           <td><span id="remote_id"></span></td></tr>
-        <tr><td class="sensor-row">Remote sensors</td>      <td><span id="mot_ip"></span></td></tr>
+        <tr><td class="sensor-row">Blind position</td>      <td><span id="pos"></span></td></tr>
+        <tr><td class="sensor-row">Remote control ID</td>   <td><span id="remote_id"></span></td></tr>
+        <tr><td class="sensor-row">Outdoor sensors</td>     <td><span id="mot_ip"></span></td></tr>
     </table>
     <hr />
 
@@ -98,8 +98,9 @@
         <tr>           
             <td><form action="status" method="post"><button id="open_blind" name="set_pos" value="100">Open blinds</button></form></td>
             <td><form action="status" method="post"><button id="close_blinds" name="set_pos" value="0">Close blinds</button></form></td>
-            <td><form action="status" method="post"><button name="pair_remote">Pair remote</button></form></td>
-            <td><button id="server_log" onclick="window.location.href = 'log'">Server Log...</button></td>
+            <td><form action="pair" method="post"><button name="pair_remote">Pair remote</button></form></td>
+            <!--<td><button id="pair_remote" onclick="window.location.href = 'pair_remote'">Pair remote</button></td>-->
+            <td><button id="server_log"  onclick="window.location.href = 'log'">Server Log...</button></td>
         </tr>
     </table>
 </body>

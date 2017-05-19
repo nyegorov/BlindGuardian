@@ -2,6 +2,8 @@
 #include "sensors.h"
 #include "log_manager.h"
 
+using namespace winrt;
+using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::System::Threading;
 using namespace winrt::Windows::Devices::I2c;
 using namespace winrt::Windows::Devices::Gpio;
@@ -44,10 +46,8 @@ hcsr501_sensor::hcsr501_sensor(wstring_view name, int32_t motion_pin) : sensor(n
 
 	if(_motion_pin) {
 		_motion_pin.ValueChanged([this](auto&& pin, auto&& args) {
-			if(args.Edge() == GpioPinEdge::FallingEdge) {
-				_last_activity_time = system_clock::now();
-				logger.info(module_name, L"activity detected");
-			}
+			_last_activity_time = system_clock::now();
+			if(args.Edge() == GpioPinEdge::RisingEdge)	logger.info(module_name, L"activity detected");
 		});
 	}
 }
@@ -89,6 +89,36 @@ void tmp75_sensor::update()
 	}
 }
 
+// MCP9808 temperature sensor
+
+std::future<void> mcp9808_sensor::start()
+{
+	try {
+		auto controller = co_await I2cController::GetDefaultAsync();
+		auto device = controller.GetDevice(I2cConnectionSettings(_address));
+
+		device.Write({ 0x08, _res });
+		device.Write({ 0x05 });
+
+		_mcp9808 = device;
+	} catch(const winrt::hresult_error&) {
+		logger.error(L"MCP9", L"I2C initialization error");
+	}
+}
+
+void mcp9808_sensor::update()
+{
+	if(_mcp9808) {
+		byte data[2];
+		_mcp9808.Read(data);
+		auto temp = (data[0] << 4) | (data[1] >> 4);
+		if(data[0] & 0x10) temp = 256 - temp;
+		set(temp);
+	} else {
+		set(error_t::not_implemented);
+	}
+}
+
 // Beeper
 
 beeper::beeper(std::wstring_view name, int32_t beeper_pin) : actuator(name)
@@ -96,13 +126,21 @@ beeper::beeper(std::wstring_view name, int32_t beeper_pin) : actuator(name)
 	_beeper_pin = init_pin(beeper_pin, GpioPinDriveMode::Output);
 }
 
-void beeper::beep(std::chrono::milliseconds duration)
+std::future<void> beeper::beep(std::chrono::milliseconds duration)
 {
 	if(_beeper_pin) {
 		_beeper_pin.Write(GpioPinValue::High);
-		std::this_thread::sleep_for(duration);
+		co_await 300ms;
 		_beeper_pin.Write(GpioPinValue::Low);
 	}
+}
+
+std::future<void> beeper::fail() {
+	co_await beep(100ms);
+	co_await 200ms;
+	co_await beep(100ms);
+	co_await 200ms;
+	co_await beep(100ms);
 }
 
 // LED

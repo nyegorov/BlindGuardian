@@ -17,6 +17,7 @@
 #define	BEEPER_PIN	22
 #define MOTION_PIN	18
 #define TMP_ADDRESS	0x48
+#define MCP_ADDRESS	0x18
 #define ESP_PORT	L"4760"
 #define ESP_GROUP	L"224.0.0.100"
 
@@ -43,7 +44,8 @@ public:
 	rules_db& rules()			{ return _rules; }
 
 private:
-	void pair_remote();
+	std::future<void> pair_remote();
+	JsonObject		_pair_info;
 
 	std::atomic<bool> _inprogress{ false };
 	rules_db		_rules;
@@ -56,7 +58,8 @@ private:
 	sensor			_light{ L"light" };
 	sensor			_position{ L"position" };
 	time_sensor		_time{ L"time" };
-	tmp75_sensor	_tmp75{ L"temp_in", tmp75_sensor::res12bit, TMP_ADDRESS };
+	//tmp75_sensor	_tmp75{ L"temp_in", tmp75_sensor::res12bit, TMP_ADDRESS };
+	mcp9808_sensor	_mcp9808{ L"temp_in", mcp9808_sensor::res12bit, MCP_ADDRESS };
 	hcsr501_sensor	_hcsr501{ L"inactivity", MOTION_PIN };
 	esp8266_sensors	_ext{ ESP_PORT, ESP_GROUP, _temp_out, _light };
 
@@ -65,7 +68,7 @@ private:
 	beeper			_beeper{ L"", BEEPER_PIN };
 	led				_led{ L"led", LED_PIN };
 
-	vec_sensors		_sensors{ &_tmp75, &_temp_out, &_light, &_position, &_hcsr501, &_time };
+	vec_sensors		_sensors{ &_mcp9808, &_temp_out, &_light, &_position, &_hcsr501, &_time };
 	vec_actuators	_actuators{ &_motor, &_beeper, &_led };
 };
 

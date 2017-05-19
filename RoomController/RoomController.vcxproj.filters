@@ -147,7 +147,7 @@
     <None Include="html\styles.css">
       <Filter>Html</Filter>
     </None>
-    <None Include="pair_remote.html">
+    <None Include="html\pair_remote.html">
       <Filter>Html</Filter>
     </None>
   </ItemGroup>

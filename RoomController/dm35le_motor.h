@@ -18,7 +18,7 @@ public:
 	void open() override	{ send_cmd(cmdUp, repeat_count); _position.set(100); }
 	void close() override	{ send_cmd(cmdDown, repeat_count); _position.set(0); }
 	void stop() override	{ send_cmd(cmdStop, repeat_count); }
-	bool pair_remote();
+	bool pair_remote (std::chrono::milliseconds timeout, std::function<void(int)> progress);
 	int get_remote_id()		{ return _remote_id; }
 
 private:

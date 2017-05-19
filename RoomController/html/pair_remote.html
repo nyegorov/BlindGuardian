@@ -1,4 +1,4 @@
-<html>
+﻿<html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=400, initial-scale=1">
@@ -22,14 +22,14 @@
             if (pair_info.done) {
                 pair_inproc.hidden = true;
                 pair_done.hidden = false;
-                remote_id.innerHTML = pair_info.id;
-                if (pair_info.id) pair_done.hidden = false; else pair_failed.hidden = false;
+                if (pair_info.id) {
+                    pair_ok.innerHTML = "Remote ID: " + pair_info.id.toString(16);
+                    pair_ok.hidden = false;
+                } else
+                    pair_failed.hidden = false;
                 clearInterval(timer_id);
             }
         }
-        pair_ok.hidden = true;
-        pair_failed.hidden = true;
-        pair_done.hidden = true;
         timer_id = setInterval(pair_info, 500);
         pair_info();
 </script>
@@ -39,9 +39,9 @@
     <p align="center">Place remote near the controller box and press <b>STOP</b> button until you hear a beep.</p>
     <div align="center">
         <p id="pair_inproc">Received command <span id="num_commands">0</span> of 11...</p>
-        <p id="pair_ok"     class="active">Remote ID: <span id="remote_id"></span></p>
-        <p id="pair_failed" class="error"><span id="remote_id">Pairing failed.</span></p>
-        <button id="pair_done" onclick="window.history.back()">Done</button>
+        <p id="pair_ok" class="active" hidden></p>
+        <p id="pair_failed" class="error" hidden>Pairing failed.</p>
+        <button id="pair_done" onclick="window.history.back()" hidden>Done</button>
     </div>
 </body>
 </html>

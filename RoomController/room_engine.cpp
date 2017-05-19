@@ -28,7 +28,7 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 	_http.on(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
 	_http.on(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
 	_http.on(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
-	//_http.on(L"/pair.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_pair_info()); });
+	_http.on(L"/pair.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, _pair_info.ToString()); });
 	_http.on(L"/log.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
 	_http.on_action(L"pair_remote", [this](auto&, auto& value) { pair_remote(); });
 	_http.on_action(L"set_pos", [this](auto&, auto& value) {
@@ -86,21 +86,19 @@ wstring room_server::get_sensors()
 	return sensors.ToString();
 }
 
-struct pair_info {
-	bool done;
-	int remote_id;
-	int commands;
-	wstring to_string() {
-
-	}
-};
-
-void room_server::pair_remote()
+std::future<void> room_server::pair_remote()
 {
-	pair_info info;
-	_beeper.beep();
-	if(_dm35le.pair_remote())	_beeper.beep();
-	else						_beeper.beep(100ms), std::this_thread::sleep_for(200ms), _beeper.beep(100ms), std::this_thread::sleep_for(200ms), _beeper.beep(100ms);
+	co_await winrt::resume_background();
+	_pair_info.SetNamedValue(L"done", JsonValue::CreateBooleanValue(false));
+	_pair_info.SetNamedValue(L"commands", JsonValue::CreateNumberValue(0));
+	co_await _beeper.beep();
+	auto ok = _dm35le.pair_remote(10s, [this](int commands_received) {
+		_pair_info.SetNamedValue(L"commands", JsonValue::CreateNumberValue(commands_received));
+	});
+	_pair_info.SetNamedValue(L"id", JsonValue::CreateNumberValue(ok ? _dm35le.get_remote_id() : 0));
+	co_await (ok ? _beeper.beep() : _beeper.fail());
+	_pair_info.SetNamedValue(L"done", JsonValue::CreateBooleanValue(true));
+	co_return;
 }
 
 value_t room_server::eval(const wchar_t *expr)
@@ -110,7 +108,8 @@ value_t room_server::eval(const wchar_t *expr)
 
 std::future<void> room_server::start()
 {
-	co_await _tmp75.start();
+	//co_await _tmp75.start();
+	co_await _mcp9808.start();
 	co_await _ext.start();
 	co_await _http.start();
 	co_await 500ms;

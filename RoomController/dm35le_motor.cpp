@@ -2,11 +2,13 @@
 #include "dm35le_motor.h"
 #include "debug_stream.h"
 
+const wchar_t module_name[] = L"DM35";
+
+using namespace winrt;
+using namespace Windows::Foundation;
 using namespace winrt::Windows::Devices::Gpio;
 using namespace winrt::Windows::System::Threading;
 using namespace std::chrono;
-
-const wchar_t module_name[] = L"DM35";
 
 namespace roomctrl {
 
@@ -131,14 +133,17 @@ unsigned long long dm35le_motor::read_cmd(milliseconds timeout)
 	return bits.to_ullong();
 }
 
-bool dm35le_motor::pair_remote()
+bool dm35le_motor::pair_remote(milliseconds timeout, std::function<void(int)> progress)
 {
 	auto start = high_resolution_clock().now();
 	std::vector<unsigned long long>	received_commands;
 	while(received_commands.size() < 11) {
-		if(high_resolution_clock().now() - start > 15s)	return false;
+		if(high_resolution_clock().now() - start > timeout)	return false;
 		auto cmd = read_cmd(5s) & 0xFFFFFFFF00;
-		if(cmd)	received_commands.push_back(cmd);
+		if(cmd) {
+			received_commands.push_back(cmd);
+			progress(received_commands.size());
+		}
 	}
 	std::sort(begin(received_commands), end(received_commands));
 	auto cmd = received_commands[5];
