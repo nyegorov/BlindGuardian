@@ -11,12 +11,6 @@ namespace roomctrl {
 
 room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _config(path / "config.json")
 {
-	/*debug << "waiting for command..." << std::endl;
-	while(true) {
-		auto cmd = _dm35le.read_cmd(RX_PIN);
-		if(cmd) debug << "got value: " << std::hex << cmd << std::dec << std::endl;
-	}*/
-	
 	_http.on(L"/", L"html/room_status.html");
 	_http.on(L"/status", L"html/room_status.html");
 	_http.on(L"/edit", L"html/edit_rule.html");
@@ -42,6 +36,7 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 	_http.on_action(L"delete_rule", [this](auto&, auto& value) { _rules.remove(std::stoul(value)); });
 
 	init(_sensors, _actuators);
+	logger.info(module_name, L"Room server v%s started", version().c_str());
 }
 
 void room_server::init(const vec_sensors &sensors, const vec_actuators &actuators)
@@ -66,6 +61,17 @@ void room_server::init(const vec_sensors &sensors, const vec_actuators &actuator
 	}
 }
 
+wstring room_server::version()
+{
+	try	{
+		auto ver = winrt::Windows::ApplicationModel::Package::Current().Id().Version();
+		wchar_t ver_str[20];
+		swprintf(ver_str, _countof(ver_str), L"%d.%d.%d.%d", ver.Major, ver.Minor, ver.Build, ver.Revision);
+		return { ver_str };
+	} catch(...)	{}
+	return L"debug"s;
+}
+
 wstring room_server::get_rules()
 {
 	return _rules.to_string();
@@ -83,6 +89,7 @@ wstring room_server::get_sensors()
 	json.SetNamedValue(L"motctrl",   JsonValue::CreateStringValue(_ext.online() ? _ext.remote_ip().DisplayName().c_str() : L"") );
 	JsonObject sensors;
 	sensors.SetNamedValue(L"sensors", json);
+	sensors.SetNamedValue(L"version", JsonValue::CreateStringValue(version()));
 	return sensors.ToString();
 }
 
@@ -108,8 +115,7 @@ value_t room_server::eval(const wchar_t *expr)
 
 std::future<void> room_server::start()
 {
-	//co_await _tmp75.start();
-	co_await _mcp9808.start();
+	co_await _temp_in.start();
 	co_await _ext.start();
 	co_await _http.start();
 	co_await 500ms;
@@ -120,9 +126,6 @@ std::future<void> room_server::start()
 
 void room_server::run()
 {
-	if(_inprogress)	return;
-	_inprogress = true;
-
 	_led.invert();
 
 	while(!_tasks.empty()) {
@@ -156,8 +159,6 @@ void room_server::run()
 		}
 		_rules.set_status(rule.id, status);
 	}
-
-	_inprogress = false;
 }
 
 }

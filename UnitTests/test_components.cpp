@@ -53,6 +53,7 @@ namespace UnitTests
 			Assert::AreEqual(10, get<int32_t>(ns.eval(L"myfunc0()")));
 			Assert::AreEqual(24, get<int32_t>(ns.eval(L"mysens")));
 			Assert::AreEqual(40, get<int32_t>(ns.eval(L"x=#5:40#; x-300")));
+			Assert::AreEqual(40, get<int32_t>(ns.eval(L"x=5:40; x-300")));
 			Assert::AreEqual(48, get<int32_t>(ns.eval(L"x=3; MyFunc2(x, myVar)+x")));
 			Assert::AreEqual(114, get<int32_t>(ns.eval(L"myVar+mysens+myfunc1(mysens)")));
 			Assert::AreEqual(0, get<int32_t>(ns.eval(L"x=4", true)));
@@ -97,6 +98,7 @@ namespace UnitTests
 			ns.set(L"light", &ls);
 			ns.set(L"set_blind", [&pos](auto& p) {return pos = p[0], value_t{ 1 }; });
 			Assert::AreEqual(1, get<int32_t>(ns.eval(L"#5:40# == time")));
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"5:40 = time", true)));
 			Assert::AreEqual(1, get<int32_t>(ns.eval(L"if(tin > 20) set_blind(66)")));
 			Assert::AreEqual(66, get<int32_t>(pos));
 			Assert::AreEqual(1, get<int32_t>(ns.eval(L"if(tin > 20 && light > 1000) set_blind(99)")));

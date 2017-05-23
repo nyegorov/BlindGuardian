@@ -296,23 +296,22 @@ void Parser::ReadNumber(wchar_t c)
 			m = m * base + v;
 		}	else	break;
 	};
-	Back();
 	_value = m;
 	_token = Parser::value;
+
+	if(c == ':') {
+		ReadNumber(Read());
+		_value = m * 60 + _value;
+	} else {
+		Back();
+	}
 }
 
 // Parse time from input stream
 void Parser::ReadTime(wchar_t c)
 {
 	ReadNumber(Read());
-	auto hours = _value;
-	if(Read() != ':')	throw error_t::syntax_error;
-	ReadNumber(Read());
-	auto mins = _value;
 	if(Read() != '#')	throw error_t::syntax_error;
-	//Back();
-	_value = hours * 60 + mins;
-	_token = Parser::value;
 }
 
 

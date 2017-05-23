@@ -51,6 +51,7 @@
         function update_status(room) {
             var hours = Math.trunc(room.sensors.time / 60);
             var mins = room.sensors.time % 60;
+            version.innerHTML = room.version;
             time.innerHTML = hours + ':' + (mins < 10 ? '0' : '') + mins.toString();
             temp_in.innerHTML = room.sensors.temp_in;
             temp_out.innerHTML = room.sensors.temp_out;
@@ -72,6 +73,8 @@
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale + '');
         }
     </script>
+
+    <div class="version">v<span id="version"></span></div>
 
     <h1>Room status</h1>
 

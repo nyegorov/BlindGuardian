@@ -28,16 +28,18 @@ StartupTask::StartupTask()
 
 void StartupTask::Run(IBackgroundTaskInstance taskInstance)
 {
-	debug << "*** RUN SRV ***" << std::endl;
+	debug << "*** RUN SERVER ***" << std::endl;
 	_deferral = taskInstance.GetDeferral();
 
-	std::async([this]() { 
+	//std::async([this]() { 
+	std::thread th([this]()	{
 		_server->start().get();
 		while(true) {
 			std::this_thread::sleep_for(1s);
 			_server->run();
 		} 
 	});
+	th.detach();
 }
 
 }

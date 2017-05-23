@@ -29,3 +29,9 @@ thead {
 
 .error { color: red; }
 .active { color: green; }
+
+.version {
+    font-size: smaller;
+    color: #666666;
+    float: right;
+}

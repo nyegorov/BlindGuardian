@@ -34,6 +34,7 @@ public:
 	using cqueue = concurrency::concurrent_queue<std::function<void()>>;
 
 	room_server(const path_t& path = L".");
+	wstring version();
 	void init(const vec_sensors &sensors, const vec_actuators &actuators);
 	std::future<void> start();
 	wstring get_rules();
@@ -47,7 +48,6 @@ private:
 	std::future<void> pair_remote();
 	JsonObject		_pair_info;
 
-	std::atomic<bool> _inprogress{ false };
 	rules_db		_rules;
 	cqueue			_tasks;
 	NScript			_parser;
@@ -59,8 +59,8 @@ private:
 	sensor			_position{ L"position" };
 	time_sensor		_time{ L"time" };
 	//tmp75_sensor	_tmp75{ L"temp_in", tmp75_sensor::res12bit, TMP_ADDRESS };
-	mcp9808_sensor	_mcp9808{ L"temp_in", mcp9808_sensor::res12bit, MCP_ADDRESS };
-	hcsr501_sensor	_hcsr501{ L"inactivity", MOTION_PIN };
+	mcp9808_sensor	_temp_in{ L"temp_in", mcp9808_sensor::res12bit, MCP_ADDRESS };
+	hcsr501_sensor	_motion{ L"inactivity", MOTION_PIN };
 	esp8266_sensors	_ext{ ESP_PORT, ESP_GROUP, _temp_out, _light };
 
 	dm35le_motor	_dm35le{ RX_PIN, TX_PIN, _position, _config };
@@ -68,7 +68,7 @@ private:
 	beeper			_beeper{ L"", BEEPER_PIN };
 	led				_led{ L"led", LED_PIN };
 
-	vec_sensors		_sensors{ &_mcp9808, &_temp_out, &_light, &_position, &_hcsr501, &_time };
+	vec_sensors		_sensors{ &_temp_in, &_temp_out, &_light, &_position, &_motion, &_time };
 	vec_actuators	_actuators{ &_motor, &_beeper, &_led };
 };
 
