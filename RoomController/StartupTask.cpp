@@ -5,8 +5,6 @@
 
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::ApplicationModel;
-using namespace winrt::Windows::Devices::Gpio;
-using namespace winrt::Windows::System::Threading;
 
 wdebugstream wdebug;
 debugstream debug;
@@ -37,7 +35,8 @@ void StartupTask::Run(IBackgroundTaskInstance taskInstance)
 		while(true) {
 			std::this_thread::sleep_for(1s);
 			_server->run();
-		} 
+		}
+		_deferral.Complete();
 	});
 	th.detach();
 }
