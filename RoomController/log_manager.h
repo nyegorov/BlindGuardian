@@ -31,6 +31,7 @@ class log_manager
 	circular_buffer<log_entry>	_log{ 1000 };
 	std::chrono::time_point<std::chrono::high_resolution_clock>	_start_time;
 	std::chrono::time_point<std::chrono::system_clock>			_start_time_sys;
+	winrt::Windows::Foundation::Diagnostics::LoggingChannel		_channel{ nullptr };
 public:
 	log_manager();
 	log_manager(path_t path);

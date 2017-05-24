@@ -2,6 +2,17 @@
 #include "log_manager.h"
 
 using namespace winrt::Windows::Data::Json;
+using namespace winrt::Windows::Foundation::Diagnostics;
+
+LoggingLevel get_level(log_level level)
+{
+	switch(level) {
+	case log_level::error:	return LoggingLevel::Error;
+	case log_level::info:	return LoggingLevel::Information;
+	case log_level::message:return LoggingLevel::Warning;
+	default:				return LoggingLevel::Verbose;
+	}
+}
 
 wstring to_string(std::thread::id id)
 {
@@ -27,12 +38,15 @@ log_manager::log_manager()
 {
 	_start_time = std::chrono::high_resolution_clock::now();
 	_start_time_sys = std::chrono::system_clock::now();
+
+	// {252E5424-43E9-4217-81A2-480950E866DA}
+	GUID guid = { 0x252e5424, 0x43e9, 0x4217, 0x81, 0xa2, 0x48, 0x9, 0x50, 0xe8, 0x66, 0xda };
+	_channel = LoggingChannel{ L"RoomSrv provider", nullptr, guid };
 }
 
-log_manager::log_manager(path_t path) : _path(path)
+log_manager::log_manager(path_t path) : log_manager()
 {
-	_start_time = std::chrono::high_resolution_clock::now();
-	_start_time_sys = std::chrono::system_clock::now();
+	_path = path;
 	std::experimental::filesystem::remove(path);
 }
 
@@ -51,6 +65,16 @@ void log_manager::log(log_level level, const wchar_t module[], const wchar_t mes
 		module, 
 		message
 	});
+
+	if(_channel.IsEnabled()) {
+		auto level_str = level == log_level::error ? L"ERR" : level == log_level::info ? L"INF" : L"MSG";
+		LoggingFields fields;
+		LoggingOptions options;
+		options.Keywords(stoull(::to_string(_log.back().thread_id)));
+		fields.AddString(message, message);
+		_channel.LogEvent(wstring(module) + L'.' + level_str, fields, get_level(level), options);
+	}
+
 	if(_enable_debug) {
 		OutputDebugStringW(::to_string(_log.back()).c_str());
 		OutputDebugStringW(L"\n");
