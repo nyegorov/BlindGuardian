@@ -22,6 +22,8 @@ wstring to_string(const log_entry&);
 class log_manager
 {
 	void log(log_level level, const wchar_t module[], const wchar_t message[]);
+	void log_etw(const log_entry& entry);
+	void log_debug(const log_entry& entry);
 	bool _enable_debug{ true };
 
 	using lock_t = std::lock_guard<std::mutex>;

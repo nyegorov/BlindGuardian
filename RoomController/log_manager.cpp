@@ -54,6 +54,27 @@ log_manager::~log_manager()
 {
 }
 
+void log_manager::log_etw(const log_entry& entry)
+{
+	if(_channel && _channel.IsEnabled()) {
+		auto level_str = entry.level == log_level::error ? L"ERR" : entry.level == log_level::info ? L"INF" : L"MSG";
+		LoggingFields fields;
+		LoggingOptions options;
+		options.Keywords(stoull(::to_string(_log.back().thread_id)));
+		fields.AddString(entry.message, entry.message);
+		_channel.LogEvent(wstring(entry.module) + L'.' + level_str, fields, get_level(entry.level), options);
+	}
+
+}
+
+void log_manager::log_debug(const log_entry& entry)
+{
+	if(_enable_debug) {
+		OutputDebugStringW(::to_string(entry).c_str());
+		OutputDebugStringW(L"\n");
+	}
+}
+
 void log_manager::log(log_level level, const wchar_t module[], const wchar_t message[])
 {
 	lock_t lock(_mutex);
@@ -66,25 +87,14 @@ void log_manager::log(log_level level, const wchar_t module[], const wchar_t mes
 		message
 	});
 
-	if(_channel.IsEnabled()) {
-		auto level_str = level == log_level::error ? L"ERR" : level == log_level::info ? L"INF" : L"MSG";
-		LoggingFields fields;
-		LoggingOptions options;
-		options.Keywords(stoull(::to_string(_log.back().thread_id)));
-		fields.AddString(message, message);
-		_channel.LogEvent(wstring(module) + L'.' + level_str, fields, get_level(level), options);
-	}
+	log_etw(_log.back());
+	log_debug(_log.back());
 
-	if(_enable_debug) {
-		OutputDebugStringW(::to_string(_log.back()).c_str());
-		OutputDebugStringW(L"\n");
-		if(!_path.empty() && _log.size() == _log.capacity()) {
-			dump();
-		}
-	}
+	if(_enable_debug && _log.size() == _log.capacity()) dump();
 }
 
 void log_manager::dump() {
+	if(_path.empty())	return;
 	try {
 		std::wofstream ofs(_path, std::ios::app);
 		for(auto& e : _log) ofs << ::to_string(e) << std::endl;
