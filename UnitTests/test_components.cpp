@@ -204,5 +204,37 @@ namespace UnitTests
 			filesystem::remove(p);
 		}
 
+		TEST_METHOD(Logger)
+		{
+			auto test = L"TEST";
+			path p(L"test.log");
+			filesystem::remove(p);
+			log_manager logger{ p };
+			logger.enable_debug(true);
+			logger.error(test, winrt::hresult_error(E_ACCESSDENIED));
+			logger.error(test, std::runtime_error("runtime error"));
+			logger.error(test, L"another error");
+			logger.message(test, L"message");
+			logger.message(test, L"%s: %d", L"Question of Life", 42);
+			logger.info(test, L"information");
+			logger.info(test, L"information: PI=%lf", atan2(1., 1.) * 4.);
+			auto jo = JsonObject::Parse(logger.to_string());
+			auto je = jo.GetNamedArray(L"entries");
+			Assert::AreEqual(to_str(std::this_thread::get_id()), wstring(je.GetObjectAt(0).GetNamedString(L"thread")));
+			Assert::AreEqual(0., je.GetObjectAt(6).GetNamedNumber(L"level"));
+			Assert::AreEqual(1., je.GetObjectAt(0).GetNamedNumber(L"level"));
+			Assert::AreEqual(2., je.GetObjectAt(3).GetNamedNumber(L"level"));
+			Assert::AreEqual(L"TEST"s, wstring(je.GetObjectAt(0).GetNamedString(L"module")));
+			Assert::AreEqual(L"information: PI=3.141593"s, wstring(je.GetObjectAt(0).GetNamedString(L"message")));
+			Assert::AreEqual(L"information"s, wstring(je.GetObjectAt(1).GetNamedString(L"message")));
+			Assert::AreEqual(L"Question of Life: 42"s, wstring(je.GetObjectAt(2).GetNamedString(L"message")));
+			Assert::AreEqual(L"message"s, wstring(je.GetObjectAt(3).GetNamedString(L"message")));
+			Assert::AreEqual(L"another error"s, wstring(je.GetObjectAt(4).GetNamedString(L"message")));
+			Assert::AreEqual(L"runtime error"s, wstring(je.GetObjectAt(5).GetNamedString(L"message")));
+			Assert::AreEqual(L"0x80070005: Отказано в доступе."s, wstring(je.GetObjectAt(6).GetNamedString(L"message")));
+			logger.dump();
+			Assert::IsTrue(filesystem::exists(p));
+		}
+
 	};
 }

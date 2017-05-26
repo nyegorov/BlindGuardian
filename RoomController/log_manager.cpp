@@ -162,5 +162,5 @@ wstring log_manager::to_string()
 	JsonObject json;
 	json.SetNamedValue(L"start", JsonValue::CreateStringValue(buf));
 	json.SetNamedValue(L"entries", jentries);
-	return json.ToString();
+	return json.Stringify();
 }

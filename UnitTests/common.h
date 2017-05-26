@@ -20,6 +20,13 @@ template<> inline std::wstring ToString<value_t>(const value_t& v) {
 }
 }
 
+inline wstring to_str(std::thread::id id)
+{
+	std::wstringstream wss;
+	wss << id;
+	return wss.str();
+}
+
 class DumbRemote
 {
 	value_type				_temp;
