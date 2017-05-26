@@ -31,6 +31,7 @@ void OpNeg(value_t& op1, value_t& op2, value_t& result) { result = -std::get<val
 void OpSub(value_t& op1, value_t& op2, value_t& result) { result = std::get<value_type>(*op1) - std::get<value_type>(*op2); }
 void OpMul(value_t& op1, value_t& op2, value_t& result) { result = std::get<value_type>(*op1) * std::get<value_type>(*op2); }
 void OpDiv(value_t& op1, value_t& op2, value_t& result) { result = std::get<value_type>(*op1) / std::get<value_type>(*op2); }
+void OpMod(value_t& op1, value_t& op2, value_t& result) { result = std::get<value_type>(*op1) % std::get<value_type>(*op2); }
 void OpNot(value_t& op1, value_t& op2, value_t& result) { result = !std::get<value_type>(*op2); }
 void OpOr(value_t& op1, value_t& op2, value_t& result)  { result = std::get<value_type>(*op1) != 0 || std::get<value_type>(*op2) != 0; }
 void OpAnd(value_t& op1, value_t& op2, value_t& result) { result = std::get<value_type>(*op1) != 0 && std::get<value_type>(*op2) != 0; }
@@ -91,7 +92,7 @@ NScript::OpInfo NScript::_operators[Term][10] = {
 	{{Parser::equ,		&OpEqu },	{Parser::assign, &OpEqu },	{Parser::nequ,&OpNeq },	{Parser::end, NULL } },
 	{{Parser::gt,		&OpGT },	{Parser::ge,	&OpGE },	{Parser::lt, &OpLT },	{Parser::le, &OpLE},	{ Parser::end, NULL } },
 	{{Parser::plus,		&OpAdd},	{Parser::minus,	&OpSub},	{Parser::end, NULL}},
-	{{Parser::multiply,	&OpMul},	{Parser::divide,&OpDiv},	{Parser::end, NULL}},
+	{{Parser::multiply,	&OpMul},	{Parser::divide,&OpDiv},	{Parser::mod, &OpMod},	{ Parser::end, NULL } },
 	{{Parser::minus,	&OpNeg},	{Parser::lnot, &OpNot},		{Parser::end, NULL}},
 };
 
@@ -247,6 +248,7 @@ Parser::Token Parser::Next()
 		case '-':	_token = minus; break;
 		case '*':	_token = multiply;break;
 		case '/':	_token = divide;break;
+		case '%':	_token = mod; break;
 		case '^':	_token = pwr;break;
 		case '~':	_token = not;break;
 		case ';':	_token = stmt; while(Peek() == c)	Read(); break;

@@ -50,6 +50,7 @@ namespace UnitTests
 			Assert::AreEqual(0, get<int32_t>(ns.eval(L"(2<=1 || 1<1 || 1>1 || 1<1) && !(3==3) && (3!=3) ? 1 : 0")));
 			Assert::AreEqual(42, get<int32_t>(ns.eval(L"x=42; x")));
 			Assert::AreEqual(1, get<int32_t>(ns.eval(L"x=1; y=2; x=x+y; y=y-x; x=x*y; x=x/y; x=x-1; x+y")));
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"x=7; y=3; x % y")));
 			Assert::AreEqual(10, get<int32_t>(ns.eval(L"myfunc0()")));
 			Assert::AreEqual(24, get<int32_t>(ns.eval(L"mysens")));
 			Assert::AreEqual(40, get<int32_t>(ns.eval(L"x=#5:40#; x-300")));
