@@ -85,7 +85,7 @@ public:
 	std::future<void> start();
 	void update() override;
 private:
-	winrt::Windows::Devices::I2c::I2cDevice _tmp75{ nullptr };
+	winrt::Windows::Devices::I2c::I2cDevice _i2c{ nullptr };
 	uint32_t	_address;
 	resolution	_res;
 };
@@ -99,7 +99,7 @@ public:
 	std::future<void> start();
 	void update() override;
 private:
-	winrt::Windows::Devices::I2c::I2cDevice _mcp9808{ nullptr };
+	winrt::Windows::Devices::I2c::I2cDevice _i2c{ nullptr };
 	uint32_t	_address;
 	resolution	_res;
 };

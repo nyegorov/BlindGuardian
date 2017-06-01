@@ -66,12 +66,13 @@ std::future<void> tmp75_sensor::start()
 {
 	try	{
 		auto controller = co_await I2cController::GetDefaultAsync();
+		if(!controller)	co_return;
 		auto device = controller.GetDevice(I2cConnectionSettings(_address));
 
 		device.Write({ 0x01, byte(_res << 5) });
 		device.Write({ 0 });
 
-		_tmp75 = device;
+		_i2c = device;
 	} catch(const winrt::hresult_error&)	{
 		logger.error(L"TM75", L"I2C initialization error");
 	}
@@ -79,9 +80,9 @@ std::future<void> tmp75_sensor::start()
 
 void tmp75_sensor::update()
 {
-	if(_tmp75) {
+	if(_i2c) {
 		byte data[2];
-		_tmp75.Read(data);
+		_i2c.Read(data);
 		auto temp = (((data[0] << 8) | data[1]) >> 4) >> _res;
 		set(temp);
 	} else {
@@ -95,12 +96,13 @@ std::future<void> mcp9808_sensor::start()
 {
 	try {
 		auto controller = co_await I2cController::GetDefaultAsync();
+		if(!controller)	co_return;
 		auto device = controller.GetDevice(I2cConnectionSettings(_address));
 
 		device.Write({ 0x08, _res });
 		device.Write({ 0x05 });
 
-		_mcp9808 = device;
+		_i2c = device;
 	} catch(const winrt::hresult_error&) {
 		logger.error(L"MCP9", L"I2C initialization error");
 	}
@@ -108,10 +110,10 @@ std::future<void> mcp9808_sensor::start()
 
 void mcp9808_sensor::update()
 {
-	if(_mcp9808) {
+	if(_i2c) {
 		byte data[2];
-		_mcp9808.Read(data);
-		auto temp = (data[0] << 4) | (data[1] >> 4);
+		_i2c.Read(data);
+		auto temp = ((data[0] & 0x0F) << 4) | (data[1] >> 4);
 		if(data[0] & 0x10) temp = 256 - temp;
 		set(temp);
 	} else {

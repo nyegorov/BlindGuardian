@@ -32,22 +32,27 @@ std::future<void> esp8266_sensors::start()
 
 void esp8266_sensors::on_message(const DatagramSocket &, const DatagramSocketMessageReceivedEventArgs &args)
 {
-	auto reader = args.GetDataReader();
-	auto byteCount = reader.UnconsumedBufferLength();
+	try {
+		auto reader = args.GetDataReader();
+		auto byteCount = reader.UnconsumedBufferLength();
 
-	if(byteCount < 7)	return;
-	uint8_t cmd  = reader.ReadByte();
-	uint8_t size = reader.ReadByte();
-	if(cmd != 's' || size != 5)		return;
+		if(byteCount < 7)	return;
+		uint8_t cmd  = reader.ReadByte();
+		uint8_t size = reader.ReadByte();
+		if(cmd != 's' || size != 5)		return;
 
-	auto temp  = reader.ReadByte();
-	auto light = reader.ReadInt32();
+		auto t_out = reader.ReadByte();
+		auto light = reader.ReadInt32();
 
-	_temp.set(temp);
-	_light.set(light);
-	logger.message(module_name, L"> temp = %d°C, light = %d lux", (int)temp, (int)light);
-	_remote_ip = args.RemoteAddress();
-	_last_status_time = steady_clock::now();
+		_temp.set(t_out);
+		_light.set(light);
+		_remote_ip = args.RemoteAddress();
+		_last_status_time = steady_clock::now();
+
+		logger.message(module_name, L"> temp = %d°C, light = %d lux", (int)t_out, (int)light);
+	} catch(winrt::hresult_error& hr) {
+		logger.error(module_name, hr);
+	}
 }
 
 }

@@ -130,8 +130,7 @@ void room_server::run()
 
 	while(!_tasks.empty()) {
 		std::function<void()> f;
-		_tasks.try_pop(f);
-		f();
+		if(_tasks.try_pop(f))	f();
 	}
 
 	for(auto& sensor : _sensors) sensor->update();

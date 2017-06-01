@@ -11,8 +11,8 @@
 #include "http_server.h"
 #include "rules_db.h"
 
-#define TX_PIN		27
-#define RX_PIN		17
+#define RF_TX_PIN	27
+#define RF_RX_PIN	17
 #define LED_PIN		4
 #define	BEEPER_PIN	22
 #define MOTION_PIN	18
@@ -58,12 +58,11 @@ private:
 	sensor			_light{ L"light" };
 	sensor			_position{ L"position" };
 	time_sensor		_time{ L"time" };
-	//tmp75_sensor	_tmp75{ L"temp_in", tmp75_sensor::res12bit, TMP_ADDRESS };
-	mcp9808_sensor	_temp_in{ L"temp_in", mcp9808_sensor::res12bit, MCP_ADDRESS };
+	mcp9808_sensor	_temp_in{ L"temp_in", mcp9808_sensor::res9bit, MCP_ADDRESS };
 	hcsr501_sensor	_motion{ L"inactivity", MOTION_PIN };
 	esp8266_sensors	_ext{ ESP_PORT, ESP_GROUP, _temp_out, _light };
 
-	dm35le_motor	_dm35le{ RX_PIN, TX_PIN, _position, _config };
+	dm35le_motor	_dm35le{ RF_RX_PIN, RF_TX_PIN, _position, _config };
 	motor_ctrl		_motor{ L"blind" , {&_dm35le} };
 	beeper			_beeper{ L"", BEEPER_PIN };
 	led				_led{ L"led", LED_PIN };

@@ -11,6 +11,8 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace winrt::Windows::Data::Json;
 using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::Windows::Networking::Sockets;
+using namespace winrt::Windows::Web::Http;
+using namespace std;
 using namespace std::experimental;
 using namespace roomctrl;
 
@@ -182,6 +184,31 @@ namespace UnitTests
 			auto s2 = re2.get_rules();
 			Assert::AreEqual(s1, s2);
 			filesystem::remove(p1 / "rules.json");
+		}
+		TEST_METHOD(Tasks)
+		{
+			path p(L"html");
+			filesystem::create_directory(p);
+			ofstream ofs(p / "room_status.html"); 
+			ofs << "<html><body>OK</body></html>" << endl;
+			ofs.close();
+
+			[&]() -> future<void> { 
+				room_server re(L".");
+				co_await winrt::resume_background();
+				co_await re.start();
+				re.eval(L"blind.close()");
+				Assert::AreEqual(0, get<int32_t>(re.eval(L"position")));
+				co_await HttpClient().GetAsync({ L"http://localhost/status?set_pos=100" }, HttpCompletionOption::ResponseHeadersRead);
+				Assert::AreEqual(0, get<int32_t>(re.eval(L"position")));
+				re.run();
+				Assert::AreEqual(100, get<int32_t>(re.eval(L"position")));
+				co_await HttpClient().GetAsync({ L"http://localhost/status?set_pos=0" }, HttpCompletionOption::ResponseHeadersRead);
+				Assert::AreEqual(100, get<int32_t>(re.eval(L"position")));
+				re.run();
+				Assert::AreEqual(0, get<int32_t>(re.eval(L"position")));
+			}().get();
+			filesystem::remove_all(p);
 		}
 
 

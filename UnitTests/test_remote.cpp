@@ -3,26 +3,51 @@
 
 #include "../RoomController/udns_resolver.h"
 #include "../RoomController/esp8266_motor.h"
+#include "../RoomController/esp8266_sensors.h"
 #include "../RoomController/debug_stream.h"
 
 using namespace std;
-using namespace roomctrl;
+using namespace std::chrono;
 using namespace std::experimental;
 using namespace std::string_literals;
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+using namespace winrt;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Web::Http;
 using namespace winrt::Windows::Storage::Streams;
+using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+using namespace roomctrl;
 
 namespace UnitTests
 {
 
 udns_resolver udns;
 
-TEST_CLASS(MotorController)
+TEST_CLASS(NodeMCU)
 {
 public:
-	TEST_CLASS_INITIALIZE(Init)
+	TEST_METHOD(RemoteSensors)
+	{
+		sensor	temp{ L"temp_out" }, light{ L"light" };
+		esp8266_sensors nodemcu(L"4760", L"224.0.0.100", temp, light);
+		Assert::IsFalse(nodemcu.online());
+		[&]() -> future<void> {
+			co_await nodemcu.start();
+			for(int i = 0; i < 60; i++) {
+				if(nodemcu.online())	break;
+				co_await 100ms;
+			}
+			co_return;
+		}().get();
+		Assert::IsTrue(nodemcu.online());
+		if(nodemcu.online()) {
+			auto t = get<int32_t>(temp.value());
+			auto l = get<int32_t>(light.value());
+			Assert::IsTrue(t >= 10 && t < 40);
+			Assert::IsTrue(l >= 100 && l < 77000);
+		}
+	}
+
+	/*TEST_CLASS_INITIALIZE(Init)
 	{
 		async([]() {
 			udns.start();
@@ -67,7 +92,7 @@ public:
 		mot.close();
 		Assert::AreEqual(  0, as<int32_t>(mot.get_pos()->value()));
 		Assert::IsTrue(mot.online());
-	}
+	}*/
 
 };
 
