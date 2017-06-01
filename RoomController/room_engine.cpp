@@ -19,11 +19,11 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 	_http.on(L"/styles.css", L"html/styles.css");
 	_http.on(L"/back.jpg", L"html/img/background.jpg");
 	_http.on(L"/favicon.ico", L"html/img/favicon.ico");
-	_http.on(L"/room.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
+	_http.on(L"/room.json",  [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
 	_http.on(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
-	_http.on(L"/rule.json", [this](auto& r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
-	_http.on(L"/pair.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, _pair_info.ToString()); });
-	_http.on(L"/log.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
+	_http.on(L"/rule.json",  [this](auto&r,auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); });
+	_http.on(L"/pair.json",  [this](auto&, auto&) { return std::make_tuple(content_type::json, _pair_info.ToString()); });
+	_http.on(L"/log.json",   [this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
 	_http.on_action(L"pair_remote", [this](auto&, auto& value) { pair_remote(); });
 	_http.on_action(L"set_pos", [this](auto&, auto& value) {
 		if(std::stoul(value) == 100)	_tasks.push([this]() {_motor.open(); });

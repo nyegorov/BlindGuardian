@@ -193,7 +193,7 @@ namespace UnitTests
 			ofs << "<html><body>OK</body></html>" << endl;
 			ofs.close();
 
-			[&]() -> future<void> { 
+			[]() -> future<void> { 
 				room_server re(L".");
 				co_await winrt::resume_background();
 				co_await re.start();
