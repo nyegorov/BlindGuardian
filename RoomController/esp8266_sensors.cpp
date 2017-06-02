@@ -4,6 +4,7 @@
 const wchar_t module_name[] = L"EXTS";
 
 using namespace winrt::Windows::Networking::Sockets;
+using namespace winrt::Windows::Storage::Streams;
 
 namespace roomctrl {
 
@@ -36,11 +37,13 @@ void esp8266_sensors::on_message(const DatagramSocket &, const DatagramSocketMes
 		auto reader = args.GetDataReader();
 		auto byteCount = reader.UnconsumedBufferLength();
 
-		if(byteCount < 7)	return;
+		if(byteCount < 7)				throw winrt::hresult_out_of_bounds();
+
 		uint8_t cmd  = reader.ReadByte();
 		uint8_t size = reader.ReadByte();
-		if(cmd != 's' || size != 5)		return;
+		if(cmd != 's' || size != 5)		throw winrt::hresult_invalid_argument();
 
+		reader.ByteOrder(ByteOrder::LittleEndian);
 		auto t_out = reader.ReadByte();
 		auto light = reader.ReadInt32();
 

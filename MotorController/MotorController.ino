@@ -67,7 +67,7 @@ void setup() {
   temp_sensor.begin();
   red_blinker.attach_ms(100, []() { digitalWrite(LED_RED, !digitalRead(LED_RED)); });
   
-/*	WiFi.hostname(host_name);
+	//WiFi.hostname(host_name);
   //WiFi.setAutoReconnect(true);
   //WiFi.onEvent(on_wifi_event);
   
@@ -93,14 +93,6 @@ void setup() {
   Serial.print("Multicast group:\t");
   Serial.println(multicast_group);           // IP address for the name discovery
 
-  red_blinker.detach();
-  digitalWrite(LED_RED, HIGH);
-
-	udns.beginMulticast(WiFi.localIP(), multicast_group, udnsPortIn);
-	server.begin();
-	server.setNoDelay(true);
-  
-	announce(host_name, WiFi.localIP());*/
   Serial.printf("Motor controller %s started\n", version);
   red_blinker.detach();
   digitalWrite(LED_ESP, HIGH);
@@ -112,7 +104,7 @@ void loop() {
   update_sensors();
   delay(200);
   digitalWrite(LED_BLUE, HIGH);
-  //write_status();
-  delay(4000);
+  write_status();
+  delay(4800);
 }
 

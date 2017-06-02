@@ -41,7 +41,7 @@ log_manager::log_manager()
 
 	// {252E5424-43E9-4217-81A2-480950E866DA}
 	GUID guid = { 0x252e5424, 0x43e9, 0x4217, 0x81, 0xa2, 0x48, 0x9, 0x50, 0xe8, 0x66, 0xda };
-	_channel = LoggingChannel{ L"RoomSrv provider", nullptr, guid };
+	_channel = LoggingChannel{ L"RoomSrv", nullptr, guid };
 }
 
 log_manager::log_manager(path_t path) : log_manager()
