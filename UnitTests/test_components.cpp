@@ -46,8 +46,8 @@ namespace UnitTests
 			ns.set(L"x", 3);
 			Assert::AreEqual(4, get<int32_t>(ns.eval(L"2*2")));
 			Assert::AreEqual(1, get<int32_t>(ns.eval(L"2*(5-3)==4")));
-			Assert::AreEqual(1, get<int32_t>(ns.eval(L"(1>2 || 1>=2 || 1<=2 || 1<2) && !(3==4) && (3!=4) ? 1 : 0")));
-			Assert::AreEqual(0, get<int32_t>(ns.eval(L"(2<=1 || 1<1 || 1>1 || 1<1) && !(3==3) && (3!=3) ? 1 : 0")));
+			Assert::AreEqual(1, get<int32_t>(ns.eval(L"(1>2 || 1>=2 or 1<=2 || 1<2) and !(3==4) && (3!=4) ? 1 : 0")));
+			Assert::AreEqual(0, get<int32_t>(ns.eval(L"(2<=1 || 1<1 || 1>1 || 1<1) and not (3==3) && (3!=3) ? 1 : 0")));
 			Assert::AreEqual(42, get<int32_t>(ns.eval(L"x=42; x")));
 			Assert::AreEqual(1, get<int32_t>(ns.eval(L"x=1; y=2; x=x+y; y=y-x; x=x*y; x=x/y; x=x-1; x+y")));
 			Assert::AreEqual(1, get<int32_t>(ns.eval(L"x=7; y=3; x % y")));

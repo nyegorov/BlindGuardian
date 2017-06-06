@@ -229,6 +229,9 @@ Parser::Parser() {
 	if(_keywords.empty()) {
 		_keywords[L"if"s] = Parser::iffunc;
 		_keywords[L"else"s] = Parser::ifelse;
+		_keywords[L"and"s] = Parser::land;
+		_keywords[L"or"s] = Parser::lor;
+		_keywords[L"not"s] = Parser::lnot;
 		_decpt = std::use_facet<std::numpunct<char> >(std::locale()).decimal_point();
 		srand((unsigned)time(NULL));
 	}
