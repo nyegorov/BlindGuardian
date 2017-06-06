@@ -32,6 +32,7 @@ void update_sensors() {
 
 void write_status()
 {
+  if(!WiFi.isConnected()) return;
 	WiFiUDP udp;
 	udp.beginPacketMulticast(multicast_group, udpPort, WiFi.localIP());
 	udp.write('s');                                   // 1 byte header (s)
@@ -41,62 +42,64 @@ void write_status()
 	udp.endPacket();
 }
 
+static char * wifi_event_names[] = {
+    "STAMODE_CONNECTED",
+    "STAMODE_DISCONNECTED",
+    "STAMODE_AUTHMODE_CHANGE",
+    "STAMODE_GOT_IP",
+    "STAMODE_DHCP_TIMEOUT",
+    "SOFTAPMODE_STACONNECTED",
+    "SOFTAPMODE_STADISCONNECTED",
+    "SOFTAPMODE_PROBEREQRECVED",
+    "UNKNOWN",
+};
+
 void on_wifi_event(WiFiEvent_t event) {
-  Serial.printf("[WiFi-event] event: %d\n", event);
-  switch(event) {
+  Serial.printf("[WiFi-event] event: %s (%d)\n", wifi_event_names[event >= WIFI_EVENT_MAX ? WIFI_EVENT_MAX : event], event);
+/*  switch(event) {
     case WIFI_EVENT_STAMODE_DISCONNECTED:
       Serial.println("WiFi lost connection");
       WiFi.disconnect(true);
       digitalWrite(LED_RED, LOW);
-      delay(1000);
+      delay(5000);
       ESP.reset();
       break;
-    }
+    }*/
 }
 
 void setup() {
-	// put your setup code here, to run once:
 	Serial.begin(115200);
   Serial.println("");
   Serial.println("Motor controller setup");
+
   pinMode(LED_ESP,  OUTPUT); 
   pinMode(LED_RED,  OUTPUT); 
   pinMode(LED_BLUE, OUTPUT); 
-
-  light_sensor.begin();
-  temp_sensor.begin();
-  red_blinker.attach_ms(100, []() { digitalWrite(LED_RED, !digitalRead(LED_RED)); });
   
-	//WiFi.hostname(host_name);
-  //WiFi.setAutoReconnect(true);
-  //WiFi.onEvent(on_wifi_event);
+	WiFi.hostname("motctrl");
+  WiFi.setAutoReconnect(true);
+  WiFi.onEvent(on_wifi_event);
   
 	WiFiManager wifiManager;
-  //wifiManager.setTimeout(180);
+  wifiManager.setConfigPortalTimeout(180);
+  red_blinker.attach_ms(100, []() { digitalWrite(LED_RED, !digitalRead(LED_RED)); });
   if(!wifiManager.autoConnect("Motctrl_AP")) {
     delay(3000);
     ESP.reset();
     delay(5000); 
 	}
 
-	//WiFi.begin("Akutron", "877D4754A1");
-	//while (WiFi.status() != WL_CONNECTED) {
-	//delay(500);
-	//Serial.print(".");
-	//}  
-
-	Serial.println("");
-	Serial.print("Connected to ");
-	Serial.println(WiFi.SSID());              // Tell us what network we're connected to
-	Serial.print("IP address:\t");
-	Serial.println(WiFi.localIP());           // Send the IP address of the ESP8266 to the computer
-  Serial.print("Multicast group:\t");
-  Serial.println(multicast_group);           // IP address for the name discovery
-
+	Serial.print("\nConnected to ");	  Serial.println(WiFi.SSID());      // Tell us what network we're connected to
+	Serial.print("IP address:\t");      Serial.println(WiFi.localIP());   // Send the IP address of the ESP8266 to the computer
+  Serial.print("Multicast group:\t"); Serial.println(multicast_group);  // Multicast group address for sending commands
   Serial.printf("Motor controller %s started\n", version);
+  
   red_blinker.detach();
   digitalWrite(LED_ESP, HIGH);
   digitalWrite(LED_RED, HIGH);
+  
+  light_sensor.begin();
+  temp_sensor.begin();
 }
 
 void loop() {
