@@ -12,6 +12,7 @@ namespace roomctrl {
 room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _config(path / "config.json")
 {
 	_http.on(L"/", L"html/room_status.html");
+	_http.on(L"/index.html", L"html/room_status.html");
 	_http.on(L"/status", L"html/room_status.html");
 	_http.on(L"/edit", L"html/edit_rule.html");
 	_http.on(L"/log", L"html/server_log.html");

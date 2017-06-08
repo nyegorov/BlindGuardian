@@ -108,6 +108,9 @@ void loop() {
   delay(200);
   digitalWrite(LED_BLUE, HIGH);
   write_status();
-  delay(4800);
+  for(int i=0; i<10; i++) {
+    delay(480);
+    digitalWrite(LED_RED, WiFi.isConnected() ? HIGH : LOW);
+  }
 }
 
