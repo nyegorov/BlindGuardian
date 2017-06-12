@@ -20,6 +20,7 @@
                 if (xhr.status == 200) {
                     var rule = JSON.parse(xhr.responseText);
                     rule_name.value = rule.name;
+                    enabled.checked = rule.enabled;
                     condition.value = rule.condition;
                     action.value = rule.action;
                     delete_rule.value = rule.id;
@@ -51,6 +52,8 @@
     <form action="status" method="post" accept-charset="utf-8">
         <h3>Rule name</h3>
         <input id="rule_name" name="rule_name" type="text" required="required" size="48"><br />
+        <br />
+        <input id="enabled" name="enabled" type="checkbox" checked="checked" value="1">Enabled<br />
 
         <h3>Condition</h3>
         <textarea id="condition" cols="46" name="condition" rows="7"></textarea><br />
@@ -59,7 +62,6 @@
         <h3>Action</h3>
         <textarea id="action" cols="46" name="action" rows="4"></textarea><br />
         <span style="color:green">Actions: <B>blind.open(), blind.close(), beep(ms), wait(ms)</B></span><br/>
-        <br />
 
         <button id="save_rule" name="save_rule" value="rule_id" type="submit">Save</button>
         <button id="delete_rule" name="delete_rule" value="rule_id">Delete</button>

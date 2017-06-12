@@ -132,7 +132,7 @@ void http_server::parse_request(wstring_view content, http_request& request)
 	}
 
 	// POST parameters
-	if(request.type == L"POST" && i+1 < rows.size()) {
+	if(request.type == L"POST" && i+1 < rows.size() && !rows[i + 1].empty()) {
 		if(request.attribs[L"Content-Type"] != L"application/x-www-form-urlencoded")	throw http_status::unsuported_media;
 		WwwFormUrlDecoder params{ wstring(rows[i + 1]) };
 		for(auto p : params)	request.params.emplace(p.Name(), p.Value());

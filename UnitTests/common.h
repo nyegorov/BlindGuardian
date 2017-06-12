@@ -31,42 +31,32 @@ class DumbRemote
 {
 	value_type				_temp;
 	value_type				_light;
-	StreamSocketListener	_listener;
 public:
-	DumbRemote(value_type temp, value_type light) : _temp(temp), _light(light) { listen(); }
+	DumbRemote(value_type temp, value_type light) : _temp(temp), _light(light) {}
 
-	void set_temp(value_type val) { _temp = val; }
-	void set_light(value_type val) { _light = val; }
-	std::future<void> listen() {
-		_listener.ConnectionReceived([this](auto&& listener, auto&& args) { on_connect(listener, args); });
-		co_await _listener.BindServiceNameAsync(L"4760");
-		co_return;
-	}
-
-	std::future<void> on_connect(StreamSocketListener listener, StreamSocketListenerConnectionReceivedEventArgs args)
+	std::future<void> set_temp(value_type val) { _temp = val; return update(); }
+	std::future<void> set_light(value_type val) { _light = val; return update(); }
+	std::future<void> update()
 	{
-		co_await winrt::resume_background();
-		DataReader reader(args.Socket().InputStream());
-		co_await reader.LoadAsync(sizeof(uint8_t));
-		auto cmd = reader.ReadByte();
-		if(cmd == 's') {
-			DataWriter writer(args.Socket().OutputStream());
+		try
+		{
+			DatagramSocket socket;
+			socket.Control().MulticastOnly(true);
+			auto os = co_await socket.GetOutputStreamAsync({ L"224.0.0.100" }, L"4760");
+			DataWriter writer(os);
+
 			writer.ByteOrder(ByteOrder::LittleEndian);
-			writer.WriteByte(0);
+			writer.WriteByte('s');
+			writer.WriteByte(5);
 			writer.WriteByte((int8_t)_temp);
 			writer.WriteUInt32(_light);
 			co_await writer.StoreAsync();
-			writer.DetachStream();
+
+		} catch(const std::exception& ex) {
+			debug << ex.what();
+		} catch(const winrt::hresult_error& hr)	{
+			wdebug << wstring(hr.message());
 		}
-		else if(cmd == 'v') {
-			DataWriter writer(args.Socket().OutputStream());
-			writer.WriteString(wstring(L"DUMB1.1", 8));
-			co_await writer.StoreAsync();
-			writer.DetachStream();
-		}
-		wdebug << L"received command: '" << (char)cmd << '\'' << std::endl;
-		reader.DetachStream();
-		co_await on_connect(listener, args);
 	}
 };
 

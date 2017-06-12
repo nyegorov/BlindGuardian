@@ -142,9 +142,9 @@ namespace UnitTests
 			rules_db db(p);
 			unsigned id;
 			Assert::AreEqual(0u, db.get_all().size());
-			id = db.save({ L"r1", L"tin > 30", L"close_blind" });
+			id = db.save({ L"r1", L"tin > 30", L"close_blind", true });
 			Assert::AreEqual(1u, id);
-			id = db.save({ L"r2", L"tin < 20", L"open_blind" });
+			id = db.save({ L"r2", L"tin < 20", L"open_blind", true });
 			Assert::AreEqual(2u, id);
 			Assert::AreEqual(2u, db.get_all().size());
 			rules_db db2(p);
@@ -164,7 +164,7 @@ namespace UnitTests
 			Assert::AreEqual(2u, id);
 			Assert::AreEqual(L"r2a"s, db.get(id).name);
 			auto json = r.to_string();
-			Assert::AreEqual(L"{\"id\":2,\"name\":\"r2a\",\"condition\":\"tin < 20\",\"action\":\"open_blind\",\"status\":1}"s, json);
+			Assert::AreEqual(L"{\"id\":2,\"name\":\"r2a\",\"condition\":\"tin < 20\",\"action\":\"open_blind\",\"enabled\":true,\"status\":1}"s, json);
 			Assert::AreEqual((int)rule_status::error, (int)db.get(id).status);
 			db.remove(id);
 			Assert::AreEqual(0u, db.get_all().size());

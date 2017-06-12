@@ -13,6 +13,7 @@ using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Web::Http;
 using namespace std;
+using namespace winrt;
 using namespace std::experimental;
 using namespace roomctrl;
 
@@ -32,6 +33,7 @@ void write_rules(path path, const room_server::vec_rules& rules)
 		json.SetNamedValue(L"name", JsonValue::CreateStringValue(r.name));
 		json.SetNamedValue(L"condition", JsonValue::CreateStringValue(r.condition));
 		json.SetNamedValue(L"action", JsonValue::CreateStringValue(r.action));
+		json.SetNamedValue(L"enabled", JsonValue::CreateBooleanValue(r.enabled));
 		json.SetNamedValue(L"status", JsonValue::CreateNumberValue((double)r.status));
 		jrules.Append(json);
 	}
@@ -52,21 +54,21 @@ namespace UnitTests
 		{
 			path p(".");
 			write_rules(p / "rules.json", {
-				{ L"r1", L"temp > 30", L"mot1.open()" },
-				{ L"r2", L"temp > 30", L"mot2.open()" },
-				{ L"r3", L"time - lasttime >= 5 && time - lasttime < 6", L"mot1.open()" },
-				{ L"r4", L"light > 1000", L"mot3.open()" },
+				{ L"r1", L"temp > 30", L"mot1.open()", true },
+				{ L"r2", L"temp > 30", L"mot2.open()", true },
+				{ L"r3", L"time - lasttime >= 5 && time - lasttime < 6", L"mot1.open()", true },
+				{ L"r4", L"light > 1000", L"mot3.open()", true },
 			});
 			DumbRemote remote(42, 0);
 			DumbSensor ts(L"temp", 24);
 			time_sensor tm(L"time");
-			udns_resolver udns;
-			esp8266_motor mote(L"localhost", udns );
+			sensor temp_out{ L"temp_out", 0 }, light{ L"light", 0 };
+			esp8266_sensors	ext{ ESP_PORT, ESP_GROUP, temp_out, light };
 			DumbMotor mot1, mot2, mot3;
 			motor_ctrl mota{ L"mot1", {&mot1} }, motb{ L"mot2", {&mot2} }, motc{ L"mot3", {&mot3} };
 			room_server re(p);
 			re.init(
-				{ &ts, mote.get_temp(), mote.get_light(), &tm },
+				{ &ts, &tm, &temp_out, &light },
 				{ &mota, &motb, &motc }
 			);
 
@@ -89,11 +91,14 @@ namespace UnitTests
 
 			// remote
 			Assert::AreEqual(0, get<int32_t>(mot3.value()));
-			remote.set_light(2000);
+			[&]() -> future<void> {
+				co_await winrt::resume_background();
+				co_await ext.start();		
+				co_await remote.set_light(2000);
+				co_await 20ms;
+			}().get();
+
 			re.run();
-			Sleep(100);
-			re.run();
-			Sleep(100);
 			Assert::AreEqual(100, get<int32_t>(mot3.value()));
 
 			filesystem::remove(p / "rules.json");
@@ -105,11 +110,11 @@ namespace UnitTests
 			DumbMotor mot_a1, mot_a2, mot_b1, mot_b2, mot_b3, mot_c1;
 
 			motor_ctrl mota{ L"mota",{ &mot_a1, &mot_a2 } }, motb{ L"motb",{ &mot_b1, &mot_b2, &mot_b3} }, motc{ L"motc", {&mot_c1} }, motd{ L"motd", {} };
-			re.rules().save({ L"o1", L"temp < 30", L"mota.open()" }, false);
-			re.rules().save({ L"o2", L"temp > 20 & temp < 30", L"motc.open(); motd.open()" }, false);
-			re.rules().save({ L"o3", L"temp > 20", L"motb.open()" }, false);
-			re.rules().save({ L"c1", L"temp < 20", L"motb.close(); motc.close(); motd.close()" }, false);
-			re.rules().save({ L"c2", L"temp > 30", L"mota.close(); motc.close(); motd.close()" }, false);
+			re.rules().save({ L"o1", L"temp < 30", L"mota.open()", true }, false);
+			re.rules().save({ L"o2", L"temp > 20 & temp < 30", L"motc.open(); motd.open()", true }, false);
+			re.rules().save({ L"o3", L"temp > 20", L"motb.open()", true }, false);
+			re.rules().save({ L"c1", L"temp < 20", L"motb.close(); motc.close(); motd.close()", true }, false);
+			re.rules().save({ L"c2", L"temp > 30", L"mota.close(); motc.close(); motd.close()", true }, false);
 			re.init({ &ts }, { &mota, &motb, &motc, &motd });
 			ts.set(0); re.run();
 			Assert::AreEqual(200, mot_a1.pos() + mot_a2.pos());
@@ -130,8 +135,8 @@ namespace UnitTests
 			DumbMotor mot1, mot2;
 			motor_ctrl mota{ L"mot1", {&mot1} }, motb{ L"mot2",{ &mot2 } };
 			room_server re(L".");
-			re.rules().save({ L"r1", L"temp > 30", L"mot1.open()" }, false);
-			re.rules().save({ L"r2", L"temp > 30 & temp.min < 25", L"mot2.open(); temp.reset()" }, false);
+			re.rules().save({ L"r1", L"temp > 30", L"mot1.open()", true }, false);
+			re.rules().save({ L"r2", L"temp > 30 & temp.min < 25", L"mot2.open(); temp.reset()", true }, false);
 			re.init( { &ts }, { &mota, &motb } );
 
 			// temperature
@@ -163,19 +168,21 @@ namespace UnitTests
 			auto rules = LR"(
 			{
 				"rules": [
-					{ "id": 1, "name": "r1", "condition" : "temp > 30", "action" : "mot1.open() " },
-					{ "id": 2, "name": "r2", "condition" : "temp > 30", "action" : "mot2.open() "}
+					{ "id": 1, "name": "r1", "condition" : "temp > 30", "action" : "mot1.open() ", "enabled" : true },
+					{ "id": 2, "name": "r2", "condition" : "temp > 30", "action" : "mot2.open() ", "enabled" : true },
+					{ "id": 3, "name": "r3", "condition" : "temp > 30", "action" : "mot3.open() ", "enabled" : false }
 				]
 			})";
 			write_rules(p1 / "rules.json", rules);
 			DumbSensor ts(L"temp", 35);
-			DumbMotor mot1, mot2;
-			motor_ctrl mota{ L"mot1", {&mot1} }, motb{ L"mot2", { &mot2 } };
+			DumbMotor mot1, mot2, mot3;
+			motor_ctrl mota{ L"mot1", {&mot1} }, motb{ L"mot2", { &mot2 } }, motc{ L"mot3",{ &mot3 } };
 			room_server re(p1);
-			re.init( { &ts }, { &mota, &motb } );
+			re.init( { &ts }, { &mota, &motb, &motc } );
 			re.run();
 			Assert::AreEqual(100, get<int32_t>(mot1.value()));
 			Assert::AreEqual(100, get<int32_t>(mot2.value()));
+			Assert::AreEqual(0, get<int32_t>(mot3.value()));
 			auto s1 = re.get_rules();
 			write_rules(p1 / "rules.json", s1);
 			room_server re2(p1);

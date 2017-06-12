@@ -31,10 +31,18 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 		if(std::stoul(value) == 0)		_tasks.push([this]() {_motor.close(); });
 	});
 	_http.on_action(L"save_rule", [this](auto& req, auto& value) {
-		auto id = _rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s] });
+		auto enabled = req.params.find(L"enabled") != req.params.end();
+		auto id = _rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s], enabled });
 		_rules.set_status(id, rule_status::inactive);
 	});
 	_http.on_action(L"delete_rule", [this](auto&, auto& value) { _rules.remove(std::stoul(value)); });
+	_http.on_action(L"enable_rule", [this](auto& req, auto& value) { 
+		auto rule = _rules.get(std::stoul(req.params[L"enable_rule"s]));
+		if(rule.id) {
+			rule.enabled = req.params.find(L"enabled") != req.params.end();
+			_rules.save(rule);
+		}
+	});
 
 	init(_sensors, _actuators);
 	logger.info(module_name, L"Room server v%s started", version().c_str());
@@ -138,6 +146,8 @@ void room_server::run()
 
 	for(const auto& rule : _rules.get_all())
 	{
+		if(!rule.enabled)	continue;
+
 		rule_status status;
 
 		auto result = _parser.eval(rule.condition, true);

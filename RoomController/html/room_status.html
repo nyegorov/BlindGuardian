@@ -34,15 +34,24 @@
             xhr2.send();
         };
 
+        function enable_rule(id, enabled) {
+
+        }
+
         function update_rules(room) {
-            var html = '<thead><tr class="row-header"><td>Rule</td><td>Status</td></tr></thead>';
+            var html = '<thead><tr class="row-header"><td></td><td>Rule</td><td>Status</td></tr></thead>';
 
             for (var i = 0; i < room.rules.length; i++) {
                 id = room.rules[i].id;
-                html += '<tr class="' + (i % 2 ? 'row-even' : 'row-odd') + '" onclick="edit_rule(' + id + ')">';
-                html += '<td><a href="edit?id=' + id + '">' + room.rules[i].name + '</a></td>';
+                html += '<tr class="' + (i % 2 ? 'row-even' : 'row-odd') + '">';
+                html += '<td width=24><form id="enable_rule' + id + '" action="status" method="post" style="height:10"><input type="hidden" name="enable_rule" value="' + id + '"><input name="enabled" value="1" type="checkbox" ' + (room.rules[i].enabled ? 'checked' : '') + ' onclick="enable_rule' + id + '.submit()"></form></td>';
+                html += '<td onclick="edit_rule(' + id + ')"><a href="edit?id=' + id + '">' + room.rules[i].name + '</a></td>';
                 status = room.rules[i].status;
-                html += '<td>' + (status == 0 ? '<p class="error">Failed</p>' : (status == 1 ? '<p class="active">Active</p>' : 'Inactive')) + '</td>';
+                html += '<td>' + (
+                    !room.rules[i].enabled ? 'Disabled' : 
+                    status == 0 ? '<p class="error">Failed</p>' :
+                    status == 1 ? '<p class="active">Active</p>' : 'Inactive'
+                ) + '</td>';
                 html += '</tr>';
             }
             rules.innerHTML = html;
@@ -102,7 +111,7 @@
             <td><form action="status" method="post"><button id="open_blind" name="set_pos" value="100">Open blinds</button></form></td>
             <td><form action="status" method="post"><button id="close_blinds" name="set_pos" value="0">Close blinds</button></form></td>
             <td><form action="pair" method="post"><button name="pair_remote">Pair remote</button></form></td>
-            <td><button id="server_log"  onclick="window.location.href = 'log'">Server Log...</button></td>
+            <td><form action="log" method="post"><button>Server Log...</button></form></td>
         </tr>
     </table>
 </body>

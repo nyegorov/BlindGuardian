@@ -12,6 +12,7 @@ JsonObject to_json(const rule & rule)
 	json.SetNamedValue(L"name", JsonValue::CreateStringValue(rule.name));
 	json.SetNamedValue(L"condition", JsonValue::CreateStringValue(rule.condition));
 	json.SetNamedValue(L"action", JsonValue::CreateStringValue(rule.action));
+	json.SetNamedValue(L"enabled", JsonValue::CreateBooleanValue(rule.enabled));
 	json.SetNamedValue(L"status", JsonValue::CreateNumberValue((double)rule.status));
 	return json;
 }
@@ -58,7 +59,8 @@ void rules_db::load()
 				(unsigned)jo.GetNamedNumber(L"id"),
 				jo.GetNamedString(L"name"),
 				jo.GetNamedString(L"condition"),
-				jo.GetNamedString(L"action")
+				jo.GetNamedString(L"action"),
+				jo.GetNamedBoolean(L"enabled")
 			);
 		}
 	} catch(const std::exception&) {} catch(const winrt::hresult_error&) {}
@@ -116,7 +118,7 @@ unsigned rules_db::save(const rule & rule, bool store_db)
 			*it = rule;
 		} else {
 			id = std::accumulate(begin(_rules), end(_rules), 0u, [](auto id, auto& r) {return std::max(r.id, id); }) + 1;
-			_rules.emplace_back(id, rule.name, rule.condition, rule.action);
+			_rules.emplace_back(id, rule.name, rule.condition, rule.action, rule.enabled);
 		}
 	}
 	if(store_db)	store();

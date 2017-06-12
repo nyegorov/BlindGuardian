@@ -26,7 +26,7 @@ std::future<void> test()
 	srv.config().set(L"enable_debug", true);
 	srv.config().set(L"poll_interval",  200);
 	srv.config().set(L"socket_timeout", 15000);
-	srv.rules().save({ L"r1", L"temp_out>30", L"blind.open()" }, false);
+	srv.rules().save({ L"r1", L"temp_out>30", L"blind.open()", true }, false);
 	co_await srv.start();
 	for(;;) {
 		co_await 1000ms;

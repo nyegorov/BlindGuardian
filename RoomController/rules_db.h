@@ -5,18 +5,19 @@ using std::experimental::filesystem::path;
 
 namespace roomctrl {
 
-enum class rule_status { error, active, inactive };
+enum class rule_status { error, active, inactive};
 
 struct rule {
 	rule() : id(0) {}
-	rule(unsigned id, const wstring& name, const wstring& condition, const wstring& action) : id(id), name(name), condition(condition), action(action) {}
-	rule(const wstring& name, const wstring& condition, const wstring& action) : rule(0, name, condition, action) {}
+	rule(unsigned id, const wstring& name, const wstring& condition, const wstring& action, bool enabled) : id(id), name(name), condition(condition), action(action), enabled(enabled) {}
+	rule(const wstring& name, const wstring& condition, const wstring& action, bool enabled) : rule(0, name, condition, action, enabled) {}
 	wstring to_string() const;
 
 	unsigned id;
 	wstring name;
 	wstring condition;
 	wstring action;
+	bool enabled;
 	rule_status	status = rule_status::inactive;
 };
 using rules_v = std::vector<rule>;
