@@ -28,6 +28,12 @@ using path_t = std::experimental::filesystem::path;
 class room_server
 {
 public:
+	struct ip_info
+	{
+		wstring lan;
+		wstring wifi;
+	};
+
 	using vec_rules = std::vector<rule>;
 	using vec_sensors = std::vector<i_sensor*>;
 	using vec_actuators = std::vector<i_actuator*>;
@@ -35,6 +41,7 @@ public:
 
 	room_server(const path_t& path = L".");
 	wstring version();
+	ip_info get_ip();
 	void init(const vec_sensors &sensors, const vec_actuators &actuators);
 	std::future<void> start();
 	wstring get_rules();

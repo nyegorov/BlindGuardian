@@ -4,6 +4,7 @@
 
 using namespace winrt;
 using namespace winrt::Windows::Data::Json;
+using namespace winrt::Windows::Networking::Connectivity;
 
 const wchar_t module_name[] = L"ROOM";
 
@@ -81,6 +82,24 @@ wstring room_server::version()
 	return L"debug"s;
 }
 
+room_server::ip_info room_server::get_ip()
+{
+	ip_info ips = { L"-", L"-" };
+	try	{
+		for(auto& profile : NetworkInformation::GetConnectionProfiles()) {
+			for(auto& host : NetworkInformation::GetHostNames()) {
+				if(!host.IPInformation())	continue;
+				if(host.IPInformation().NetworkAdapter().NetworkAdapterId() == profile.NetworkAdapter().NetworkAdapterId())
+					if(profile.IsWlanConnectionProfile())	ips.wifi = host.CanonicalName();
+					else									ips.lan  = host.CanonicalName();
+			}
+		}
+	} catch(const winrt::hresult_error& hr)	{
+		logger.error(module_name, hr);
+	}
+	return ips;
+}
+
 wstring room_server::get_rules()
 {
 	return _rules.to_string();
@@ -89,6 +108,7 @@ wstring room_server::get_rules()
 wstring room_server::get_sensors()
 {
 	JsonObject json;
+	auto ip = get_ip();
 	for (auto& s : _sensors) {
 		json.SetNamedValue(s->name(), is_error(s->value()) ? JsonValue::CreateStringValue(L"--") :
 			JsonValue::CreateNumberValue(std::get<value_type>(*s->value())));
@@ -99,6 +119,8 @@ wstring room_server::get_sensors()
 	JsonObject sensors;
 	sensors.SetNamedValue(L"sensors", json);
 	sensors.SetNamedValue(L"version", JsonValue::CreateStringValue(version()));
+	sensors.SetNamedValue(L"lan", JsonValue::CreateStringValue(ip.lan));
+	sensors.SetNamedValue(L"wifi", JsonValue::CreateStringValue(ip.wifi));
 	return sensors.ToString();
 }
 

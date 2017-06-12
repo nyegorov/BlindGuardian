@@ -61,6 +61,8 @@
             var hours = Math.trunc(room.sensors.time / 60);
             var mins = room.sensors.time % 60;
             version.innerHTML = room.version;
+            lan.innerHTML = room.lan;
+            wifi.innerHTML = room.wifi;
             time.innerHTML = hours + ':' + (mins < 10 ? '0' : '') + mins.toString();
             temp_in.innerHTML = room.sensors.temp_in;
             temp_out.innerHTML = room.sensors.temp_out;
@@ -114,5 +116,6 @@
             <td><form action="log" method="post"><button>Server Log...</button></form></td>
         </tr>
     </table>
+    <br /><div class="version" style="position:fixed;bottom:0">Wi-Fi: <span id="wifi"></span>, LAN: <span id="lan"></span></div>
 </body>
 </html>
