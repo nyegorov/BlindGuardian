@@ -48,7 +48,7 @@
                 html += '<td onclick="edit_rule(' + id + ')"><a href="edit?id=' + id + '">' + room.rules[i].name + '</a></td>';
                 status = room.rules[i].status;
                 html += '<td>' + (
-                    !room.rules[i].enabled ? 'Disabled' : 
+                    !room.rules[i].enabled ? '<p class="disabled">Disabled</p>' : 
                     status == 0 ? '<p class="error">Failed</p>' :
                     status == 1 ? '<p class="active">Active</p>' : 'Inactive'
                 ) + '</td>';

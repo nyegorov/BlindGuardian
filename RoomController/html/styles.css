@@ -28,6 +28,7 @@ thead {
 .sensor-row { width: 197px; }
 
 .error { color: red; }
+.disabled { color:grey; }
 .active { color: green; }
 
 .version {
