@@ -43,6 +43,12 @@ wstring_view trim(wstring_view str, wchar_t trim_char = ' ')
 	return str;
 }
 
+bool ends_with(wstring_view str, wstring_view tail)
+{
+	if(str.length() >= tail.length())	str.remove_prefix(str.length() - tail.length());
+	return str == tail;
+}
+
 std::vector<wstring_view> split(wstring_view src, wchar_t separator = ' ')
 {
 	std::vector<wstring_view> result;
@@ -198,8 +204,10 @@ std::future<void> http_server::on_connection(StreamSocket socket)
 				auto pc = _actions.find(p.first);
 				if (pc != _actions.end()) {
 					(pc->second)(req, p.second);
-					resp.status = http_status::found;
-					resp.params = L"Location: " + req.path + L"\r\n";
+					if(!ends_with(req.path, L"json")) {
+						resp.status = http_status::found;
+						resp.params = L"Location: " + req.path + L"\r\n";
+					}
 				}
 			}
 			

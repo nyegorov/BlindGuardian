@@ -15,10 +15,7 @@
             xhr.open('GET', 'room.json', true);
             xhr.onreadystatechange = function () {
                 if (xhr.readyState != 4) return;
-                if (xhr.status == 200) {
-                    var room = JSON.parse(xhr.responseText);
-                    update_status(room);
-                }
+                if (xhr.status == 200)   update_status(JSON.parse(xhr.responseText));
             }
             xhr.send();
 
@@ -26,16 +23,20 @@
             xhr2.open('GET', 'rules.json', true);
             xhr2.onreadystatechange = function () {
                 if (xhr2.readyState != 4) return;
-                if (xhr2.status == 200) {
-                    var rules = JSON.parse(xhr2.responseText);
-                    update_rules(rules);
-                }
+                if (xhr2.status == 200)   update_rules(JSON.parse(xhr2.responseText));
             }
             xhr2.send();
         };
 
-        function enable_rule(id, enabled) {
-
+        function enable_rule(id, cb_enabled) {
+            var xhr = new XMLHttpRequest();
+            var params = 'enable_rule=' + id + (cb_enabled.checked ? '&enabled=1' : '');
+            xhr.open('GET', 'rules.json?' + params, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState != 4) return;
+                if (xhr.status == 200)   update_rules(JSON.parse(xhr.responseText));
+            }
+            xhr.send();
         }
 
         function update_rules(room) {
@@ -44,7 +45,7 @@
             for (var i = 0; i < room.rules.length; i++) {
                 id = room.rules[i].id;
                 html += '<tr class="' + (i % 2 ? 'row-even' : 'row-odd') + '">';
-                html += '<td width=24><form id="enable_rule' + id + '" action="status" method="post" style="height:10"><input type="hidden" name="enable_rule" value="' + id + '"><input name="enabled" value="1" type="checkbox" ' + (room.rules[i].enabled ? 'checked' : '') + ' onclick="enable_rule' + id + '.submit()"></form></td>';
+                html += '<td width=24><input type="checkbox" ' + (room.rules[i].enabled ? 'checked' : '') + ' onclick="enable_rule(' + id + ', this)"></form></td>';
                 html += '<td onclick="edit_rule(' + id + ')"><a href="edit?id=' + id + '">' + room.rules[i].name + '</a></td>';
                 status = room.rules[i].status;
                 html += '<td>' + (

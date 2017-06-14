@@ -35,13 +35,19 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 		auto enabled = req.params.find(L"enabled") != req.params.end();
 		auto id = _rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s], enabled });
 		_rules.set_status(id, rule_status::inactive);
+		logger.info(module_name, L"save rule %d", id);
 	});
-	_http.on_action(L"delete_rule", [this](auto&, auto& value) { _rules.remove(std::stoul(value)); });
+	_http.on_action(L"delete_rule", [this](auto&, auto& value) { 
+		auto id = std::stoul(value);
+		_rules.remove(id); 
+		logger.info(module_name, L"delete rule %d", id);
+	});
 	_http.on_action(L"enable_rule", [this](auto& req, auto& value) { 
 		auto rule = _rules.get(std::stoul(req.params[L"enable_rule"s]));
 		if(rule.id) {
 			rule.enabled = req.params.find(L"enabled") != req.params.end();
 			_rules.save(rule);
+			logger.info(module_name, L"%s rule %d", rule.enabled ? L"enable" : L"disable", rule.id);
 		}
 	});
 
