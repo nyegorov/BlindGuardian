@@ -82,7 +82,7 @@ public:
 	enum resolution : uint8_t { res9bit = 1, res10bit, res11bit, res12bit };
 
 	tmp75_sensor(wstring_view name, resolution res, uint32_t address) : sensor(name), _res(res), _address(address) {}
-	std::future<void> start();
+	winrt::Windows::Foundation::IAsyncAction start();
 	void update() override;
 private:
 	winrt::Windows::Devices::I2c::I2cDevice _i2c{ nullptr };
@@ -96,7 +96,7 @@ public:
 	enum resolution : uint8_t { res9bit = 1, res10bit, res11bit, res12bit };
 
 	mcp9808_sensor(wstring_view name, resolution res, uint32_t address) : sensor(name), _res(res), _address(address) {}
-	std::future<void> start();
+	winrt::Windows::Foundation::IAsyncAction start();
 	void update() override;
 private:
 	winrt::Windows::Devices::I2c::I2cDevice _i2c{ nullptr };
@@ -107,11 +107,12 @@ private:
 class beeper final : public actuator
 {
 public:
+	using IAsyncAction = winrt::Windows::Foundation::IAsyncAction;
 	beeper(std::wstring_view name, int32_t beeper_pin);
 	std::vector<const i_action*> actions() const override { return{ &_beep }; }
-	std::future<void> beep(std::chrono::milliseconds duration);
-	std::future<void> beep() { return beep(300ms); }
-	std::future<void> fail();
+	IAsyncAction beep(std::chrono::milliseconds duration);
+	IAsyncAction beep() { return beep(300ms); }
+	IAsyncAction fail();
 private:
 	action _beep{ L"beep",    [this](auto& params) { auto t = params.empty() ? 300ms : get_arg<std::chrono::milliseconds>(params, 0); beep(t); } };
 	winrt::Windows::Devices::Gpio::GpioPin	_beeper_pin{ nullptr };

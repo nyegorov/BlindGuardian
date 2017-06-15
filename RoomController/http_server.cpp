@@ -87,7 +87,7 @@ http_server::http_server(const wchar_t* port_name, const wchar_t* server_name) :
 	_content_types.emplace(L".gz"s,		content_type::gz);
 }
 
-std::future<void> http_server::start()
+IAsyncAction http_server::start()
 {
 	_listener.ConnectionReceived([this](auto&&, auto&& args) { on_connection(args.Socket()); });
 	co_await _listener.BindServiceNameAsync(_port);
@@ -185,7 +185,7 @@ void http_server::on(const wchar_t* url, path file_name)
 	});
 }
 
-std::future<void> http_server::on_connection(StreamSocket socket)
+IAsyncAction http_server::on_connection(StreamSocket socket)
 {
 	try {
 		co_await winrt::resume_background();
@@ -195,7 +195,7 @@ std::future<void> http_server::on_connection(StreamSocket socket)
 		http_response resp;
 		try {
 			resp.status = http_status::ok;
-			if (!read_request(socket.InputStream(), content))	co_return;
+			if (!read_request(socket.InputStream(), content))	return;
 			parse_request(content, req);
 
 			logger.message(module_name, L"%s %s", req.type.c_str(), req.path.c_str());

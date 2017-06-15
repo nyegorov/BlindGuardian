@@ -19,7 +19,7 @@ class esp8266_sensors
 public:
 	esp8266_sensors(std::wstring_view udp_port, std::wstring_view multicast_group, sensor& temp, sensor& light);
 	~esp8266_sensors();
-	std::future<void> start();
+	winrt::Windows::Foundation::IAsyncAction start();
 	HostName remote_ip() { return _remote_ip; }
 	bool online()		 { return steady_clock::now() - _last_status_time.load() < 30s; }
 

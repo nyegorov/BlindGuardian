@@ -3,6 +3,7 @@
 
 const wchar_t module_name[] = L"EXTS";
 
+using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Storage::Streams;
 
@@ -17,7 +18,7 @@ esp8266_sensors::~esp8266_sensors()
 {
 }
 
-std::future<void> esp8266_sensors::start()
+IAsyncAction esp8266_sensors::start()
 {
 	try {
 		_socket = DatagramSocket();
@@ -28,7 +29,6 @@ std::future<void> esp8266_sensors::start()
 	} catch(winrt::hresult_error& hr) {
 		logger.error(module_name, hr);
 	}
-	co_return;
 }
 
 void esp8266_sensors::on_message(const DatagramSocket &, const DatagramSocketMessageReceivedEventArgs &args)

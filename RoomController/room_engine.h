@@ -38,12 +38,13 @@ public:
 	using vec_sensors = std::vector<i_sensor*>;
 	using vec_actuators = std::vector<i_actuator*>;
 	using cqueue = concurrency::concurrent_queue<std::function<void()>>;
+	using IAsyncAction = winrt::Windows::Foundation::IAsyncAction;
 
 	room_server(const path_t& path = L".");
 	wstring version();
 	ip_info get_ip();
 	void init(const vec_sensors &sensors, const vec_actuators &actuators);
-	std::future<void> start();
+	IAsyncAction start();
 	wstring get_rules();
 	wstring get_sensors();
 	void run();
@@ -52,7 +53,7 @@ public:
 	rules_db& rules()			{ return _rules; }
 
 private:
-	std::future<void> pair_remote();
+	IAsyncAction pair_remote();
 	JsonObject		_pair_info;
 
 	rules_db		_rules;

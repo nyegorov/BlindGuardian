@@ -130,7 +130,7 @@ wstring room_server::get_sensors()
 	return sensors.ToString();
 }
 
-std::future<void> room_server::pair_remote()
+IAsyncAction room_server::pair_remote()
 {
 	co_await winrt::resume_background();
 	_pair_info.SetNamedValue(L"done", JsonValue::CreateBooleanValue(false));
@@ -142,7 +142,6 @@ std::future<void> room_server::pair_remote()
 	_pair_info.SetNamedValue(L"id", JsonValue::CreateNumberValue(ok ? _dm35le.get_remote_id() : 0));
 	co_await (ok ? _beeper.beep() : _beeper.fail());
 	_pair_info.SetNamedValue(L"done", JsonValue::CreateBooleanValue(true));
-	co_return;
 }
 
 value_t room_server::eval(const wchar_t *expr)
@@ -150,7 +149,7 @@ value_t room_server::eval(const wchar_t *expr)
 	return _parser.eval(expr);
 }
 
-std::future<void> room_server::start()
+IAsyncAction room_server::start()
 {
 	co_await _temp_in.start();
 	co_await _ext.start();
@@ -158,7 +157,6 @@ std::future<void> room_server::start()
 	co_await 500ms;
 	_motor.start();
 	_beeper.beep();
-	co_return;
 }
 
 void room_server::run()

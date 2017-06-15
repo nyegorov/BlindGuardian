@@ -11,6 +11,7 @@ using winrt::Windows::Networking::Sockets::StreamSocket;
 using winrt::Windows::Networking::Sockets::StreamSocketListener;
 using winrt::Windows::Storage::Streams::IInputStream;
 using winrt::Windows::Storage::Streams::DataWriter;
+using winrt::Windows::Foundation::IAsyncAction;
 
 enum class http_status {
 	ok,
@@ -64,7 +65,7 @@ public:
 	using action_fun_t = std::function<void(http_request&, const wstring& value)>;
 
 	http_server(const wchar_t* port_name, const wchar_t *server_name);
-	std::future<void> start();
+	IAsyncAction start();
 	void on(const wchar_t* url, process_fun_t callback) { _callbacks.emplace( url, callback); }
 	void on(const wchar_t* url, path file_name);
 	void on_action(const wchar_t* action, action_fun_t callback) { _actions.emplace( action, callback ); }
@@ -73,7 +74,7 @@ private:
 	void parse_request(wstring_view content, http_request& request);
 	void write_response(DataWriter& writer, const http_response& response);
 	void write_content(DataWriter& writer, const content_t& content);
-	std::future<void> on_connection(StreamSocket socket);
+	IAsyncAction on_connection(StreamSocket socket);
 	
 	wstring				_port;
 	wstring				_server_name;

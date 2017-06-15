@@ -185,7 +185,7 @@ namespace UnitTests
 			srv.on(L"/some", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"YEP"); });
 			srv.on(L"/file", p);
 			srv.on_action(L"doit", [&value](auto&&, auto&& v) { value = v; });
-			srv.start().get();
+			srv.start();
 
 			wstring content;
 			content = async([]() { return HttpClient().GetStringAsync({ L"http://localhost:666" }).get(); }).get();
