@@ -185,7 +185,7 @@ void http_server::on(const wchar_t* url, path file_name)
 	});
 }
 
-IAsyncAction http_server::on_connection(StreamSocket socket)
+winrt::fire_and_forget http_server::on_connection(StreamSocket socket)
 {
 	try {
 		co_await winrt::resume_background();
@@ -228,7 +228,6 @@ IAsyncAction http_server::on_connection(StreamSocket socket)
 		write_response(writer, resp);
 		if(resp.content_size > 0)	write_content(writer, answer);
 		co_await writer.StoreAsync();
-		co_return;
 	} catch(winrt::hresult_error& hr) {
 		logger.error(module_name, hr);
 	} catch(std::exception& ex) {

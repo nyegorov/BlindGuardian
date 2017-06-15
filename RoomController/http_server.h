@@ -74,7 +74,7 @@ private:
 	void parse_request(wstring_view content, http_request& request);
 	void write_response(DataWriter& writer, const http_response& response);
 	void write_content(DataWriter& writer, const content_t& content);
-	IAsyncAction on_connection(StreamSocket socket);
+	winrt::fire_and_forget on_connection(StreamSocket socket);
 	
 	wstring				_port;
 	wstring				_server_name;

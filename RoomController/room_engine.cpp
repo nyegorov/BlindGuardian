@@ -81,8 +81,13 @@ wstring room_server::version()
 {
 	try	{
 		auto ver = winrt::Windows::ApplicationModel::Package::Current().Id().Version();
-		wchar_t ver_str[20];
-		swprintf(ver_str, _countof(ver_str), L"%d.%d.%d.%d", ver.Major, ver.Minor, ver.Build, ver.Revision);
+		wchar_t ver_str[40];
+#ifdef _DEBUG
+		wchar_t format[] = L"%d.%d.%d.%d-D";
+#else
+		wchar_t format[] = L"%d.%d.%d.%d";
+#endif
+		swprintf(ver_str, _countof(ver_str), format, ver.Major, ver.Minor, ver.Build, ver.Revision);
 		return { ver_str };
 	} catch(...)	{}
 	return L"debug"s;
