@@ -39,9 +39,12 @@ log_manager::log_manager()
 	_start_time = std::chrono::high_resolution_clock::now();
 	_start_time_sys = std::chrono::system_clock::now();
 
-	// {252E5424-43E9-4217-81A2-480950E866DA}
-	GUID guid = { 0x252e5424, 0x43e9, 0x4217, 0x81, 0xa2, 0x48, 0x9, 0x50, 0xe8, 0x66, 0xda };
-	_channel = LoggingChannel{ L"RoomSrv", nullptr, guid };
+	try	{
+		// {252E5424-43E9-4217-81A2-480950E866DA}
+		GUID guid = { 0x252e5424, 0x43e9, 0x4217, 0x81, 0xa2, 0x48, 0x9, 0x50, 0xe8, 0x66, 0xda };
+		_channel = LoggingChannel{ L"RoomSrv", nullptr, guid };
+	} catch(...) {
+	}
 }
 
 log_manager::log_manager(path_t path) : log_manager()
