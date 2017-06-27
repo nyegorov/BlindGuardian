@@ -247,13 +247,11 @@ namespace UnitTests
 
 			// Update
 			new_rule.name = L"edited rule";
-			auto r4 = [&]() -> future<rule> {
+			[&]() -> future<void> {
 				co_await winrt::resume_background();
 				auto resp = co_await HttpClient().PutAsync({ L"http://localhost/rules.json" }, HttpStringContent(new_rule.to_string()));
-				auto result = co_await resp.Content().ReadAsStringAsync();
-				return rule{ JsonObject::Parse(result) };
 			}().get();
-			Assert::IsTrue(r4 == new_rule);
+			Assert::IsTrue(re.rules().get(new_rule.id) == new_rule);
 
 			// Delete
 			[&]() -> future<void> {
