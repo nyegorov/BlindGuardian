@@ -23,14 +23,37 @@
                     enabled.checked = rule.enabled;
                     condition.value = rule.condition;
                     action.value = rule.action;
-                    delete_rule.value = rule.id;
-                    save_rule.value = rule.id;
                 }
             }
             xhr.send();
         }
 
-        rule_id = GetURLParameter('id');
+        function get_rule(id) {
+            var rule = {
+                id:         id,
+                name:       rule_name.value,
+                condition:  condition.value,
+                action:     action.value,
+                enabled:    enabled.checked
+            };
+            return JSON.stringify(rule);
+        }
+
+        function save_rule(id) {
+            var xhr = new XMLHttpRequest();
+            xhr.open(rule_id ? 'PUT' : 'POST', 'rule.json', true);
+            xhr.onreadystatechange = function () { if (xhr.status == 200 || xhr.status == 201) window.location.href = "status"; }
+            xhr.send(get_rule(id));
+        }
+
+        function delete_rule(id) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('DELETE', 'rule.json?id=' + id, true);
+            xhr.onreadystatechange = function () { if (xhr.status == 200) window.location.href = "status"; }
+            xhr.send();
+        }
+
+        rule_id = parseInt(GetURLParameter('id'));
         load_rule(rule_id);
 
         window.onload = function () {
@@ -61,10 +84,10 @@
 
         <h3>Action</h3>
         <textarea id="action" cols="46" name="action" rows="4"></textarea><br />
-        <span style="color:green">Actions: <B>blind.open(), blind.close(), beep(ms), wait(ms)</B></span><br/>
+        <span style="color:green">Actions: <B>blind.open(), blind.close(), beep(ms), wait(ms)</B></span><br />
+    </form>
 
-        <button id="save_rule" name="save_rule" value="rule_id" type="submit">Save</button>
-        <button id="delete_rule" name="delete_rule" value="rule_id">Delete</button>
-</form>
+    <button id="save_rule" onclick="save_rule(rule_id)">Save</button>
+    <button id="delete_rule" onclick="delete_rule(rule_id)">Delete</button>
 </BODY>
 </HTML>

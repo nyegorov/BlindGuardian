@@ -18,9 +18,11 @@
 #include "winrt\Windows.Foundation.Diagnostics.h"
 #include "winrt\Windows.Networking.Sockets.h"
 #include "winrt\Windows.Networking.Connectivity.h"
+#include "winrt\Windows.Security.Cryptography.h"
 #include "winrt\Windows.Storage.Streams.h"
 #include "winrt\Windows.System.Threading.h"
 #include "winrt\Windows.Web.Http.h"
+#include "winrt\Windows.Web.Http.Headers.h"
 
 #pragma comment(lib, "windowsapp")
 

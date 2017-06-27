@@ -11,6 +11,9 @@ const wchar_t module_name[] = L"HTTP";
 
 const wchar_t *status_codes[] = {
 	L"200 OK",
+	L"201 Created",
+	L"202 Accepted",
+	L"204 No Content",
 	L"302 Found",
 	L"401 Unauthorized",
 	L"403 Forbidden",
@@ -68,6 +71,20 @@ http_response http_error(http_status status, http_server::content_t& content)
 	return http_response{ status, content_type::html };
 }
 
+http_method get_method(wstring_view method) {
+	if(method == L"POST")	return http_method::post;
+	if(method == L"PUT")	return http_method::put;
+	if(method == L"DELETE")	return http_method::del;
+	return http_method::get;
+}
+
+const wchar_t* get_method_name(http_method method) {
+	if(method == http_method::post)	return L"POST";
+	if(method == http_method::put)	return L"PUT";
+	if(method == http_method::del)	return L"DELETE";
+	return L"GET";
+}
+
 http_server::http_server(const wchar_t* port_name, const wchar_t* server_name) : 
 	_port(port_name), _server_name(server_name)
 {
@@ -117,7 +134,7 @@ void http_server::parse_request(wstring_view content, http_request& request)
 	// header
 	auto header = split(rows[0], ' ');
 	if(header.size() < 2)	throw http_status::internal_server_error;
-	request.type = header[0];
+	request.type = get_method(header[0]);
 	auto path = split(header[1], '?');
 	if(path.size() < 1)		throw http_status::internal_server_error;
 	request.path = path[0];
@@ -138,10 +155,14 @@ void http_server::parse_request(wstring_view content, http_request& request)
 	}
 
 	// POST parameters
-	if(request.type == L"POST" && i+1 < rows.size() && !rows[i + 1].empty()) {
-		if(request.attribs[L"Content-Type"] != L"application/x-www-form-urlencoded")	throw http_status::unsuported_media;
-		WwwFormUrlDecoder params{ wstring(rows[i + 1]) };
-		for(auto p : params)	request.params.emplace(p.Name(), p.Value());
+	if(i+1 < rows.size() && !rows[i + 1].empty()) {
+		if(request.attribs[L"Content-Type"] == L"application/x-www-form-urlencoded") {
+			WwwFormUrlDecoder params{ wstring(rows[i + 1]) };
+			for(auto p : params)	request.params.emplace(p.Name(), p.Value());
+		} else {
+			for(++i; i < rows.size(); i++)	request.body += rows[i];
+		}
+
 	}
 }
 
@@ -154,7 +175,7 @@ void http_server::write_response(DataWriter& writer, const http_response& respon
 	writer << L"HTTP/1.1 " << status_codes[(unsigned)response.status] << eol;
 	writer << L"Server: " << _server_name << eol;
 	if (response.content_size > 0) {
-		writer << L"Content-Type: " << content_types[(unsigned)response.content_type] << eol;
+		writer << L"Content-Type: " << content_types[(unsigned)response.content_type] << L"; charset=utf-8" << eol;
 		writer << L"Content-Length: " << std::to_wstring(response.content_size) << eol;
 	}
 	writer << L"Connection: close" << eol;
@@ -198,7 +219,7 @@ winrt::fire_and_forget http_server::on_connection(StreamSocket socket)
 			if (!read_request(socket.InputStream(), content))	return;
 			parse_request(content, req);
 
-			logger.message(module_name, L"%s %s", req.type.c_str(), req.path.c_str());
+			logger.message(module_name, L"%s %s", get_method_name(req.type), req.path.c_str());
 
 			for(auto p : req.params) {
 				auto pc = _actions.find(p.first);
@@ -214,7 +235,9 @@ winrt::fire_and_forget http_server::on_connection(StreamSocket socket)
 			if (resp.status != http_status::found) {
 				auto pc = _callbacks.find(req.path);
 				if (pc == _callbacks.end()) throw http_status::not_found;
-				std::tie(resp.content_type, answer) = pc->second(req, resp);
+				auto pm = pc->second.find(req.type);
+				if(pm == pc->second.end()) throw http_status::not_found;
+				std::tie(resp.content_type, answer) = pm->second(req, resp);
 			}
 
 		} catch(http_status status) {

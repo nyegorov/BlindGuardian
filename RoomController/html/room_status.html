@@ -30,13 +30,9 @@
 
         function enable_rule(id, cb_enabled) {
             var xhr = new XMLHttpRequest();
-            var params = 'enable_rule=' + id + (cb_enabled.checked ? '&enabled=1' : '');
-            xhr.open('GET', 'rules.json?' + params, true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState != 4) return;
-                if (xhr.status == 200)   update_rules(JSON.parse(xhr.responseText));
-            }
-            xhr.send();
+            xhr.open('PUT', 'rule.json', true);
+            xhr.onreadystatechange = function () { load_status(); }
+            xhr.send(JSON.stringify({ id: id, enabled: cb_enabled.checked }));
         }
 
         function update_rules(room) {

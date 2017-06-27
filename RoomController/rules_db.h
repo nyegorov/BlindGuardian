@@ -11,7 +11,9 @@ struct rule {
 	rule() : id(0) {}
 	rule(unsigned id, const wstring& name, const wstring& condition, const wstring& action, bool enabled) : id(id), name(name), condition(condition), action(action), enabled(enabled) {}
 	rule(const wstring& name, const wstring& condition, const wstring& action, bool enabled) : rule(0, name, condition, action, enabled) {}
+	rule(winrt::Windows::Data::Json::JsonObject json);
 	wstring to_string() const;
+	void update(winrt::Windows::Data::Json::JsonObject json);
 
 	unsigned id;
 	wstring name;
@@ -21,6 +23,8 @@ struct rule {
 	rule_status	status = rule_status::inactive;
 };
 using rules_v = std::vector<rule>;
+
+bool operator == (const rule& r1, const rule& r2);
 
 class rules_db
 {

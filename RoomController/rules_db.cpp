@@ -17,9 +17,32 @@ JsonObject to_json(const rule & rule)
 	return json;
 }
 
+rule::rule(JsonObject json)
+{
+	update(json);
+}
+
+void rule::update(winrt::Windows::Data::Json::JsonObject json)
+{
+	for(auto& kv : json.GetView()) {
+		auto key = kv.Key();
+		auto val = kv.Value();
+		if(key == L"id")			id = (unsigned)val.GetNumber();
+		else if(key == L"name")		name = val.GetString();
+		else if(key == L"condition")condition = val.GetString();
+		else if(key == L"action")	action = val.GetString();
+		else if(key == L"enabled")	enabled = val.GetBoolean();
+	}
+
+}
+
 wstring rule::to_string() const
 {
 	return to_json(*this).ToString();
+}
+
+bool operator == (const rule& r1, const rule& r2) {
+	return r1.id == r2.id && r1.name == r2.name && r1.condition == r2.condition && r1.action == r2.action && r1.enabled == r2.enabled;
 }
 
 rules_db::rules_db(const path& storage) : _storage(storage)
@@ -54,14 +77,7 @@ void rules_db::load()
 		auto json = JsonObject::Parse(wss.str());
 		auto jrules = json.GetNamedArray(L"rules");
 		for(auto jr : jrules) {
-			auto jo = jr.GetObject();
-			_rules.emplace_back(
-				(unsigned)jo.GetNamedNumber(L"id"),
-				jo.GetNamedString(L"name"),
-				jo.GetNamedString(L"condition"),
-				jo.GetNamedString(L"action"),
-				jo.GetNamedBoolean(L"enabled")
-			);
+			_rules.emplace_back(jr.GetObject());
 		}
 	} catch(const std::exception&) {} catch(const winrt::hresult_error&) {}
 }
@@ -83,7 +99,7 @@ rules_v rules_db::get_all() const
 {
 	lock_t lock(_mutex);
 	rules_v res = _rules;
-	return res;
+		return res;
 }
 
 std::vector<unsigned> rules_db::get_ids() const {

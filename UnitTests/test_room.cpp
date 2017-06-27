@@ -12,6 +12,8 @@ using namespace winrt::Windows::Data::Json;
 using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Web::Http;
+using namespace winrt::Windows::Web::Http::Headers;
+using namespace winrt::Windows::Security::Cryptography;
 using namespace std;
 using namespace winrt;
 using namespace std::experimental;
@@ -49,7 +51,6 @@ namespace UnitTests
 	TEST_CLASS(RoomEngine)
 	{
 	public:
-
 		TEST_METHOD(Sensors)
 		{
 			path p(".");
@@ -216,6 +217,60 @@ namespace UnitTests
 				Assert::AreEqual(0, get<int32_t>(re.eval(L"position")));
 			}().get();
 			filesystem::remove_all(p);
+		}
+		TEST_METHOD(RuleApi) 
+		{
+			path p(".");
+			filesystem::remove_all(p / "rules.json");
+			room_server re(p);
+			[&]() -> future<void> {
+				co_await winrt::resume_background();
+				co_await re.start();
+			}().get();
+
+			Assert::AreEqual(0u, re.rules().get_all().size());
+
+			// Create
+			rule new_rule{ L"новое правило", L"1&2", L"42", true };
+			auto r1 = [&]() -> future<rule> {
+				co_await winrt::resume_background();
+				auto resp = co_await HttpClient().PostAsync({ L"http://localhost/rule.json" }, HttpStringContent(new_rule.to_string()));
+				auto result = CryptographicBuffer::ConvertBinaryToString(BinaryStringEncoding::Utf8, co_await resp.Content().ReadAsBufferAsync());
+				return rule{ JsonObject::Parse(result) };
+			}().get();
+			new_rule.id = r1.id;
+			auto r2 = re.rules().get(r1.id);
+			Assert::IsTrue(r1 == new_rule);
+			Assert::IsTrue(r2 == new_rule);
+
+			// Read
+			auto r3 = [&]() -> future<rule> {
+				co_await winrt::resume_background();
+				auto resp = co_await HttpClient().GetAsync({ L"http://localhost/rule.json?id=" + to_wstring(r1.id) }, HttpCompletionOption::ResponseContentRead);
+				auto result = co_await resp.Content().ReadAsStringAsync();
+				return rule{ JsonObject::Parse(result) };
+			}().get();
+			Assert::IsTrue(r3 == new_rule);
+
+			// Update
+			new_rule.name = L"edited rule";
+			auto r4 = [&]() -> future<rule> {
+				co_await winrt::resume_background();
+				auto resp = co_await HttpClient().PutAsync({ L"http://localhost/rule.json" }, HttpStringContent(new_rule.to_string()));
+				auto result = co_await resp.Content().ReadAsStringAsync();
+				return rule{ JsonObject::Parse(result) };
+			}().get();
+			Assert::IsTrue(r4 == new_rule);
+
+			// Delete
+			[&]() -> future<void> {
+				co_await winrt::resume_background();
+				co_await HttpClient().DeleteAsync({ L"http://localhost/rule.json?id=" + to_wstring(r1.id) });
+			}().get();
+
+			Assert::AreEqual(0u, re.rules().get_all().size());
+
+			filesystem::remove_all(p / "rules.json");
 		}
 
 

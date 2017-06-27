@@ -15,6 +15,9 @@ using winrt::Windows::Foundation::IAsyncAction;
 
 enum class http_status {
 	ok,
+	created,
+	accepted,
+	no_content,
 	found,
 	unauthorized,
 	forbidden,
@@ -22,6 +25,13 @@ enum class http_status {
 	method_not_allowed,
 	unsuported_media,
 	internal_server_error
+};
+
+enum class http_method {
+	get,
+	post,
+	put,
+	del,
 };
 
 enum class content_type {
@@ -42,10 +52,11 @@ enum class content_type {
 
 struct http_request
 {
-	wstring type;
+	http_method type;
 	std::map<wstring, wstring> params;
 	std::map<wstring, wstring> attribs;
 	wstring path;
+	wstring body;
 };
 
 struct http_response
@@ -63,10 +74,12 @@ public:
 	using content_t = std::variant<wstring, binary_t>;
 	using process_fun_t = std::function<std::tuple<content_type, content_t>(http_request&, http_response&)>;
 	using action_fun_t = std::function<void(http_request&, const wstring& value)>;
+	using process_t = std::unordered_map<http_method, process_fun_t>;
 
 	http_server(const wchar_t* port_name, const wchar_t *server_name);
 	IAsyncAction start();
-	void on(const wchar_t* url, process_fun_t callback) { _callbacks.emplace( url, callback); }
+	void on(const wchar_t* url, process_t process) { _callbacks.emplace( url, process); }
+	void on(const wchar_t* url, process_fun_t callback) { on(url, { {http_method::get, callback} }); }
 	void on(const wchar_t* url, path file_name);
 	void on_action(const wchar_t* action, action_fun_t callback) { _actions.emplace( action, callback ); }
 private:
@@ -79,8 +92,9 @@ private:
 	wstring				_port;
 	wstring				_server_name;
 	StreamSocketListener _listener;
+	
 	std::unordered_map<wstring, content_type>	_content_types;
-	std::unordered_map<wstring, process_fun_t>	_callbacks;
+	std::unordered_map<wstring, process_t>		_callbacks;
 	std::unordered_map<wstring, action_fun_t>	_actions;
 };
 
