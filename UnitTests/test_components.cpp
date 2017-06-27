@@ -179,12 +179,10 @@ namespace UnitTests
 			ofs.write(test.c_str(), test.size());
 			ofs.close();
 			http_server srv(L"666", L"unit test server" );
-			wstring value;
 			srv.on(L"/",	 [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"MAIN"); });
 			srv.on(L"/test", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"OK"); });
 			srv.on(L"/some", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"YEP"); });
 			srv.on(L"/file", p);
-			srv.on_action(L"doit", [&value](auto&&, auto&& v) { value = v; });
 			srv.start();
 
 			wstring content;
@@ -192,9 +190,6 @@ namespace UnitTests
 			Assert::AreEqual(L"MAIN"s, content);
 			content = async([]() { return HttpClient().GetStringAsync({ L"http://localhost:666/test" }).get(); }).get();
 			Assert::AreEqual(L"OK"s, content);
-			content = async([]() { return HttpClient().GetStringAsync({ L"http://localhost:666/some?doit=YES" }).get(); }).get();
-			Assert::AreEqual(L"YEP"s, content);
-			Assert::AreEqual(L"YES"s, value);
 
 			IBuffer buf;
 			array<uint8_t, 9> res;

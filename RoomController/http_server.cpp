@@ -37,6 +37,7 @@ const wchar_t *content_types[] = {
 	L"application/x-zip",
 	L"application/x-gzip",
 	L"text/plain",
+	L"none"
 };
 
 wstring_view trim(wstring_view str, wchar_t trim_char = ' ')
@@ -221,24 +222,11 @@ winrt::fire_and_forget http_server::on_connection(StreamSocket socket)
 
 			logger.message(module_name, L"%s %s", get_method_name(req.type), req.path.c_str());
 
-			for(auto p : req.params) {
-				auto pc = _actions.find(p.first);
-				if (pc != _actions.end()) {
-					(pc->second)(req, p.second);
-					if(!ends_with(req.path, L"json")) {
-						resp.status = http_status::found;
-						resp.params = L"Location: " + req.path + L"\r\n";
-					}
-				}
-			}
-			
-			if (resp.status != http_status::found) {
-				auto pc = _callbacks.find(req.path);
-				if (pc == _callbacks.end()) throw http_status::not_found;
-				auto pm = pc->second.find(req.type);
-				if(pm == pc->second.end()) throw http_status::not_found;
-				std::tie(resp.content_type, answer) = pm->second(req, resp);
-			}
+			auto pc = _callbacks.find(req.path);
+			if (pc == _callbacks.end()) throw http_status::not_found;
+			auto pm = pc->second.find(req.type);
+			if(pm == pc->second.end()) throw http_status::not_found;
+			std::tie(resp.content_type, answer) = pm->second(req, resp);
 
 		} catch(http_status status) {
 			resp = http_error(status, answer);

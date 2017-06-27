@@ -48,6 +48,7 @@ enum class content_type {
 	zip,
 	gz,
 	text,
+	none
 };
 
 struct http_request
@@ -73,7 +74,6 @@ public:
 	using binary_t = std::vector<uint8_t>;
 	using content_t = std::variant<wstring, binary_t>;
 	using process_fun_t = std::function<std::tuple<content_type, content_t>(http_request&, http_response&)>;
-	using action_fun_t = std::function<void(http_request&, const wstring& value)>;
 	using process_t = std::unordered_map<http_method, process_fun_t>;
 
 	http_server(const wchar_t* port_name, const wchar_t *server_name);
@@ -81,7 +81,6 @@ public:
 	void on(const wchar_t* url, process_t process) { _callbacks.emplace( url, process); }
 	void on(const wchar_t* url, process_fun_t callback) { on(url, { {http_method::get, callback} }); }
 	void on(const wchar_t* url, path file_name);
-	void on_action(const wchar_t* action, action_fun_t callback) { _actions.emplace( action, callback ); }
 private:
 	size_t read_request(const IInputStream& stream, wstring& content);
 	void parse_request(wstring_view content, http_request& request);
@@ -95,6 +94,46 @@ private:
 	
 	std::unordered_map<wstring, content_type>	_content_types;
 	std::unordered_map<wstring, process_t>		_callbacks;
-	std::unordered_map<wstring, action_fun_t>	_actions;
 };
 
+template<class T> class rest_adapter {
+public:
+	using restapi_t = http_server::process_t;
+	using model = typename T::model;
+
+	static restapi_t get(T& db) {
+		return {
+			{ http_method::get,  [&db](auto&& req, auto&&) {
+				auto pid = req.params.find(L"id");
+				if(pid == req.params.end()) {
+					return std::make_tuple(content_type::json, db.to_string());
+				} else {
+					return std::make_tuple(content_type::json, db.get(std::stoul(pid->second)).to_string());
+				} 
+			} },
+			{ http_method::post, [&db](auto&&req, auto&&) {
+				auto r = model{ JsonObject::Parse(req.body) };
+				r.id = 0;
+				auto id = db.save(r);
+				logger.info(module_name, L"create rule %d", id);
+				return std::make_tuple(content_type::json, db.get(id).to_string()); 
+			} },
+			{ http_method::put, [&db](auto&&req, auto&&) {
+				auto json = JsonObject::Parse(req.body);
+				auto id = (unsigned)json.GetNamedNumber(L"id", 0);
+				auto r = db.get(id);
+				if(!r.id)		throw http_status::not_found;
+				r.update(json);
+				db.save(r);
+				logger.info(module_name, L"update rule %d", id);
+				return std::make_tuple(content_type::json, db.get(id).to_string()); 
+			} },
+			{ http_method::del, [&db](auto&&req, auto&&) {
+				auto id = std::stoul(req.params[L"id"s]);
+				db.remove(id);
+				logger.info(module_name, L"delete rule %d", id);
+				return std::make_tuple(content_type::text, L""); 
+			} },
+		};
+	}
+};

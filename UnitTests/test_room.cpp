@@ -184,13 +184,6 @@ namespace UnitTests
 			Assert::AreEqual(100, get<int32_t>(mot1.value()));
 			Assert::AreEqual(100, get<int32_t>(mot2.value()));
 			Assert::AreEqual(0, get<int32_t>(mot3.value()));
-			auto s1 = re.get_rules();
-			write_rules(p1 / "rules.json", s1);
-			room_server re2(p1);
-			re2.init( { &ts }, { &mota, &motb });
-			re2.run();
-			auto s2 = re2.get_rules();
-			Assert::AreEqual(s1, s2);
 			filesystem::remove(p1 / "rules.json");
 		}
 		TEST_METHOD(Tasks)
@@ -207,11 +200,11 @@ namespace UnitTests
 				co_await re.start();
 				re.eval(L"blind.close()");
 				Assert::AreEqual(0, get<int32_t>(re.eval(L"position")));
-				co_await HttpClient().GetAsync({ L"http://localhost/status?set_pos=100" }, HttpCompletionOption::ResponseHeadersRead);
+				co_await HttpClient().GetAsync({ L"http://localhost/set_pos?pos=100" }, HttpCompletionOption::ResponseHeadersRead);
 				Assert::AreEqual(0, get<int32_t>(re.eval(L"position")));
 				re.run();
 				Assert::AreEqual(100, get<int32_t>(re.eval(L"position")));
-				co_await HttpClient().GetAsync({ L"http://localhost/status?set_pos=0" }, HttpCompletionOption::ResponseHeadersRead);
+				co_await HttpClient().GetAsync({ L"http://localhost/set_pos?pos=0" }, HttpCompletionOption::ResponseHeadersRead);
 				Assert::AreEqual(100, get<int32_t>(re.eval(L"position")));
 				re.run();
 				Assert::AreEqual(0, get<int32_t>(re.eval(L"position")));
@@ -234,7 +227,7 @@ namespace UnitTests
 			rule new_rule{ L"новое правило", L"1&2", L"42", true };
 			auto r1 = [&]() -> future<rule> {
 				co_await winrt::resume_background();
-				auto resp = co_await HttpClient().PostAsync({ L"http://localhost/rule.json" }, HttpStringContent(new_rule.to_string()));
+				auto resp = co_await HttpClient().PostAsync({ L"http://localhost/rules.json" }, HttpStringContent(new_rule.to_string()));
 				auto result = CryptographicBuffer::ConvertBinaryToString(BinaryStringEncoding::Utf8, co_await resp.Content().ReadAsBufferAsync());
 				return rule{ JsonObject::Parse(result) };
 			}().get();
@@ -246,7 +239,7 @@ namespace UnitTests
 			// Read
 			auto r3 = [&]() -> future<rule> {
 				co_await winrt::resume_background();
-				auto resp = co_await HttpClient().GetAsync({ L"http://localhost/rule.json?id=" + to_wstring(r1.id) }, HttpCompletionOption::ResponseContentRead);
+				auto resp = co_await HttpClient().GetAsync({ L"http://localhost/rules.json?id=" + to_wstring(r1.id) }, HttpCompletionOption::ResponseContentRead);
 				auto result = co_await resp.Content().ReadAsStringAsync();
 				return rule{ JsonObject::Parse(result) };
 			}().get();
@@ -256,7 +249,7 @@ namespace UnitTests
 			new_rule.name = L"edited rule";
 			auto r4 = [&]() -> future<rule> {
 				co_await winrt::resume_background();
-				auto resp = co_await HttpClient().PutAsync({ L"http://localhost/rule.json" }, HttpStringContent(new_rule.to_string()));
+				auto resp = co_await HttpClient().PutAsync({ L"http://localhost/rules.json" }, HttpStringContent(new_rule.to_string()));
 				auto result = co_await resp.Content().ReadAsStringAsync();
 				return rule{ JsonObject::Parse(result) };
 			}().get();
@@ -265,7 +258,7 @@ namespace UnitTests
 			// Delete
 			[&]() -> future<void> {
 				co_await winrt::resume_background();
-				co_await HttpClient().DeleteAsync({ L"http://localhost/rule.json?id=" + to_wstring(r1.id) });
+				co_await HttpClient().DeleteAsync({ L"http://localhost/rules.json?id=" + to_wstring(r1.id) });
 			}().get();
 
 			Assert::AreEqual(0u, re.rules().get_all().size());

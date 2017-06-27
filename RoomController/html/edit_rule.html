@@ -14,7 +14,7 @@
         }
         function load_rule(id) {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'rule.json?id=' + id, true);
+            xhr.open('GET', 'rules.json?id=' + id, true);
             xhr.onreadystatechange = function () {
                 if (xhr.readyState != 4) return;
                 if (xhr.status == 200) {
@@ -41,14 +41,14 @@
 
         function save_rule(id) {
             var xhr = new XMLHttpRequest();
-            xhr.open(rule_id ? 'PUT' : 'POST', 'rule.json', true);
+            xhr.open(rule_id ? 'PUT' : 'POST', 'rules.json', true);
             xhr.onreadystatechange = function () { if (xhr.status == 200 || xhr.status == 201) window.location.href = "status"; }
             xhr.send(get_rule(id));
         }
 
         function delete_rule(id) {
             var xhr = new XMLHttpRequest();
-            xhr.open('DELETE', 'rule.json?id=' + id, true);
+            xhr.open('DELETE', 'rules.json?id=' + id, true);
             xhr.onreadystatechange = function () { if (xhr.status == 200) window.location.href = "status"; }
             xhr.send();
         }

@@ -41,6 +41,13 @@ wstring rule::to_string() const
 	return to_json(*this).ToString();
 }
 
+wstring to_string(const rules_v&& rules)
+{
+	JsonArray jrules;
+	for(auto& r : rules) jrules.Append(to_json(r));
+	return jrules.Stringify();
+}
+
 bool operator == (const rule& r1, const rule& r2) {
 	return r1.id == r2.id && r1.name == r2.name && r1.condition == r2.condition && r1.action == r2.action && r1.enabled == r2.enabled;
 }
@@ -61,9 +68,7 @@ wstring rules_db::to_string() const
 		lock_t lock(_mutex);
 		for(auto& r : _rules) jrules.Append(to_json(r));
 	}
-	JsonObject json;
-	json.SetNamedValue(L"rules", jrules);
-	return json.Stringify();
+	return jrules.Stringify();
 }
 
 void rules_db::load()

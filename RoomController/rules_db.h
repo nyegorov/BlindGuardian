@@ -37,6 +37,7 @@ class rules_db
 	std::locale			_utf8_locale{ std::locale(), new std::codecvt_utf8<wchar_t>() };
 	path				_storage;
 public:
+	using model = rule;
 	rules_db(const path& storage);
 	~rules_db();
 
@@ -48,5 +49,7 @@ public:
 	unsigned save(const rule& rule, bool store_db = true);
 	void remove(unsigned id);
 };
+
+wstring to_string(const rules_v&& rules);
 
 }

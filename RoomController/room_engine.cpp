@@ -22,59 +22,16 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 	_http.on(L"/back.jpg", L"html/img/background.jpg");
 	_http.on(L"/favicon.ico", L"html/img/favicon.ico");
 	_http.on(L"/room.json",  [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
-	_http.on(L"/rules.json", [this](auto&, auto&) { return std::make_tuple(content_type::json, get_rules()); });
 	_http.on(L"/pair.json",  [this](auto&, auto&) { return std::make_tuple(content_type::json, _pair_info.ToString()); });
 	_http.on(L"/log.json",   [this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
-	_http.on(L"/rule.json", {
-		{ http_method::get,  [this](auto&r, auto&) { return std::make_tuple(content_type::json, _rules.get(std::stoul(r.params[L"id"s])).to_string()); }},
-		{ http_method::post, [this](auto&req, auto&) { 
-			auto r = rule{ JsonObject::Parse(req.body) };
-			auto id = _rules.save(r);
-			logger.info(module_name, L"create rule %d", id);
-			return std::make_tuple(content_type::json, _rules.get(id).to_string()); }
-		},
-		{ http_method::put, [this](auto&req, auto&) { 
-			auto json = JsonObject::Parse(req.body);
-			auto id = (unsigned)json.GetNamedNumber(L"id");
-			auto r = _rules.get(id);
-			if(!r.id)		throw http_status::not_found;
-			r.update(json);
-			_rules.save(r);
-			logger.info(module_name, L"update rule %d", id);
-			return std::make_tuple(content_type::json, _rules.get(id).to_string()); }
-		},
-		{ http_method::del, [this](auto&req, auto&) { 
-			auto id = std::stoul(req.params[L"id"s]);
-			_rules.remove(id);
-			logger.info(module_name, L"delete rule %d", id);
-			return std::make_tuple(content_type::text, L""); }
-		},
+	_http.on(L"/rules.json", rest_adapter<rules_db>::get(_rules));
+	_http.on(L"/pair_remote", [this](auto&, auto& value) { pair_remote(); return std::make_tuple(content_type::text, L""); });
+	_http.on(L"/set_pos", [this](auto& req, auto&) {
+		auto pos = std::stoul(req.params[L"pos"]);
+		if(pos == 100)	_tasks.push([this]() {_motor.open(); });
+		if(pos == 0)	_tasks.push([this]() {_motor.close(); });
+		return std::make_tuple(content_type::text, L"");
 	});
-
-	_http.on_action(L"pair_remote", [this](auto&, auto& value) { pair_remote(); });
-	_http.on_action(L"set_pos", [this](auto&, auto& value) {
-		if(std::stoul(value) == 100)	_tasks.push([this]() {_motor.open(); });
-		if(std::stoul(value) == 0)		_tasks.push([this]() {_motor.close(); });
-	});
-/*	_http.on_action(L"save_rule", [this](auto& req, auto& value) {
-		auto enabled = req.params.find(L"enabled") != req.params.end();
-		auto id = _rules.save({ std::stoul(value), req.params[L"rule_name"s], req.params[L"condition"s], req.params[L"action"s], enabled });
-		_rules.set_status(id, rule_status::inactive);
-		logger.info(module_name, L"save rule %d", id);
-	});*/
-/*	_http.on_action(L"delete_rule", [this](auto&, auto& value) { 
-		auto id = std::stoul(value);
-		_rules.remove(id); 
-		logger.info(module_name, L"delete rule %d", id);
-	});*/
-/*	_http.on_action(L"enable_rule", [this](auto& req, auto& value) { 
-		auto rule = _rules.get(std::stoul(req.params[L"enable_rule"s]));
-		if(rule.id) {
-			rule.enabled = req.params.find(L"enabled") != req.params.end();
-			_rules.save(rule);
-			logger.info(module_name, L"%s rule %d", rule.enabled ? L"enable" : L"disable", rule.id);
-		}
-	});*/
 
 	init(_sensors, _actuators);
 	logger.info(module_name, L"Room server v%s started", version().c_str());
@@ -134,11 +91,6 @@ room_server::ip_info room_server::get_ip()
 		logger.error(module_name, hr);
 	}
 	return ips;
-}
-
-wstring room_server::get_rules()
-{
-	return _rules.to_string();
 }
 
 wstring room_server::get_sensors()

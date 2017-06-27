@@ -45,7 +45,6 @@ public:
 	ip_info get_ip();
 	void init(const vec_sensors &sensors, const vec_actuators &actuators);
 	IAsyncAction start();
-	wstring get_rules();
 	wstring get_sensors();
 	void run();
 	value_t eval(const wchar_t *expr);

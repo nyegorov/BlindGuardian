@@ -10,6 +10,20 @@
         function edit_rule(id) {
             window.location.href = 'edit?id=' + id;
         }
+
+        function set_pos(pos) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'set_pos?pos=' + pos, true);
+            xhr.send();
+        }
+
+        function pair() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'pair_remote', true);
+            xhr.onreadystatechange = function () { if (xhr.status == 200) window.location.href = 'pair'; }
+            xhr.send();
+        }
+
         function load_status() {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', 'room.json', true);
@@ -30,28 +44,28 @@
 
         function enable_rule(id, cb_enabled) {
             var xhr = new XMLHttpRequest();
-            xhr.open('PUT', 'rule.json', true);
+            xhr.open('PUT', 'rules.json', true);
             xhr.onreadystatechange = function () { load_status(); }
             xhr.send(JSON.stringify({ id: id, enabled: cb_enabled.checked }));
         }
 
-        function update_rules(room) {
+        function update_rules(rules) {
             var html = '<thead><tr class="row-header"><td></td><td>Rule</td><td>Status</td></tr></thead>';
 
-            for (var i = 0; i < room.rules.length; i++) {
-                id = room.rules[i].id;
+            for (var i = 0; i < rules.length; i++) {
+                id = rules[i].id;
                 html += '<tr class="' + (i % 2 ? 'row-even' : 'row-odd') + '">';
-                html += '<td width=24><input type="checkbox" ' + (room.rules[i].enabled ? 'checked' : '') + ' onclick="enable_rule(' + id + ', this)"></form></td>';
-                html += '<td onclick="edit_rule(' + id + ')"><a href="edit?id=' + id + '">' + room.rules[i].name + '</a></td>';
-                status = room.rules[i].status;
+                html += '<td width=24><input type="checkbox" ' + (rules[i].enabled ? 'checked' : '') + ' onclick="enable_rule(' + id + ', this)"></form></td>';
+                html += '<td onclick="edit_rule(' + id + ')"><a href="edit?id=' + id + '">' + rules[i].name + '</a></td>';
+                status = rules[i].status;
                 html += '<td>' + (
-                    !room.rules[i].enabled ? '<p class="disabled">Disabled</p>' : 
+                    !rules[i].enabled ? '<p class="disabled">Disabled</p>' : 
                     status == 0 ? '<p class="error">Failed</p>' :
                     status == 1 ? '<p class="active">Active</p>' : 'Inactive'
                 ) + '</td>';
                 html += '</tr>';
             }
-            rules.innerHTML = html;
+            table_rules.innerHTML = html;
         }
 
         function update_status(room) {
@@ -73,7 +87,7 @@
         }
 
         load_status();
-        setInterval(load_status, 5000);
+        //setInterval(load_status, 5000);
 
         window.onload = function () {
             var siteWidth = 400;
@@ -100,17 +114,17 @@
     <hr />
 
     <!-- rules -->
-    <table id="rules" style="width:100%"></table>
+    <table id="table_rules" style="width:100%"></table>
     <button id="add_rule" onclick="edit_rule(0)">Add rule...</Button>
     <hr />
 
     <!-- action bar -->
     <table style="width:100%; text-align:center">
         <tr>           
-            <td><form action="status" method="post"><button id="open_blind" name="set_pos" value="100">Open blinds</button></form></td>
-            <td><form action="status" method="post"><button id="close_blinds" name="set_pos" value="0">Close blinds</button></form></td>
-            <td><form action="pair" method="post"><button name="pair_remote">Pair remote</button></form></td>
-            <td><form action="log" method="post"><button>Server Log...</button></form></td>
+            <td><button onclick="set_pos(100)">Open blinds</button></td>
+            <td><button onclick="set_pos(0)">Close blinds</button></td>
+            <td><button onclick="pair()">Pair remote</button></td>
+            <td><button onclick="window.location = 'log'">Server Log...</button></td>
         </tr>
     </table>
     <br /><div class="version" style="position:fixed;bottom:0">Wi-Fi: <span id="wifi"></span>, LAN: <span id="lan"></span></div>
