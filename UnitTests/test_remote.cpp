@@ -27,7 +27,7 @@ TEST_CLASS(NodeMCU)
 public:
 	TEST_METHOD(RemoteSensors)
 	{
-		sensor	temp{ L"temp_out" }, light{ L"light" };
+/*		sensor	temp{ L"temp_out" }, light{ L"light" };
 		esp8266_sensors nodemcu(L"4760", L"224.0.0.100", temp, light);
 		Assert::IsFalse(nodemcu.online());
 		[&]() -> future<void> {
@@ -44,7 +44,7 @@ public:
 			auto l = get<int32_t>(light.value());
 			Assert::IsTrue(t >= 10 && t < 40);
 			Assert::IsTrue(l >= 100 && l < 77000);
-		}
+		}*/
 	}
 
 	/*TEST_CLASS_INITIALIZE(Init)

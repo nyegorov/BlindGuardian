@@ -47,6 +47,12 @@ wstring_view trim(wstring_view str, wchar_t trim_char = ' ')
 	return str;
 }
 
+bool starts_with(wstring_view str, wstring_view head)
+{
+	if(str.length() >= head.length())	str.remove_suffix(str.length() - head.length());
+	return str == head;
+}
+
 bool ends_with(wstring_view str, wstring_view tail)
 {
 	if(str.length() >= tail.length())	str.remove_prefix(str.length() - tail.length());
@@ -176,7 +182,7 @@ void http_server::write_response(DataWriter& writer, const http_response& respon
 	writer << L"HTTP/1.1 " << status_codes[(unsigned)response.status] << eol;
 	writer << L"Server: " << _server_name << eol;
 	if (response.content_size > 0) {
-		writer << L"Content-Type: " << content_types[(unsigned)response.content_type] << L"; charset=utf-8" << eol;
+		writer << L"Content-Type: " << content_types[(unsigned)response.content_type] << eol;
 		writer << L"Content-Length: " << std::to_wstring(response.content_size) << eol;
 	}
 	writer << L"Connection: close" << eol;
@@ -222,8 +228,9 @@ winrt::fire_and_forget http_server::on_connection(StreamSocket socket)
 
 			logger.message(module_name, L"%s %s", get_method_name(req.type), req.path.c_str());
 
-			auto pc = _callbacks.find(req.path);
+			auto pc = std::find_if(cbegin(_callbacks), cend(_callbacks), [&req](auto&& ci) { return starts_with(req.path, ci.first); });
 			if (pc == _callbacks.end()) throw http_status::not_found;
+			req.rest = req.path.substr(pc->first.size());
 			std::tie(resp.content_type, answer) = pc->second(req, resp);
 
 		} catch(http_status status) {

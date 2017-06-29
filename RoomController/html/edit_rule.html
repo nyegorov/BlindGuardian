@@ -1,65 +1,32 @@
 <HTML>
 <HEAD>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=400, initial-scale=1">
     <title>Add/Edit blind control rules</title>
     <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="scripts.js" charset="utf-8"></script>
     <script>
-        function GetURLParameter(sParam) {
-            var sPageURL = window.location.search.substring(1);
-            var sURLVariables = sPageURL.split('&');
-            for (var i = 0; i < sURLVariables.length; i++) {
-                var sParameterName = sURLVariables[i].split('=');
-                if (sParameterName[0] == sParam) return sParameterName[1];
-            }
-        }
-        function load_rule(id) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'rules.json?id=' + id, true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState != 4) return;
-                if (xhr.status == 200) {
-                    var rule = JSON.parse(xhr.responseText);
-                    rule_name.value = rule.name;
-                    enabled.checked = rule.enabled;
-                    condition.value = rule.condition;
-                    action.value = rule.action;
-                }
-            }
-            xhr.send();
-        }
+        rule_id = parseInt(get_parameter('id'));
 
-        function get_rule(id) {
-            var rule = {
-                id:         id,
+        function rule() {
+            return {
+                id:         rule_id,
                 name:       rule_name.value,
                 condition:  condition.value,
                 action:     action.value,
                 enabled:    enabled.checked
             };
-            return JSON.stringify(rule);
         }
 
-        function save_rule(id) {
-            var xhr = new XMLHttpRequest();
-            xhr.open(rule_id ? 'PUT' : 'POST', 'rules.json', true);
-            xhr.onreadystatechange = function () { if (xhr.status == 200 || xhr.status == 201) window.location.href = "status"; }
-            xhr.send(get_rule(id));
-        }
-
-        function delete_rule(id) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('DELETE', 'rules.json?id=' + id, true);
-            xhr.onreadystatechange = function () { if (xhr.status == 200) window.location.href = "status"; }
-            xhr.send();
-        }
-
-        rule_id = parseInt(GetURLParameter('id'));
-        load_rule(rule_id);
+        if (rule_id != 0) get_object('rules', rule_id, rule => {
+            rule_name.value = rule.name;
+            enabled.checked = rule.enabled;
+            condition.value = rule.condition;
+            action.value    = rule.action;
+        });
 
         window.onload = function () {
-            var siteWidth = 400;
-            var scale = screen.width / siteWidth
-            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale + '');
+            scale_form();
 
             if (rule_id == 0) {
                 header.innerHTML = "Add rule";
@@ -87,7 +54,7 @@
         <span style="color:green">Actions: <B>blind.open(), blind.close(), beep(ms), wait(ms)</B></span><br />
     </form>
 
-    <button id="save_rule" onclick="save_rule(rule_id)">Save</button>
-    <button id="delete_rule" onclick="delete_rule(rule_id)">Delete</button>
+    <button id="save_rule" onclick="save_object('rules', rule(), () => window.location.href = 'status')">Save</button>
+    <button id="delete_rule" onclick="delete_object('rules', rule_id, () => window.location.href = 'status')">Delete</button>
 </BODY>
 </HTML>

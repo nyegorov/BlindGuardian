@@ -15,7 +15,7 @@ struct rule {
 	wstring to_string() const;
 	void update(winrt::Windows::Data::Json::JsonObject json);
 
-	unsigned id;
+	unsigned id = 0;
 	wstring name;
 	wstring condition;
 	wstring action;
@@ -44,6 +44,8 @@ public:
 	wstring to_string() const;
 	rules_v get_all() const;
 	std::vector<unsigned> get_ids() const;
+	rule create(const wstring& name, const wstring& condition, const wstring& action, bool enabled) { return rule{ name, condition, action, enabled }; }
+	rule create(winrt::Windows::Data::Json::JsonObject json) { return rule{ json }; }
 	rule get(unsigned id) const;
 	void set_status(unsigned id, rule_status status);
 	unsigned save(const rule& rule, bool store_db = true);

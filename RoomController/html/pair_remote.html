@@ -4,31 +4,22 @@
     <meta name="viewport" content="width=400, initial-scale=1">
     <title>Pair remote</title>
     <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="scripts.js" charset="utf-8"></script>
     <script>
         function pair_info() {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'pair.json', true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState != 4) return;
-                if (xhr.status == 200) {
-                    var pair_info = JSON.parse(xhr.responseText);
-                    update_pair(pair_info);
+            get_object('pair', 0, (pair_info) => {
+                num_commands.innerHTML = pair_info.commands;
+                if (pair_info.done) {
+                    pair_inproc.hidden = true;
+                    pair_done.hidden = false;
+                    if (pair_info.id) {
+                        pair_ok.innerHTML = "Remote ID: " + pair_info.id.toString(16);
+                        pair_ok.hidden = false;
+                    } else
+                        pair_failed.hidden = false;
+                    clearInterval(timer_id);
                 }
-            }
-            xhr.send();
-        }
-        function update_pair(pair_info) {
-            num_commands.innerHTML = pair_info.commands;
-            if (pair_info.done) {
-                pair_inproc.hidden = true;
-                pair_done.hidden = false;
-                if (pair_info.id) {
-                    pair_ok.innerHTML = "Remote ID: " + pair_info.id.toString(16);
-                    pair_ok.hidden = false;
-                } else
-                    pair_failed.hidden = false;
-                clearInterval(timer_id);
-            }
+            });
         }
         timer_id = setInterval(pair_info, 500);
         pair_info();

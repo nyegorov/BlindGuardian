@@ -4,96 +4,57 @@
     <meta name="viewport" content="width=400, initial-scale=1">
     <title>Room status</title>
     <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="scripts.js" charset="utf-8"></script>
 </head>
 <body>
     <script>
-        function edit_rule(id) {
-            window.location.href = 'edit?id=' + id;
-        }
-
-        function set_pos(pos) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'set_pos?pos=' + pos, true);
-            xhr.send();
-        }
-
-        function pair() {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'pair_remote', true);
-            xhr.onreadystatechange = function () { if (xhr.status == 200) window.location.href = 'pair'; }
-            xhr.send();
-        }
+        function enable_rule(id, cb)    { save_object('rules', { id: id, enabled: cb.checked }, () => load_status()); }
+        function set_pos(pos)           { save_object('set_pos?pos=' + pos, {}); }
+        function pair()                 { save_object('pair_remote', {}, (res) => window.location.href = 'pair'); }
 
         function load_status() {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'room.json', true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState != 4) return;
-                if (xhr.status == 200)   update_status(JSON.parse(xhr.responseText));
-            }
-            xhr.send();
+            get_object('room', 0, (room) => {
+                var hours = Math.trunc(room.sensors.time / 60);
+                var mins = room.sensors.time % 60;
+                version.innerHTML = room.version;
+                lan.innerHTML = room.lan;
+                wifi.innerHTML = room.wifi;
+                time.innerHTML = hours + ':' + (mins < 10 ? '0' : '') + mins.toString();
+                temp_in.innerHTML = room.sensors.temp_in;
+                temp_out.innerHTML = room.sensors.temp_out;
+                light.innerHTML = room.sensors.light;
+                inactivity.innerHTML = room.sensors.inactivity == 0 ? 'activity detected' :
+                    room.sensors.inactivity == 1 ? '1 minute of inactivity' :
+                    room.sensors.inactivity + ' minutes of inactivity';
+                mot_ip.innerHTML = room.sensors.motctrl == '' ? '<span class="error">offline</span>' : '<span class="active">' + room.sensors.motctrl + '</span>';
+                pos.innerHTML = room.sensors.position == 0 ? 'closed' : (room.sensors.position == 100 ? 'open' : room.sensors.position);
+                remote_id.innerHTML = room.sensors.remote_id.toString(16);
+            });
+               
+            get_object('rules', 0, (rules) => {
+                var html = '<thead><tr class="row-header"><td></td><td>Rule</td><td>Status</td></tr></thead>';
 
-            var xhr2 = new XMLHttpRequest();
-            xhr2.open('GET', 'rules.json', true);
-            xhr2.onreadystatechange = function () {
-                if (xhr2.readyState != 4) return;
-                if (xhr2.status == 200)   update_rules(JSON.parse(xhr2.responseText));
-            }
-            xhr2.send();
+                for (var i = 0; i < rules.length; i++) {
+                    id = rules[i].id;
+                    html += '<tr class="' + (i % 2 ? 'row-even' : 'row-odd') + '">';
+                    html += '<td width=24><input type="checkbox" ' + (rules[i].enabled ? 'checked' : '') + ' onclick="enable_rule(' + id + ', this)"></form></td>';
+                    html += '<td onclick="window.location.href=\'edit?id=' + id + '\'"><a href="edit?id=' + id + '">' + rules[i].name + '</a></td>';
+                    status = rules[i].status;
+                    html += '<td>' + (
+                        !rules[i].enabled ? '<p class="disabled">Disabled</p>' :
+                        status == 0 ? '<p class="error">Failed</p>' :
+                        status == 1 ? '<p class="active">Active</p>' : 'Inactive'
+                    ) + '</td>';
+                    html += '</tr>';
+                }
+                table_rules.innerHTML = html;
+            });
         };
-
-        function enable_rule(id, cb_enabled) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('PUT', 'rules.json', true);
-            xhr.onreadystatechange = function () { load_status(); }
-            xhr.send(JSON.stringify({ id: id, enabled: cb_enabled.checked }));
-        }
-
-        function update_rules(rules) {
-            var html = '<thead><tr class="row-header"><td></td><td>Rule</td><td>Status</td></tr></thead>';
-
-            for (var i = 0; i < rules.length; i++) {
-                id = rules[i].id;
-                html += '<tr class="' + (i % 2 ? 'row-even' : 'row-odd') + '">';
-                html += '<td width=24><input type="checkbox" ' + (rules[i].enabled ? 'checked' : '') + ' onclick="enable_rule(' + id + ', this)"></form></td>';
-                html += '<td onclick="edit_rule(' + id + ')"><a href="edit?id=' + id + '">' + rules[i].name + '</a></td>';
-                status = rules[i].status;
-                html += '<td>' + (
-                    !rules[i].enabled ? '<p class="disabled">Disabled</p>' : 
-                    status == 0 ? '<p class="error">Failed</p>' :
-                    status == 1 ? '<p class="active">Active</p>' : 'Inactive'
-                ) + '</td>';
-                html += '</tr>';
-            }
-            table_rules.innerHTML = html;
-        }
-
-        function update_status(room) {
-            var hours = Math.trunc(room.sensors.time / 60);
-            var mins = room.sensors.time % 60;
-            version.innerHTML = room.version;
-            lan.innerHTML = room.lan;
-            wifi.innerHTML = room.wifi;
-            time.innerHTML = hours + ':' + (mins < 10 ? '0' : '') + mins.toString();
-            temp_in.innerHTML = room.sensors.temp_in;
-            temp_out.innerHTML = room.sensors.temp_out;
-            light.innerHTML = room.sensors.light;
-            inactivity.innerHTML = room.sensors.inactivity == 0 ? 'activity detected' :
-                                   room.sensors.inactivity == 1 ? '1 minute of inactivity' :
-                                                                  room.sensors.inactivity + ' minutes of inactivity';
-            mot_ip.innerHTML = room.sensors.motctrl == '' ? '<span class="error">offline</span>' : '<span class="active">' + room.sensors.motctrl + '</span>';
-            pos.innerHTML = room.sensors.position == 0 ? 'closed' : (room.sensors.position == 100 ? 'open' : room.sensors.position);
-            remote_id.innerHTML = room.sensors.remote_id.toString(16);
-        }
 
         load_status();
         setInterval(load_status, 5000);
 
-        window.onload = function () {
-            var siteWidth = 400;
-            var scale = screen.width / siteWidth
-            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale + '');
-        }
+        window.onload = function () { scale_form(); }
     </script>
 
     <div class="version">v<span id="version"></span></div>

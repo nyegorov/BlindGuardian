@@ -4,21 +4,9 @@
     <meta name="viewport" content="width=400, initial-scale=1">
     <title>Server log</title>
     <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="scripts.js" charset="utf-8"></script>
     <script>
-        function load_servlog() {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'log.json', true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState != 4) return;
-                if (xhr.status == 200) {
-                    var log = JSON.parse(xhr.responseText);
-                    update_log(log);
-                }
-            }
-            xhr.send();
-        };
-
-        function update_log(log) {
+        get_object('log', 0, (log) => {
             var html = '';
             html += '<thead><tr class="row-header">';
             html += '<td>Type</td>';
@@ -42,15 +30,9 @@
                 html += '</tr>';
             }
             table_log.innerHTML = html;
-        }
+        });
 
-        load_servlog();
-
-        window.onload = function () {
-            var siteWidth = 400;
-            var scale = screen.width / siteWidth
-            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale + '');
-        }
+        window.onload = function () { scale_form(); }
     </script>
 </head>
 <body>

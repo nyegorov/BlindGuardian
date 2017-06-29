@@ -12,26 +12,27 @@ namespace roomctrl {
 
 room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _config(path / "config.json")
 {
-	_http.on(L"/", L"html/room_status.html");
-	_http.on(L"/index.html", L"html/room_status.html");
 	_http.on(L"/status", L"html/room_status.html");
 	_http.on(L"/edit", L"html/edit_rule.html");
 	_http.on(L"/log", L"html/server_log.html");
 	_http.on(L"/pair", L"html/pair_remote.html");
 	_http.on(L"/styles.css", L"html/styles.css");
+	_http.on(L"/scripts.js", L"html/scripts.js");
 	_http.on(L"/back.jpg", L"html/img/background.jpg");
 	_http.on(L"/favicon.ico", L"html/img/favicon.ico");
-	_http.on(L"/room.json",  [this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
-	_http.on(L"/pair.json",  [this](auto&, auto&) { return std::make_tuple(content_type::json, _pair_info.ToString()); });
-	_http.on(L"/log.json",   [this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
-	_http.on(L"/rules.json", rest_adapter<rules_db>::get(_rules));
-	_http.on(L"/pair_remote", [this](auto&, auto& value) { pair_remote(); return std::make_tuple(content_type::text, L""); });
-	_http.on(L"/set_pos", [this](auto& req, auto&) {
+
+	_http.on(L"/api/room",		[this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
+	_http.on(L"/api/log",		[this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
+	_http.on(L"/api/rules",		rest_adapter<rules_db>::get(_rules));
+	_http.on(L"/api/pair_remote",[this](auto&, auto& value) { pair_remote(); return std::make_tuple(content_type::text, L""); });
+	_http.on(L"/api/pair",		[this](auto&, auto&) { return std::make_tuple(content_type::json, _pair_info.ToString()); });
+	_http.on(L"/api/set_pos",	[this](auto& req, auto&) {
 		auto pos = std::stoul(req.params[L"pos"]);
 		if(pos == 100)	_tasks.push([this]() {_motor.open(); });
 		if(pos == 0)	_tasks.push([this]() {_motor.close(); });
 		return std::make_tuple(content_type::text, L"");
 	});
+	_http.on(L"/", L"html/room_status.html");
 
 	init(_sensors, _actuators);
 	logger.info(module_name, L"Room server v%s started", version().c_str());

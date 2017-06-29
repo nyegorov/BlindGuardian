@@ -57,6 +57,7 @@ struct http_request
 	std::map<wstring, wstring> params;
 	std::map<wstring, wstring> attribs;
 	wstring path;
+	wstring rest;
 	wstring body;
 };
 
@@ -74,10 +75,11 @@ public:
 	using binary_t = std::vector<uint8_t>;
 	using content_t = std::variant<wstring, binary_t>;
 	using callback_t = std::function<std::tuple<content_type, content_t>(http_request&, http_response&)>;
+	using callback_entry_t = std::pair<wstring, callback_t>;
 
 	http_server(const wchar_t* port_name, const wchar_t *server_name);
 	IAsyncAction start();
-	void on(const wchar_t* url, callback_t process) { _callbacks.emplace( url, process); }
+	void on(const wchar_t* url, callback_t process) { _callbacks.emplace_back(std::make_pair(url, process)); }
 	void on(const wchar_t* url, path file_name);
 private:
 	size_t read_request(const IInputStream& stream, wstring& content);
@@ -91,47 +93,37 @@ private:
 	StreamSocketListener _listener;
 	
 	std::unordered_map<wstring, content_type>	_content_types;
-	std::unordered_map<wstring, callback_t>	_callbacks;
+	std::vector<callback_entry_t>				_callbacks;
 };
 
 template<class T> class rest_adapter {
 public:
 	using callback_t = http_server::callback_t;
 	using content_t = http_server::content_t;
-	using model = typename T::model;
 
 	static callback_t get(T& db) {
-		return [&db](auto&& req, auto&&) -> std::tuple<content_type, content_t> {
+		return [&db](auto&& req, auto&& resp) -> std::tuple<content_type, content_t> {
+			auto id = req.rest.empty() ? 0 : std::stoul(req.rest.c_str() + 1);
 			switch(req.type) {
-			case http_method::get: {
-				auto pid = req.params.find(L"id");
-				if(pid == req.params.end()) {
-					return std::make_tuple(content_type::json, db.to_string());
-				} else {
-					return std::make_tuple(content_type::json, db.get(std::stoul(pid->second)).to_string());
-				}
-			}
+			case http_method::get:
+				return std::make_tuple(content_type::json, id ? db.get(id).to_string() : db.to_string());
 			case http_method::post: {
-				auto r = model{ JsonObject::Parse(req.body) };
-				r.id = 0;
-				auto id = db.save(r);
-				logger.info(module_name, L"create rule %d", id);
-				return std::make_tuple(content_type::json, db.get(id).to_string());
+				auto new_id = db.save(db.create(JsonObject::Parse(req.body)));
+				resp.params = L"Location: " + req.path + L"/" + std::to_wstring(new_id) + L"\r\n";
+				resp.status = http_status::created;
+				return std::make_tuple(content_type::text, L"");
 			}
 			case http_method::put: {
-				auto json = JsonObject::Parse(req.body);
-				auto id = (unsigned)json.GetNamedNumber(L"id", 0);
-				auto r = db.get(id);
-				if(!r.id)		throw http_status::not_found;
-				r.update(json);
-				db.save(r);
-				logger.info(module_name, L"update rule %d", id);
-				return std::make_tuple(content_type::json, db.get(id).to_string());
+				auto obj = db.get(id);
+				if(!obj.id)		throw http_status::not_found;
+				obj.update(JsonObject::Parse(req.body));
+				obj.id = id;
+				db.save(obj);
+				return std::make_tuple(content_type::text, L"");
 			}
 			case http_method::del: {
-				auto id = std::stoul(req.params[L"id"s]);
 				db.remove(id);
-				logger.info(module_name, L"delete rule %d", id);
+				resp.status = http_status::no_content;
 				return std::make_tuple(content_type::text, L"");
 			}
 			default: throw http_status::method_not_allowed;

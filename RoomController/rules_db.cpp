@@ -49,7 +49,7 @@ wstring to_string(const rules_v&& rules)
 }
 
 bool operator == (const rule& r1, const rule& r2) {
-	return r1.id == r2.id && r1.name == r2.name && r1.condition == r2.condition && r1.action == r2.action && r1.enabled == r2.enabled;
+	return r1.name == r2.name && r1.condition == r2.condition && r1.action == r2.action && r1.enabled == r2.enabled;
 }
 
 rules_db::rules_db(const path& storage) : _storage(storage)

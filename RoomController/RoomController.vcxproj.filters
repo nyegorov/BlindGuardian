@@ -150,6 +150,9 @@
     <None Include="html\pair_remote.html">
       <Filter>Html</Filter>
     </None>
+    <None Include="html\scripts.js">
+      <Filter>Html</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">

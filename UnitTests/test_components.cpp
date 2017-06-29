@@ -179,10 +179,10 @@ namespace UnitTests
 			ofs.write(test.c_str(), test.size());
 			ofs.close();
 			http_server srv(L"666", L"unit test server" );
-			srv.on(L"/",	 [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"MAIN"); });
 			srv.on(L"/test", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"OK"); });
 			srv.on(L"/some", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"YEP"); });
 			srv.on(L"/file", p);
+			srv.on(L"/", [](auto&&, auto&&) { return std::make_tuple(content_type::html, L"MAIN"); });
 			srv.start();
 
 			wstring content;
