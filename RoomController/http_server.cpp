@@ -224,9 +224,7 @@ winrt::fire_and_forget http_server::on_connection(StreamSocket socket)
 
 			auto pc = _callbacks.find(req.path);
 			if (pc == _callbacks.end()) throw http_status::not_found;
-			auto pm = pc->second.find(req.type);
-			if(pm == pc->second.end()) throw http_status::not_found;
-			std::tie(resp.content_type, answer) = pm->second(req, resp);
+			std::tie(resp.content_type, answer) = pc->second(req, resp);
 
 		} catch(http_status status) {
 			resp = http_error(status, answer);
