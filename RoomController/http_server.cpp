@@ -181,7 +181,7 @@ void http_server::write_response(DataWriter& writer, const http_response& respon
 	const wchar_t eol[] = L"\r\n";
 	writer << L"HTTP/1.1 " << status_codes[(unsigned)response.status] << eol;
 	writer << L"Server: " << _server_name << eol;
-	if (response.content_size > 0) {
+	if (response.content_size > 0 && response.content_type != content_type::none) {
 		writer << L"Content-Type: " << content_types[(unsigned)response.content_type] << eol;
 		writer << L"Content-Length: " << std::to_wstring(response.content_size) << eol;
 	}
@@ -223,6 +223,7 @@ winrt::fire_and_forget http_server::on_connection(StreamSocket socket)
 		http_response resp;
 		try {
 			resp.status = http_status::ok;
+			resp.content_type = content_type::none;
 			if (!read_request(socket.InputStream(), content))	return;
 			parse_request(content, req);
 

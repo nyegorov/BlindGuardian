@@ -6,7 +6,7 @@
  /* File created by MIDL compiler version 8.01.0620 */
 /* at Tue Jan 19 05:14:07 2038
  */
-/* Compiler settings for C:\Users\nick\AppData\Local\Temp\roomctrl.idl-2367eb5f:
+/* Compiler settings for C:\Users\nick\AppData\Local\Temp\roomctrl.idl-10b8e59a:
     Oicf, W1, Zp8, env=Win32 (32b run), target_arch=X86 8.01.0620 
     protocol : dce , ms_ext, c_ext, robust
     error checks: allocation ref bounds_check enum stub_data 
