@@ -11,9 +11,9 @@ struct rule {
 	rule() : id(0) {}
 	rule(unsigned id, const wstring& name, const wstring& condition, const wstring& action, bool enabled) : id(id), name(name), condition(condition), action(action), enabled(enabled) {}
 	rule(const wstring& name, const wstring& condition, const wstring& action, bool enabled) : rule(0, name, condition, action, enabled) {}
-	rule(winrt::Windows::Data::Json::JsonObject json);
+	rule(winrt::Windows::Data::Json::JsonObject json) { *this = json; }
+	rule& operator = (winrt::Windows::Data::Json::JsonObject json);
 	wstring to_string() const;
-	void update(winrt::Windows::Data::Json::JsonObject json);
 
 	unsigned id = 0;
 	wstring name;
@@ -44,8 +44,6 @@ public:
 	wstring to_string() const;
 	rules_v get_all() const;
 	std::vector<unsigned> get_ids() const;
-	rule create(const wstring& name, const wstring& condition, const wstring& action, bool enabled) { return rule{ name, condition, action, enabled }; }
-	rule create(winrt::Windows::Data::Json::JsonObject json) { return rule{ json }; }
 	rule get(unsigned id) const;
 	void set_status(unsigned id, rule_status status);
 	unsigned save(const rule& rule, bool store_db = true);

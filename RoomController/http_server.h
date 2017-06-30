@@ -108,15 +108,17 @@ public:
 			case http_method::get:
 				return std::make_tuple(content_type::json, id ? db.get(id).to_string() : db.to_string());
 			case http_method::post: {
-				auto new_id = db.save(db.create(JsonObject::Parse(req.body)));
+				if(req.body.empty())	throw http_status::unsuported_media;
+				auto new_id = db.save({ JsonObject::Parse(req.body) });
 				resp.params = L"Location: " + req.path + L"/" + std::to_wstring(new_id) + L"\r\n";
 				resp.status = http_status::created;
 				return std::make_tuple(content_type::text, L"");
 			}
 			case http_method::put: {
 				auto obj = db.get(id);
-				if(!obj.id)		throw http_status::not_found;
-				obj.update(JsonObject::Parse(req.body));
+				if(!obj.id)				throw http_status::not_found;
+				if(req.body.empty())	throw http_status::unsuported_media;
+				obj = JsonObject::Parse(req.body);
 				obj.id = id;
 				db.save(obj);
 				return std::make_tuple(content_type::text, L"");

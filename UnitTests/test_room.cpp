@@ -233,7 +233,7 @@ namespace UnitTests
 			rule new_rule{ L"новое правило", L"1&2", L"42", true };
 			auto new_id = [&]() -> future<unsigned long> {
 				co_await winrt::resume_background();
-				auto resp = co_await HttpClient().PostAsync({ L"http://localhost/api/rules.json" }, HttpStringContent(new_rule.to_string()));
+				auto resp = co_await HttpClient().PostAsync({ L"http://localhost/api/rules" }, HttpStringContent(new_rule.to_string()));
 				wstring loc = resp.Headers().Lookup(L"Location");
 				if(loc.size() > resp.RequestMessage().RequestUri().Path().size()) {
 					return std::stoul(loc.substr(resp.RequestMessage().RequestUri().Path().size() + 1));
@@ -246,7 +246,7 @@ namespace UnitTests
 			// Read
 			auto r3 = [&]() -> future<rule> {
 				co_await winrt::resume_background();
-				auto resp = co_await HttpClient().GetAsync({ L"http://localhost/api/rules.json/" + to_wstring(new_id) }, HttpCompletionOption::ResponseContentRead);
+				auto resp = co_await HttpClient().GetAsync({ L"http://localhost/api/rules/" + to_wstring(new_id) }, HttpCompletionOption::ResponseContentRead);
 				auto result = CryptographicBuffer::ConvertBinaryToString(BinaryStringEncoding::Utf8, co_await resp.Content().ReadAsBufferAsync());
 				return rule{ JsonObject::Parse(result) };
 			}().get();
@@ -256,14 +256,14 @@ namespace UnitTests
 			new_rule.name = L"edited rule";
 			[&]() -> future<void> {
 				co_await winrt::resume_background();
-				auto resp = co_await HttpClient().PutAsync({ L"http://localhost/api/rules.json/" + to_wstring(new_id) }, HttpStringContent(new_rule.to_string()));
+				auto resp = co_await HttpClient().PutAsync({ L"http://localhost/api/rules/" + to_wstring(new_id) }, HttpStringContent(new_rule.to_string()));
 			}().get();
 			Assert::IsTrue(re.rules().get(new_id) == new_rule);
 
 			// Delete
 			[&]() -> future<void> {
 				co_await winrt::resume_background();
-				co_await HttpClient().DeleteAsync({ L"http://localhost/api/rules.json/" + to_wstring(new_id) });
+				co_await HttpClient().DeleteAsync({ L"http://localhost/api/rules/" + to_wstring(new_id) });
 			}().get();
 
 			Assert::AreEqual(0u, re.rules().get_all().size());

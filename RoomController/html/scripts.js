@@ -20,9 +20,19 @@ function get_object(obj, id, callback = (x) => { }) {
     xhr.send();
 }
 
-function save_object(obj, rule, callback) {
+function put_object(obj, rule, callback) {
     var xhr = new XMLHttpRequest();
-    xhr.open(rule.id ? 'PUT' : 'POST', 'api/' + obj + (rule.id ? '/' + rule.id : ''), true);
+    xhr.open('PUT', 'api/' + obj + '/' + rule.id, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState != 4) return;
+        if (success(xhr.status)) callback();
+    }
+    xhr.send(JSON.stringify(rule));
+}
+
+function post_object(obj, rule, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'api/' + obj, true);
     xhr.onreadystatechange = function () {
         if (xhr.readyState != 4) return;
         if (success(xhr.status)) callback();

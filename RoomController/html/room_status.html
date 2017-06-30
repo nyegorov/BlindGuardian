@@ -8,9 +8,9 @@
 </head>
 <body>
     <script>
-        function enable_rule(id, cb)    { save_object('rules', { id: id, enabled: cb.checked }, () => load_status()); }
-        function set_pos(pos)           { save_object('set_pos?pos=' + pos, {}); }
-        function pair()                 { save_object('pair_remote', {}, (res) => window.location.href = 'pair'); }
+        function enable_rule(id, cb)    { put_object('rules', { id: id, enabled: cb.checked }, () => load_status()); }
+        function set_pos(pos)           { post_object('set_pos?pos=' + pos, {}); }
+        function pair()                 { post_object('pair_remote', {}, (res) => window.location.href = 'pair'); }
 
         function load_status() {
             get_object('room', 0, (room) => {

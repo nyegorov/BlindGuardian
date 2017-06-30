@@ -17,12 +17,7 @@ JsonObject to_json(const rule & rule)
 	return json;
 }
 
-rule::rule(JsonObject json)
-{
-	update(json);
-}
-
-void rule::update(winrt::Windows::Data::Json::JsonObject json)
+rule& rule::operator=(winrt::Windows::Data::Json::JsonObject json)
 {
 	for(auto& kv : json.GetView()) {
 		auto key = kv.Key();
@@ -33,7 +28,7 @@ void rule::update(winrt::Windows::Data::Json::JsonObject json)
 		else if(key == L"action")	action = val.GetString();
 		else if(key == L"enabled")	enabled = val.GetBoolean();
 	}
-
+	return *this;
 }
 
 wstring rule::to_string() const
