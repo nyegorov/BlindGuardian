@@ -18,7 +18,7 @@ esp8266_sensors::~esp8266_sensors()
 {
 }
 
-IAsyncAction esp8266_sensors::start()
+task<void> esp8266_sensors::start()
 {
 	try {
 		_socket = DatagramSocket();

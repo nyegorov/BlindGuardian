@@ -62,7 +62,7 @@ void hcsr501_sensor::update()
 
 // TMP75 temperature sensor
 
-IAsyncAction tmp75_sensor::start()
+task<void> tmp75_sensor::start()
 {
 	try	{
 		auto controller = co_await I2cController::GetDefaultAsync();
@@ -92,7 +92,7 @@ void tmp75_sensor::update()
 
 // MCP9808 temperature sensor
 
-IAsyncAction mcp9808_sensor::start()
+task<void> mcp9808_sensor::start()
 {
 	try {
 		auto controller = co_await I2cController::GetDefaultAsync();
@@ -128,7 +128,7 @@ beeper::beeper(std::wstring_view name, int32_t beeper_pin) : actuator(name)
 	_beeper_pin = init_pin(beeper_pin, GpioPinDriveMode::Output);
 }
 
-IAsyncAction beeper::beep(std::chrono::milliseconds duration)
+task<void> beeper::beep(std::chrono::milliseconds duration)
 {
 	if(_beeper_pin) {
 		_beeper_pin.Write(GpioPinValue::High);
@@ -137,7 +137,7 @@ IAsyncAction beeper::beep(std::chrono::milliseconds duration)
 	}
 }
 
-IAsyncAction beeper::fail() {
+task<void> beeper::fail() {
 	co_await beep(100ms);
 	co_await 200ms;
 	co_await beep(100ms);

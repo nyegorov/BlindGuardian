@@ -7,7 +7,7 @@
     <script type="text/javascript" src="scripts.js" charset="utf-8"></script>
     <script>
         function pair_info() {
-            get_object('pair', 0, (pair_info) => {
+            get_object('pairing', 0, (pair_info) => {
                 num_commands.innerHTML = pair_info.commands;
                 if (pair_info.done) {
                     pair_inproc.hidden = true;

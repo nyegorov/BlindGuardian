@@ -23,7 +23,8 @@
 
 namespace roomctrl {
 
-using path_t = std::experimental::filesystem::path;
+using std::experimental::filesystem::path;
+using concurrency::task;
 
 class room_server
 {
@@ -38,13 +39,12 @@ public:
 	using vec_sensors = std::vector<i_sensor*>;
 	using vec_actuators = std::vector<i_actuator*>;
 	using cqueue = concurrency::concurrent_queue<std::function<void()>>;
-	using IAsyncAction = winrt::Windows::Foundation::IAsyncAction;
 
-	room_server(const path_t& path = L".");
+	room_server(const path& path = L".");
 	wstring version();
 	ip_info get_ip();
 	void init(const vec_sensors &sensors, const vec_actuators &actuators);
-	IAsyncAction start();
+	task<void> start();
 	wstring get_sensors();
 	void run();
 	value_t eval(const wchar_t *expr);
@@ -52,7 +52,7 @@ public:
 	rules_db& rules()			{ return _rules; }
 
 private:
-	IAsyncAction pair_remote();
+	task<void> pair_remote();
 	JsonObject		_pair_info;
 
 	rules_db		_rules;

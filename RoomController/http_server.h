@@ -6,12 +6,12 @@ using std::wstring;
 using std::wstring_view;
 using std::wstringstream;
 using std::experimental::filesystem::path;
+using concurrency::task;
 
 using winrt::Windows::Networking::Sockets::StreamSocket;
 using winrt::Windows::Networking::Sockets::StreamSocketListener;
 using winrt::Windows::Storage::Streams::IInputStream;
 using winrt::Windows::Storage::Streams::DataWriter;
-using winrt::Windows::Foundation::IAsyncAction;
 
 enum class http_status {
 	ok,
@@ -78,7 +78,7 @@ public:
 	using callback_entry_t = std::pair<wstring, callback_t>;
 
 	http_server(const wchar_t* port_name, const wchar_t *server_name);
-	IAsyncAction start();
+	task<void> start();
 	void on(const wchar_t* url, callback_t process) { _callbacks.emplace_back(std::make_pair(url, process)); }
 	void on(const wchar_t* url, path file_name);
 private:

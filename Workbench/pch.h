@@ -36,4 +36,5 @@
 #include <variant>
 #include <vector>
 
+#include <pplawait.h>
 #include <concurrent_queue.h>

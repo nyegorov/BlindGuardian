@@ -11,6 +11,7 @@ using winrt::Windows::Networking::Sockets::DatagramSocket;
 using winrt::Windows::Networking::Sockets::DatagramSocketMessageReceivedEventArgs;
 using namespace std::chrono_literals;
 using std::chrono::steady_clock;
+using concurrency::task;
 
 namespace roomctrl {
 
@@ -19,7 +20,7 @@ class esp8266_sensors
 public:
 	esp8266_sensors(std::wstring_view udp_port, std::wstring_view multicast_group, sensor& temp, sensor& light);
 	~esp8266_sensors();
-	winrt::Windows::Foundation::IAsyncAction start();
+	task<void> start();
 	HostName remote_ip() { return _remote_ip; }
 	bool online()		 { return steady_clock::now() - _last_status_time.load() < 30s; }
 

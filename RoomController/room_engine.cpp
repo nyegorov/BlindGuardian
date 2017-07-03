@@ -10,7 +10,7 @@ const wchar_t module_name[] = L"ROOM";
 
 namespace roomctrl {
 
-room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _config(path / "config.json")
+room_server::room_server(const path& path) : _rules(path / "rules.json"), _config(path / "config.json")
 {
 	_http.on(L"/status", L"html/room_status.html");
 	_http.on(L"/edit", L"html/edit_rule.html");
@@ -24,13 +24,18 @@ room_server::room_server(const path_t& path) : _rules(path / "rules.json"), _con
 	_http.on(L"/api/room",		[this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
 	_http.on(L"/api/log",		[this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
 	_http.on(L"/api/rules",		rest_adapter<rules_db>::get(_rules));
-	_http.on(L"/api/pair_remote",[this](auto&, auto& value) { pair_remote(); return std::make_tuple(content_type::text, L""); });
-	_http.on(L"/api/pair",		[this](auto&, auto&) { return std::make_tuple(content_type::json, _pair_info.ToString()); });
-	_http.on(L"/api/set_pos",	[this](auto& req, auto&) {
-		auto pos = std::stoul(req.params[L"pos"]);
+	_http.on(L"/api/pairing",	[this](auto&, auto&) { return std::make_tuple(content_type::json, _pair_info.ToString()); });
+	_http.on(L"/api/blinds",	[this](auto& req, auto&) {
+		if(req.type != http_method::put)	throw http_status::method_not_allowed;
+		auto pos = JsonObject::Parse(req.body).GetNamedNumber(L"position");
 		if(pos == 100)	_tasks.push([this]() {_motor.open(); });
 		if(pos == 0)	_tasks.push([this]() {_motor.close(); });
 		return std::make_tuple(content_type::text, L"");
+	});
+	_http.on(L"/api/actions", [this](auto& req, auto& value) { 
+		auto action = JsonObject::Parse(req.body).GetNamedString(L"action");
+		if(action == L"pair")	pair_remote();
+		return std::make_tuple(content_type::text, L""); 
 	});
 	_http.on(L"/", L"html/room_status.html");
 
@@ -113,7 +118,7 @@ wstring room_server::get_sensors()
 	return sensors.ToString();
 }
 
-IAsyncAction room_server::pair_remote()
+task<void> room_server::pair_remote()
 {
 	co_await winrt::resume_background();
 	_pair_info.SetNamedValue(L"done", JsonValue::CreateBooleanValue(false));
@@ -132,7 +137,7 @@ value_t room_server::eval(const wchar_t *expr)
 	return _parser.eval(expr);
 }
 
-IAsyncAction room_server::start()
+task<void> room_server::start()
 {
 	co_await _temp_in.start();
 	co_await _ext.start();

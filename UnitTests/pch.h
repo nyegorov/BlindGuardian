@@ -50,6 +50,7 @@
 #include <vector>
 #include <experimental\resumable>
 
+#include <pplawait.h>
 #include <concurrent_queue.h>
 
 using namespace std::literals::string_literals;

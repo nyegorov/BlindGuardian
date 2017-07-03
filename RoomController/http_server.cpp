@@ -111,7 +111,7 @@ http_server::http_server(const wchar_t* port_name, const wchar_t* server_name) :
 	_content_types.emplace(L".gz"s,		content_type::gz);
 }
 
-IAsyncAction http_server::start()
+task<void> http_server::start()
 {
 	_listener.ConnectionReceived([this](auto&&, auto&& args) { on_connection(args.Socket()); });
 	co_await _listener.BindServiceNameAsync(_port);

@@ -50,7 +50,7 @@ udns_resolver::~udns_resolver()
 {
 }
 
-IAsyncAction udns_resolver::start()
+task<void> udns_resolver::start()
 {
 	try {
 		_socket = DatagramSocket();
@@ -64,7 +64,7 @@ IAsyncAction udns_resolver::start()
 	}
 }
 
-IAsyncAction udns_resolver::post_cmd(uint8_t cmd)
+task<void> udns_resolver::post_cmd(uint8_t cmd)
 {
 	try {
 		auto os = co_await _socket.GetOutputStreamAsync(_multicast_group, udns_port_out);
@@ -76,8 +76,8 @@ IAsyncAction udns_resolver::post_cmd(uint8_t cmd)
 	}
 }
 
-IAsyncAction udns_resolver::refresh()	{ return post_cmd('$'); }
-IAsyncAction udns_resolver::reset()		{ return post_cmd('r'); }
+task<void> udns_resolver::refresh()	{ return post_cmd('$'); }
+task<void> udns_resolver::reset()	{ return post_cmd('r'); }
 
 HostName udns_resolver::get_address(const std::wstring& name) const
 {
