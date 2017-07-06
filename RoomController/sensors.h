@@ -94,7 +94,7 @@ private:
 class mcp9808_sensor final : public sensor
 {
 public:
-	enum resolution : uint8_t { res9bit = 1, res10bit, res11bit, res12bit };
+	enum resolution : uint8_t { res9bit, res10bit, res11bit, res12bit };
 
 	mcp9808_sensor(wstring_view name, resolution res, uint32_t address) : sensor(name), _res(res), _address(address) {}
 	task<void> start();
