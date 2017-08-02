@@ -16,6 +16,7 @@ using namespace winrt::Windows::Web::Http::Headers;
 using namespace winrt::Windows::Security::Cryptography;
 using namespace std;
 using namespace winrt;
+using namespace concurrency;
 using namespace std::experimental;
 using namespace roomctrl;
 
@@ -201,17 +202,17 @@ namespace UnitTests
 			ofs << "<html><body>OK</body></html>" << endl;
 			ofs.close();
 
-			[]() -> future<void> { 
+			[]() -> task<void> { 
 				room_server re(L".");
 				co_await winrt::resume_background();
 				co_await re.start();
 				re.eval(L"blind.close()");
 				Assert::AreEqual(0, get<int32_t>(re.eval(L"position")));
-				co_await HttpClient().GetAsync({ L"http://localhost/api/set_pos?pos=100" }, HttpCompletionOption::ResponseHeadersRead);
+				co_await HttpClient().PutAsync({ L"http://localhost/api/blinds" }, HttpStringContent(L"{\"position\": 100}"));
 				Assert::AreEqual(0, get<int32_t>(re.eval(L"position")));
 				re.run();
 				Assert::AreEqual(100, get<int32_t>(re.eval(L"position")));
-				co_await HttpClient().GetAsync({ L"http://localhost/api/set_pos?pos=0" }, HttpCompletionOption::ResponseHeadersRead);
+				co_await HttpClient().PutAsync({ L"http://localhost/api/blinds" }, HttpStringContent(L"{\"position\": 0}"));
 				Assert::AreEqual(100, get<int32_t>(re.eval(L"position")));
 				re.run();
 				Assert::AreEqual(0, get<int32_t>(re.eval(L"position")));
