@@ -49,7 +49,7 @@ void room_server::init(const vec_sensors &sensors, const vec_actuators &actuator
 	_sensors = sensors;
 	_actuators = actuators;
 	_parser.clear();
-	_parser.set(L"wait", [](auto& params) { auto ms = get_arg<milliseconds>(params, 0); std::this_thread::sleep_for(ms); return value_t{ 1 }; });
+	_parser.set(L"wait", [](auto& params) { const auto ms = get_arg<milliseconds>(params, 0); std::this_thread::sleep_for(ms); return value_t{ 1 }; });
 	for(auto& ps : _sensors) {
 		_parser.set(ps->name(), ps);
 		_parser.set(ps->name() + L".min", [ps](auto&) {return ps->min(); });
@@ -68,12 +68,12 @@ void room_server::init(const vec_sensors &sensors, const vec_actuators &actuator
 wstring room_server::version()
 {
 	try	{
-		auto ver = winrt::Windows::ApplicationModel::Package::Current().Id().Version();
-		wchar_t ver_str[40];
+		const auto ver = winrt::Windows::ApplicationModel::Package::Current().Id().Version();
+		wchar_t ver_str[40] = { 0 };
 #ifdef _DEBUG
-		wchar_t format[] = L"%d.%d.%d.%d-D";
+		const wchar_t format[] = L"%d.%d.%d.%d-D";
 #else
-		wchar_t format[] = L"%d.%d.%d.%d";
+		const wchar_t format[] = L"%d.%d.%d.%d";
 #endif
 		swprintf(ver_str, _countof(ver_str), format, ver.Major, ver.Minor, ver.Build, ver.Revision);
 		return { ver_str };
@@ -85,8 +85,8 @@ room_server::ip_info room_server::get_ip()
 {
 	ip_info ips = { L"-", L"-" };
 	try	{
-		for(auto& profile : NetworkInformation::GetConnectionProfiles()) {
-			for(auto& host : NetworkInformation::GetHostNames()) {
+		for(const auto& profile : NetworkInformation::GetConnectionProfiles()) {
+			for(const auto& host : NetworkInformation::GetHostNames()) {
 				if(!host.IPInformation())	continue;
 				if(host.IPInformation().NetworkAdapter().NetworkAdapterId() == profile.NetworkAdapter().NetworkAdapterId())
 					if(profile.IsWlanConnectionProfile())	ips.wifi = host.CanonicalName();
@@ -162,12 +162,11 @@ void room_server::run()
 	{
 		if(!rule.enabled)	continue;
 
-		rule_status status;
+		rule_status status = rule_status::error;
 
 		auto result = _parser.eval(rule.condition, true);
 		if(is_error(result)) {
 			logger.error(module_name, L"error evaluating condition '%s': %s", rule.condition.c_str(), get_error_msg(result));
-			status = rule_status::error;
 		} else {
 			status = result == value_t{ 0 } ? rule_status::inactive : rule_status::active;
 		}

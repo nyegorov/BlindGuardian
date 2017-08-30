@@ -23,7 +23,7 @@ public:
 	STDMETHODIMP GetIids(ULONG *iidCount, IID **iids) {
 		if(!iidCount || !iids)	return E_INVALIDARG;
 		*iidCount = 1;
-		*iids = reinterpret_cast<IID*>(::CoTaskMemAlloc(sizeof(IID)));
+		*iids = static_cast<IID*>(::CoTaskMemAlloc(sizeof(IID)));
 		if(!*iids)	return E_OUTOFMEMORY;
 		**iids = IID_IActivationFactory;
 		return S_OK;

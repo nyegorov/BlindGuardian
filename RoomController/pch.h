@@ -43,8 +43,12 @@
 #include <variant>
 #include <vector>
 
+#undef min
+#undef max
+
 #include <pplawait.h>
 #include <concurrent_queue.h>
+#include <gsl.h>
 
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
@@ -57,5 +61,3 @@ template <> struct __declspec(uuid("3a14233f-a037-4ac0-a0ad-c4bb0bbf0112")) __de
 template <> struct __declspec(uuid("3a14233f-a037-4ac0-a0ad-c4bb0bbf0113")) __declspec(novtable) IAsyncOperationWithProgress<bool, int> : impl_IAsyncOperationWithProgress<bool, int> {};
 }
 
-#undef min
-#undef max

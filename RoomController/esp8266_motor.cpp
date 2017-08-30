@@ -67,9 +67,9 @@ void esp8266_motor::start()
 
 bool esp8266_motor::wait_timeout(IAsyncInfo action, milliseconds timeout)
 {
-	auto start = std::chrono::high_resolution_clock::now();
+	const auto start = std::chrono::high_resolution_clock::now();
 	while(true) {
-		auto status = action.Status();
+		const auto status = action.Status();
 		if(status == AsyncStatus::Completed)	break;
 		if(status == AsyncStatus::Error)		throw winrt::hresult_error(action.ErrorCode());
 		if(std::chrono::high_resolution_clock::now() - start > timeout) {
@@ -127,7 +127,7 @@ bool esp8266_motor::send_cmd(HostName host, uint8_t cmd, winrt::array_view<const
 			logger.message(module_name, L"%c.", cmd);
 
 		return true;
-	} catch(winrt::hresult_error& hr) {
+	} catch(const winrt::hresult_error& hr) {
 		logger.error(module_name, hr);
 	}
 	return false;
@@ -162,7 +162,7 @@ void esp8266_motor::reset() { _udns.reset(); }
 void esp8266_motor::update_sensors()
 {
 	cmd_status cmd;
-	bool ok = send_cmd(_udns.get_address(_host), cmd, _timeout_sensors);
+	const bool ok = send_cmd(_udns.get_address(_host), cmd, _timeout_sensors);
 	if(ok) {
 		_light.set(cmd.in.light);
 		_temp.set(cmd.in.temp);

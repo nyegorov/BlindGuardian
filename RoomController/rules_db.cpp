@@ -19,7 +19,7 @@ JsonObject to_json(const rule & rule)
 
 rule& rule::operator=(winrt::Windows::Data::Json::JsonObject json)
 {
-	for(auto& kv : json) {
+	for(const auto& kv : json) {
 		auto key = kv.Key();
 		auto val = kv.Value();
 		if(key == L"id")			id = static_cast<unsigned>(val.GetNumber());

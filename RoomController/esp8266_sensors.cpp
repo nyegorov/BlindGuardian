@@ -35,12 +35,12 @@ void esp8266_sensors::on_message(const DatagramSocket &, const DatagramSocketMes
 {
 	try {
 		auto reader = args.GetDataReader();
-		auto byteCount = reader.UnconsumedBufferLength();
+		const auto byteCount = reader.UnconsumedBufferLength();
 
 		if(byteCount < 7)				throw winrt::hresult_out_of_bounds();
 
-		uint8_t cmd  = reader.ReadByte();
-		uint8_t size = reader.ReadByte();
+		const uint8_t cmd  = reader.ReadByte();
+		const uint8_t size = reader.ReadByte();
 		if(cmd != 's' || size != 5)		throw winrt::hresult_invalid_argument();
 
 		reader.ByteOrder(ByteOrder::LittleEndian);
@@ -53,7 +53,7 @@ void esp8266_sensors::on_message(const DatagramSocket &, const DatagramSocketMes
 		_last_status_time = steady_clock::now();
 
 		logger.message(module_name, L"> temp = %d°C, light = %d lux", (int)t_out, (int)light);
-	} catch(winrt::hresult_error& hr) {
+	} catch(const winrt::hresult_error& hr) {
 		logger.error(module_name, hr);
 	}
 }

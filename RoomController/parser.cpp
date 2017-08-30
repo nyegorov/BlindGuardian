@@ -10,13 +10,13 @@
 
 namespace roomctrl	{
 
-wchar_t* get_error_msg(const value_t& v) {
-	auto it = std::get_if<error_t>(&v);
+const wchar_t* get_error_msg(const value_t& v) {
+	const error_t* it = std::get_if<error_t>(&v);
 	if(!it)	return L"ok";
 	switch(*it) {
 	case error_t::invalid_args:		return L"invalid arguments";
 	case error_t::not_implemented:	return L"not implemented";
-	case error_t::syntax_error:			return L"syntax error";
+	case error_t::syntax_error:		return L"syntax error";
 	case error_t::name_not_found:	return L"name not found";
 	case error_t::type_mismatch:	return L"type mismatch";
 	default:						return L"runtime error";
@@ -113,7 +113,7 @@ value_t NScript::eval(wstring script, bool noassign)
 
 // Parse "if <cond> <true-part> [else <part>]" statement
 void NScript::ParseIf(value_t& result, bool skip, bool noassign) {
-	bool cond = skip || result != value_t{0};
+	const bool cond = skip || result != value_t{0};
 	Parse(Statement, result, !cond || skip, noassign);
 	if(_parser.GetToken() == Parser::ifelse) {
 		_parser.Next();
@@ -180,7 +180,8 @@ void NScript::Parse(Precedence level, value_t& result, bool skip, bool noassign)
 		Parse((Precedence)((int)level + 1), result, skip, noassign);
 	}	else	{
 		// all other
-		bool noop = true, is_unary = (level == Unary || level == Unary);
+		bool noop = true;
+		const bool is_unary = (level == Unary);
 
 		// parse left-hand operand (for binary operators)
 		if(!is_unary)	Parse((Precedence)((int)level+1), result, skip, noassign);
@@ -290,15 +291,13 @@ Parser::Token Parser::Next()
 // Parse integer value from input stream
 void Parser::ReadNumber(wchar_t c)
 {
-	int base = 10, m = c - '0';
-	int e1 = 0, e2 = 0, esign = 1;
-	bool overflow = false;
-
+	int m = c - '0';
+	
 	while(c = Read())	{	
 		if(isdigit(c))	{
-			char v = c - '0';
-			if(m > (LONG_MAX - v) / base)	throw error_t::syntax_error;
-			m = m * base + v;
+			const char v = c - '0';
+			if(m > (LONG_MAX - v) / 10)	throw error_t::syntax_error;
+			m = m * 10 + v;
 		}	else	break;
 	};
 	_value = m;

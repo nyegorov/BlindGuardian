@@ -14,11 +14,11 @@ namespace roomctrl {
 
 void delay(microseconds microSeconds)
 {
-	auto start = std::chrono::high_resolution_clock().now();
+	const auto start = std::chrono::high_resolution_clock().now();
 	while(high_resolution_clock().now() - start < microSeconds);
 }
 
-bool wait_sync(GpioPin& pin, milliseconds timeout)
+bool wait_sync(const GpioPin& pin, milliseconds timeout)
 {
 	auto start = high_resolution_clock::now();
 restart:
@@ -76,8 +76,8 @@ void dm35le_motor::send_cmd(command code, uint32_t repeat)
 	if(!_tx_pin)	return;
 
 	_tx_pin.Write(GpioPinValue::Low);
-	auto default_priority = GetThreadPriority(GetCurrentThread());
-	auto cmd = (unsigned long long)_remote_id << 8 | (code << 4) | code;
+	const auto default_priority = GetThreadPriority(GetCurrentThread());
+	const auto cmd = (unsigned long long)_remote_id << 8 | ((unsigned long long)code << 4) | code;
 	std::bitset<40> data{ cmd };
 
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
@@ -112,7 +112,7 @@ unsigned long long dm35le_motor::read_cmd(milliseconds timeout)
 
 	reader.Start();
 	auto task = reader.WaitForItemsAsync(80);
-	auto start = high_resolution_clock::now();
+	const auto start = high_resolution_clock::now();
 	while(task.Status() != winrt::Windows::Foundation::AsyncStatus::Completed)
 		if(high_resolution_clock::now() - start > timeout) return 0;
 	reader.Stop();
@@ -121,8 +121,8 @@ unsigned long long dm35le_motor::read_cmd(milliseconds timeout)
 
 	for(int i = 0; i < 40; ++i)
 	{
-		auto rise = reader.GetNextItem();
-		auto fall = reader.GetNextItem();
+		const auto rise = reader.GetNextItem();
+		const auto fall = reader.GetNextItem();
 		if(rise.Edge != GpioPinEdge::RisingEdge || fall.Edge != GpioPinEdge::FallingEdge)	return 0;
 		auto pulse = fall.RelativeTime - rise.RelativeTime;
 		if(pulse < 300us || pulse > 800us) return 0;
@@ -135,7 +135,7 @@ unsigned long long dm35le_motor::read_cmd(milliseconds timeout)
 
 bool dm35le_motor::pair_remote(milliseconds timeout, std::function<void(int)> progress)
 {
-	auto start = high_resolution_clock().now();
+	const auto start = high_resolution_clock().now();
 	std::vector<unsigned long long>	received_commands;
 	while(received_commands.size() < 11) {
 		if(high_resolution_clock().now() - start > timeout)	return false;

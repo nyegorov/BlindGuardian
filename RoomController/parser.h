@@ -18,7 +18,7 @@ using std::wstring;
 
 namespace roomctrl	{
 
-wchar_t* get_error_msg(const value_t& v);
+const wchar_t* get_error_msg(const value_t& v);
 
 // Container for storing named objects and variables
 
@@ -78,7 +78,7 @@ private:
 	wstring			_temp;
 
 	wchar_t Peek()			{return _pos >= _content.length() ? 0 : _content[_pos];}
-	wchar_t Read()			{wchar_t c = Peek();_pos++;return c;}
+	wchar_t Read()			{const wchar_t c = Peek();_pos++;return c;}
 	void Back()				{_pos--;}
 	void ReadNumber(wchar_t c);
 	void ReadTime(wchar_t c);

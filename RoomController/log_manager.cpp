@@ -23,11 +23,11 @@ wstring to_string(std::thread::id id)
 
 wstring to_string(const log_entry& entry)
 {
-	auto time_t = std::chrono::system_clock::to_time_t(entry.timestamp);
+	const auto time_t = std::chrono::system_clock::to_time_t(entry.timestamp);
 	tm tm;
 	localtime_s(&tm, &time_t);
 
-	wchar_t buf[1024];
+	wchar_t buf[1024] = { 0 };
 	auto level = entry.level == log_level::error ? L"ERR" : 
 		entry.level == log_level::info ? L"INF" : L"MSG";
 	swprintf(buf, sizeof(buf) / sizeof(buf[0]), L"% 2d:%02d:%02d (%.3lf) [%s.%s %s] %s", tm.tm_hour, tm.tm_min, tm.tm_sec, entry.elapsed / 1000., entry.module, level, to_string(entry.thread_id).c_str(), entry.message.c_str());
@@ -100,7 +100,7 @@ void log_manager::dump() {
 	if(_path.empty())	return;
 	try {
 		std::wofstream ofs(_path, std::ios::app);
-		for(auto& e : _log) ofs << ::to_string(e) << std::endl;
+		for(const auto& e : _log) ofs << ::to_string(e) << std::endl;
 	} catch(const std::exception&) { }
 	_log.clear();
 }
@@ -143,10 +143,10 @@ wstring log_manager::to_string()
 {
 	lock_t lock(_mutex);
 	JsonArray jentries;
-	wchar_t buf[256];
+	wchar_t buf[256] = { 0 };
 	for(const auto& e : reverse(_log)) {
 		JsonObject je;
-		auto time_t = std::chrono::system_clock::to_time_t(e.timestamp);
+		const auto time_t = std::chrono::system_clock::to_time_t(e.timestamp);
 		tm tm;
 		localtime_s(&tm, &time_t);
 		swprintf(buf, sizeof(buf) / sizeof(buf[0]), L"%d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
@@ -158,7 +158,7 @@ wstring log_manager::to_string()
 		je.SetNamedValue(L"message", JsonValue::CreateStringValue(e.message));
 		jentries.Append(je);
 	}
-	auto time_t = std::chrono::system_clock::to_time_t(_start_time_sys);
+	const auto time_t = std::chrono::system_clock::to_time_t(_start_time_sys);
 	tm tm;
 	localtime_s(&tm, &time_t);
 	swprintf(buf, sizeof(buf) / sizeof(buf[0]), L"%d.%02d.%04d %02d:%02d:%02d", tm.tm_mday, tm.tm_mon, 1900 + tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
