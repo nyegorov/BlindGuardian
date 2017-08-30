@@ -59,8 +59,8 @@ class time_sensor final : public sensor
 public:
 	time_sensor(wstring_view name) : sensor(name) { update(); }
 	void update() override {
-		auto now = std::chrono::system_clock::now();
-		auto now_t = std::chrono::system_clock::to_time_t(now);
+		const auto now = std::chrono::system_clock::now();
+		const auto now_t = std::chrono::system_clock::to_time_t(now);
 		tm tm;
 		localtime_s(&tm, &now_t);
 		_value = tm.tm_hour * 60 + tm.tm_min;

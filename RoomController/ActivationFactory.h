@@ -23,7 +23,8 @@ public:
 	STDMETHODIMP GetIids(ULONG *iidCount, IID **iids) {
 		if(!iidCount || !iids)	return E_INVALIDARG;
 		*iidCount = 1;
-		*iids = (IID*)::CoTaskMemAlloc(sizeof(IID));
+		*iids = reinterpret_cast<IID*>(::CoTaskMemAlloc(sizeof(IID)));
+		if(!*iids)	return E_OUTOFMEMORY;
 		**iids = IID_IActivationFactory;
 		return S_OK;
 	}
@@ -31,7 +32,7 @@ public:
 	STDMETHODIMP GetTrustLevel(::TrustLevel *trustLevel) { return trustLevel ? *trustLevel = ::TrustLevel::BaseTrust, S_OK : E_INVALIDARG; }
 	STDMETHODIMP GetFactory(HSTRING className, IActivationFactory** factory) {
 		const wchar_t* name = ::WindowsGetStringRawBuffer(className, nullptr);
-		return ::wcscmp(name, _className) == 0 ? QueryInterface(IID_IActivationFactory, (void**)factory) : _next ? _next->GetFactory(className, factory) : E_NOINTERFACE;
+		return ::wcscmp(name, _className) == 0 ? QueryInterface(IID_IActivationFactory, reinterpret_cast<void**>(factory)) : _next ? _next->GetFactory(className, factory) : E_NOINTERFACE;
 	}
 	STDMETHODIMP ActivateInstance(IInspectable **instance) { return E_NOTIMPL; }
 protected:

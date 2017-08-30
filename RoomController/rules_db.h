@@ -19,7 +19,7 @@ struct rule {
 	wstring name;
 	wstring condition;
 	wstring action;
-	bool enabled;
+	bool enabled = false;
 	rule_status	status = rule_status::inactive;
 };
 using rules_v = std::vector<rule>;

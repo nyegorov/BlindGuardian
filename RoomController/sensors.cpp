@@ -54,7 +54,7 @@ hcsr501_sensor::hcsr501_sensor(wstring_view name, int32_t motion_pin) : sensor(n
 
 void hcsr501_sensor::update()
 {
-	system_clock::time_point last = _last_activity_time;
+	const system_clock::time_point last = _last_activity_time;
 	auto duration = system_clock::now() - last;
 	set(duration_cast<minutes>(duration).count());
 }

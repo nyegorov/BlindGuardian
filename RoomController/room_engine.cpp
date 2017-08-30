@@ -12,14 +12,14 @@ namespace roomctrl {
 
 room_server::room_server(const path& path) : _rules(path / "rules.json"), _config(path / "config.json")
 {
-	_http.on(L"/status", L"html/room_status.html");
-	_http.on(L"/edit", L"html/edit_rule.html");
-	_http.on(L"/log", L"html/server_log.html");
-	_http.on(L"/pair", L"html/pair_remote.html");
-	_http.on(L"/styles.css", L"html/styles.css");
-	_http.on(L"/scripts.js", L"html/scripts.js");
-	_http.on(L"/back.jpg", L"html/img/background.jpg");
-	_http.on(L"/favicon.ico", L"html/img/favicon.ico");
+	_http.on(L"/status",		L"html/room_status.html");
+	_http.on(L"/edit",			L"html/edit_rule.html");
+	_http.on(L"/log",			L"html/server_log.html");
+	_http.on(L"/pair",			L"html/pair_remote.html");
+	_http.on(L"/styles.css",	L"html/styles.css");
+	_http.on(L"/scripts.js",	L"html/scripts.js");
+	_http.on(L"/back.jpg",		L"html/img/background.jpg");
+	_http.on(L"/favicon.ico",	L"html/img/favicon.ico");
 
 	_http.on(L"/api/room",		[this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
 	_http.on(L"/api/log",		[this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
@@ -32,12 +32,12 @@ room_server::room_server(const path& path) : _rules(path / "rules.json"), _confi
 		if(pos == 0)	_tasks.push([this]() {_motor.close(); });
 		return std::make_tuple(content_type::text, L"");
 	});
-	_http.on(L"/api/actions", [this](auto& req, auto& value) { 
+	_http.on(L"/api/actions",	[this](auto& req, auto& value) { 
 		auto action = JsonObject::Parse(req.body).GetNamedString(L"action");
 		if(action == L"pair")	pair_remote();
 		return std::make_tuple(content_type::text, L""); 
 	});
-	_http.on(L"/", L"html/room_status.html");
+	_http.on(L"/",				L"html/room_status.html");
 
 	init(_sensors, _actuators);
 	logger.info(module_name, L"Room server v%s started", version().c_str());

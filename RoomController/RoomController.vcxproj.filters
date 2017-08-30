@@ -140,7 +140,6 @@
     <None Include="html\room_status.html">
       <Filter>Html</Filter>
     </None>
-    <None Include="packages.config" />
     <None Include="html\server_log.html">
       <Filter>Html</Filter>
     </None>
@@ -153,6 +152,7 @@
     <None Include="html\scripts.js">
       <Filter>Html</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">

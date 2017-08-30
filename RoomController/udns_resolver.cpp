@@ -16,10 +16,10 @@ const wchar_t udns_port_out[] = L"4761";
 void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessageReceivedEventArgs &args)
 {
 	auto reader = args.GetDataReader();
-	auto byteCount = reader.UnconsumedBufferLength();
+	const auto byteCount = reader.UnconsumedBufferLength();
 
 	if(byteCount < 5)	return;
-	uint8_t cmd = reader.ReadByte();
+	const uint8_t cmd = reader.ReadByte();
 	if(cmd != '#')		return;
 
 	uint8_t ip_addr[4], name_len;

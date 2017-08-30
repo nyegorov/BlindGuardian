@@ -13,7 +13,7 @@ JsonObject to_json(const rule & rule)
 	json.SetNamedValue(L"condition", JsonValue::CreateStringValue(rule.condition));
 	json.SetNamedValue(L"action", JsonValue::CreateStringValue(rule.action));
 	json.SetNamedValue(L"enabled", JsonValue::CreateBooleanValue(rule.enabled));
-	json.SetNamedValue(L"status", JsonValue::CreateNumberValue((double)rule.status));
+	json.SetNamedValue(L"status", JsonValue::CreateNumberValue(static_cast<double>(rule.status)));
 	return json;
 }
 
@@ -22,7 +22,7 @@ rule& rule::operator=(winrt::Windows::Data::Json::JsonObject json)
 	for(auto& kv : json) {
 		auto key = kv.Key();
 		auto val = kv.Value();
-		if(key == L"id")			id = (unsigned)val.GetNumber();
+		if(key == L"id")			id = static_cast<unsigned>(val.GetNumber());
 		else if(key == L"name")		name = val.GetString();
 		else if(key == L"condition")condition = val.GetString();
 		else if(key == L"action")	action = val.GetString();

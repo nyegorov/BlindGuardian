@@ -56,7 +56,7 @@ struct i_actuator
 
 inline value_t operator *(const value_t& v)
 {
-	if(auto ps = std::get_if<i_sensor*>(&v))	return (*ps)->value();
+	if(const auto ps = std::get_if<i_sensor*>(&v))	return (*ps)->value();
 	return v;
 }
 
