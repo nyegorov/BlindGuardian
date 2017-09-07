@@ -32,7 +32,8 @@ void config_manager::set(const wchar_t name[], bool value)
 wstring config_manager::get(const wchar_t name[], const wchar_t default[]) const
 {
 	lock_t lock(_mutex);
-	return _data.GetNamedString(name, default);
+	auto str = _data.GetNamedString(name, default);
+	return { str.begin(), str.end() };
 }
 
 int config_manager::get(const wchar_t name[], int default) const

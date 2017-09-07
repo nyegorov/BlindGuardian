@@ -2,7 +2,6 @@
 
 #include <chrono>
 #include <string>
-#include "winrt\base.h"
 
 inline long long gettime() {
 	static auto start_time = std::chrono::high_resolution_clock::now();
@@ -22,6 +21,11 @@ inline void log_hresult(const wchar_t *module, const winrt::hresult_error& hr)
 	wchar_t buf[1024];
 	swprintf(buf, _countof(buf), L"% 8lld %s: %s\n", gettime(), module, std::wstring(hr.message()).c_str());
 	OutputDebugStringW(buf);
+}
+
+inline std::wstring to_wstring(const winrt::hstring& hs)
+{
+	return { hs.begin(), hs.end() };
 }
 
 class watch

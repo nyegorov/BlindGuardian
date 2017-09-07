@@ -27,6 +27,11 @@ inline wstring to_str(std::thread::id id)
 	return wss.str();
 }
 
+inline std::wstring to_wstring(const winrt::hstring& hs)
+{
+	return { hs.begin(), hs.end() };
+}
+
 class DumbRemote
 {
 	value_type				_temp;

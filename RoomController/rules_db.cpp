@@ -17,7 +17,7 @@ JsonObject to_json(const rule & rule)
 	return json;
 }
 
-rule& rule::operator=(winrt::Windows::Data::Json::JsonObject json)
+rule& rule::operator=(JsonObject json)
 {
 	for(const auto& kv : json) {
 		auto key = kv.Key();
@@ -33,14 +33,16 @@ rule& rule::operator=(winrt::Windows::Data::Json::JsonObject json)
 
 wstring rule::to_string() const
 {
-	return to_json(*this).ToString();
+	auto hs = to_json(*this).ToString();
+	return { hs.begin(), hs.end() };
 }
 
 wstring to_string(const rules_v&& rules)
 {
 	JsonArray jrules;
 	for(auto& r : rules) jrules.Append(to_json(r));
-	return jrules.Stringify();
+	auto hs = jrules.Stringify();
+	return { hs.begin(), hs.end() };
 }
 
 bool operator == (const rule& r1, const rule& r2) {
@@ -63,7 +65,8 @@ wstring rules_db::to_string() const
 		lock_t lock(_mutex);
 		for(auto& r : _rules) jrules.Append(to_json(r));
 	}
-	return jrules.Stringify();
+	auto hs = jrules.Stringify();
+	return { hs.begin(), hs.end() };
 }
 
 void rules_db::load()

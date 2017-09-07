@@ -235,7 +235,7 @@ namespace UnitTests
 			auto new_id = [&]() -> future<unsigned long> {
 				co_await winrt::resume_background();
 				auto resp = co_await HttpClient().PostAsync({ L"http://localhost/api/rules" }, HttpStringContent(new_rule.to_string()));
-				wstring loc = resp.Headers().Lookup(L"Location");
+				wstring loc = to_wstring(resp.Headers().Lookup(L"Location"));
 				if(loc.size() > resp.RequestMessage().RequestUri().Path().size()) {
 					return std::stoul(loc.substr(resp.RequestMessage().RequestUri().Path().size() + 1));
 				}

@@ -39,8 +39,8 @@ void esp8266_sensors::on_message(const DatagramSocket &, const DatagramSocketMes
 
 		if(byteCount < 7)				throw winrt::hresult_out_of_bounds();
 
-		const uint8_t cmd  = reader.ReadByte();
-		const uint8_t size = reader.ReadByte();
+		const auto cmd  = reader.ReadByte();
+		const auto size = reader.ReadByte();
 		if(cmd != 's' || size != 5)		throw winrt::hresult_invalid_argument();
 
 		reader.ByteOrder(ByteOrder::LittleEndian);

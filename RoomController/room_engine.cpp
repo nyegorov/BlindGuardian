@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "common.h"
 #include "room_engine.h"
 #include "debug_stream.h"
 
@@ -24,7 +25,7 @@ room_server::room_server(const path& path) : _rules(path / "rules.json"), _confi
 	_http.on(L"/api/room",		[this](auto&, auto&) { return std::make_tuple(content_type::json, get_sensors()); });
 	_http.on(L"/api/log",		[this](auto&, auto&) { return std::make_tuple(content_type::json, logger.to_string()); });
 	_http.on(L"/api/rules",		rest_adapter<rules_db>::get(_rules));
-	_http.on(L"/api/pairing",	[this](auto&, auto&) { return std::make_tuple(content_type::json, _pair_info.ToString()); });
+	_http.on(L"/api/pairing",	[this](auto&, auto&) { return std::make_tuple(content_type::json, ::to_wstring(_pair_info.ToString())); });
 	_http.on(L"/api/blinds",	[this](auto& req, auto&) {
 		if(req.type != http_method::put)	throw http_status::method_not_allowed;
 		auto pos = JsonObject::Parse(req.body).GetNamedNumber(L"position");
@@ -115,7 +116,7 @@ wstring room_server::get_sensors()
 	sensors.SetNamedValue(L"version", JsonValue::CreateStringValue(version()));
 	sensors.SetNamedValue(L"lan", JsonValue::CreateStringValue(ip.lan));
 	sensors.SetNamedValue(L"wifi", JsonValue::CreateStringValue(ip.wifi));
-	return sensors.ToString();
+	return ::to_wstring(sensors.ToString());
 }
 
 task<void> room_server::pair_remote()

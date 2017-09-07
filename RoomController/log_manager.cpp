@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "common.h"
 #include "log_manager.h"
 
 using namespace winrt::Windows::Data::Json;
@@ -165,5 +166,5 @@ wstring log_manager::to_string()
 	JsonObject json;
 	json.SetNamedValue(L"start", JsonValue::CreateStringValue(buf));
 	json.SetNamedValue(L"entries", jentries);
-	return json.Stringify();
+	return ::to_wstring(json.Stringify());
 }

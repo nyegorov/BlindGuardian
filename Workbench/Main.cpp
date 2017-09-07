@@ -4,11 +4,9 @@
 #include "udns_resolver.h"
 #include "room_engine.h"
 #include "log_manager.h"
-#include "winrt/ppl.h"
 
 
 using namespace winrt;
-using namespace winrt::ppl;
 using namespace std;
 using namespace std::experimental;
 using namespace roomctrl;

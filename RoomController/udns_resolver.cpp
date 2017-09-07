@@ -25,7 +25,8 @@ void udns_resolver::on_message(const DatagramSocket &, const DatagramSocketMessa
 	uint8_t ip_addr[4], name_len;
 	reader.ReadBytes(ip_addr);
 	name_len = reader.ReadByte();
-	wstring name = reader.ReadString(name_len);
+	auto hstr = reader.ReadString(name_len);
+	wstring name{ hstr.begin(), hstr.end() };
 	std::wstringstream ws;
 	ws << ip_addr[0] << '.' << ip_addr[1] << '.' << ip_addr[2] << '.' << ip_addr[3];
 	wstring ip = ws.str();

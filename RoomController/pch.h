@@ -48,16 +48,8 @@
 
 #include <pplawait.h>
 #include <concurrent_queue.h>
-#include <gsl.h>
 
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 using namespace std::literals::chrono_literals;
-
-namespace winrt::ABI::Windows::Foundation
-{
-template <> struct __declspec(uuid("3a14233f-a037-4ac0-a0ad-c4bb0bbf0111")) __declspec(novtable) AsyncOperationProgressHandler<bool, int> : impl_AsyncOperationProgressHandler<bool, int> {};
-template <> struct __declspec(uuid("3a14233f-a037-4ac0-a0ad-c4bb0bbf0112")) __declspec(novtable) AsyncOperationWithProgressCompletedHandler<bool, int> : impl_AsyncOperationWithProgressCompletedHandler<bool, int> {};
-template <> struct __declspec(uuid("3a14233f-a037-4ac0-a0ad-c4bb0bbf0113")) __declspec(novtable) IAsyncOperationWithProgress<bool, int> : impl_IAsyncOperationWithProgress<bool, int> {};
-}
 
