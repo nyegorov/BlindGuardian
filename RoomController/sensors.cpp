@@ -73,8 +73,8 @@ task<void> tmp75_sensor::start()
 		device.Write({ 0 });
 
 		_i2c = device;
-	} catch(const winrt::hresult_error&)	{
-		logger.error(L"TM75", L"I2C initialization error");
+	} catch(const winrt::hresult_error& hr)	{
+		logger.error(L"TM75", hr);
 	}
 }
 
@@ -103,8 +103,8 @@ task<void> mcp9808_sensor::start()
 		device.Write({ 0x05 });
 
 		_i2c = device;
-	} catch(const winrt::hresult_error&) {
-		logger.error(L"MCP9", L"I2C initialization error");
+	} catch(const winrt::hresult_error& hr) {
+		logger.error(L"MCP9", hr);
 	}
 }
 
