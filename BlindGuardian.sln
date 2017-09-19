@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.6
+VisualStudioVersion = 15.0.26730.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RoomController", "RoomController\RoomController.vcxproj", "{F3038CCB-C88B-42DE-9BEC-D116DCC19C87}"
 EndProject
@@ -19,6 +19,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MotorController", "MotorCon
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Schematics", "Schematics", "{C4B63646-460B-408E-9099-55BFD1B329FF}"
 	ProjectSection(SolutionItems) = preProject
+		Schematics\Breadboard.fzz = Schematics\Breadboard.fzz
 		Schematics\NodeMcu.fzz = Schematics\NodeMcu.fzz
 		Schematics\NodeMcu_bb.pdf = Schematics\NodeMcu_bb.pdf
 		Schematics\NodeMcu_schem.pdf = Schematics\NodeMcu_schem.pdf
@@ -109,5 +110,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {84703FB2-1B29-4AC4-A608-E94CF63EBB72}
 	EndGlobalSection
 EndGlobal
